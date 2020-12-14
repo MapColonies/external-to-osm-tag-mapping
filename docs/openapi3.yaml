@@ -1,0 +1,40 @@
+openapi: 3.0.1
+info:
+  title: service-name
+  description: basic template for map colonies service
+  version: 1.0.0
+servers:
+  - url: http://localhost:1337
+paths:
+  /helloworld:
+    get:
+      tags:
+        - helloWorld
+      summary: hello world
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/helloWorld"
+components:
+  parameters:
+    idParam:
+      name: id
+      in: query
+      description: id of requested item
+      required: true
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    helloWorld:
+      required:
+        - hello
+      type: object
+      properties:
+        hello:
+          type: string
+      example:
+        hello: world

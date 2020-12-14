@@ -1,0 +1,79 @@
+{
+  "name": "@map-colonies/external-to-osm-tag-mapping",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "scripts": {
+    "test:unit": "jest --coverage --testPathPattern=\"./tests/unit/.*.spec.ts\" --reporters='default' --reporters='jest-html-reporters' --watchAll=false",
+    "test:integration": "jest --testPathPattern=\"./tests/integration/.*.spec.ts\"",
+    "lint": "eslint src/**",
+    "lint:fix": "eslint --fix src/**",
+    "release": "standard-version",
+    "test": "npm run test:unit && npm run test:integration",
+    "build": "tsc --project tsconfig.build.json && copyfiles ./docs ./config dist",
+    "start": "npm run build && node ./dist/index.js"
+  },
+  "directories": {
+    "test": "tests"
+  },
+  "author": "",
+  "license": "ISC",
+  "husky": {
+    "hooks": {
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
+    }
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^9.1.1",
+    "@commitlint/config-conventional": "^10.0.0",
+    "@map-colonies/eslint-config": "^2.0.0",
+    "@types/config": "0.0.36",
+    "@types/cors": "^2.8.7",
+    "@types/express": "^4.17.8",
+    "@types/jest": "^26.0.12",
+    "@types/swagger-ui-express": "^4.1.2",
+    "@types/yamljs": "^0.2.31",
+    "commitlint": "^9.1.2",
+    "copyfiles": "^2.3.0",
+    "cz-conventional-changelog": "^3.3.0",
+    "eslint": "^7.8.1",
+    "husky": "^4.2.5",
+    "jest": "^26.4.2",
+    "jest-create-mock-instance": "^1.1.0",
+    "jest-html-reporters": "^2.0.3",
+    "prettier": "2.2.1",
+    "standard-version": "^9.0.0",
+    "ts-jest": "^26.3.0",
+    "typescript": "^3.8.3"
+  },
+  "dependencies": {
+    "@map-colonies/mc-logger": "^1.2.1",
+    "@map-colonies/mc-model-types": "^1.0.1",
+    "@map-colonies/mc-probe": "^1.0.0",
+    "body-parser": "^1.19.0",
+    "config": "^3.3.1",
+    "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "http-status-codes": "^2.1.2",
+    "openapi-validator-middleware": "^3.1.1",
+    "reflect-metadata": "^0.1.13",
+    "swagger-ui-express": "^4.1.4",
+    "tsyringe": "^4.3.0",
+    "yamljs": "^0.3.0"
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "coverageReporters": [
+      "text",
+      "html"
+    ]
+  }
+}
