@@ -11,7 +11,7 @@ RUN npm run build
 
 FROM node:12.18.3-slim as production
 
-ARG SERVICE_NAME=meow
+ARG SERVICE_NAME=external-to-osm-tag-mapping
 ENV NODE_ENV=production
 ENV SERVER_PORT=8080
 

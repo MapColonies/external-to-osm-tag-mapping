@@ -3,6 +3,7 @@ import { Application } from 'express';
 
 import { container } from 'tsyringe';
 import { ServerBuilder } from '../../../../src/serverBuilder';
+import { Tags } from '../../../../src/schema/models/mapping';
 
 let app: Application | null = null;
 
@@ -17,4 +18,8 @@ export async function getSchemas(): Promise<supertest.Response> {
 
 export async function getSchema(name: string): Promise<supertest.Response> {
   return supertest.agent(app).get(`/schemas/${name}`);
+}
+
+export async function map(name: string, tags: Tags): Promise<supertest.Response> {
+  return supertest.agent(app).post(`/schemas/${name}/map`).send(tags);
 }
