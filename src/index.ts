@@ -4,6 +4,8 @@ import { container } from 'tsyringe';
 import { get } from 'config';
 import { getApp } from './app';
 import { DEFAULT_SERVER_PORT } from './common/constants';
+import { Services } from './common/constants';
+import { ILogger } from './common/interfaces';
 
 interface IServerConfig {
   port: string;
@@ -13,9 +15,11 @@ const serverConfig = get<IServerConfig>('server');
 const port: number = parseInt(serverConfig.port) || DEFAULT_SERVER_PORT;
 const app = getApp();
 const probe = container.resolve(Probe);
+const logger = container.resolve<ILogger>(Services.LOGGER);
+
 probe
   .start(app, port)
   .then(() => {
-    console.log('live');
+    logger.log('info', `app listening on port ${port}`);
   })
   .catch(console.error);

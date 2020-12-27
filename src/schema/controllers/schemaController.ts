@@ -12,16 +12,15 @@ interface SchemaParams {
   name: string;
 }
 
-type ErrorMessage = Record<string, string>;
-type GetSchemasHandler = RequestHandler<SchemaParams, Schema[] | ErrorMessage>;
-type GetSchemaHandler = RequestHandler<SchemaParams, Schema | ErrorMessage>;
-type PostMapHandler = RequestHandler<SchemaParams, Tags, ErrorMessage>;
+type GetSchemasHandler = RequestHandler<SchemaParams, Schema[]>;
+type GetSchemaHandler = RequestHandler<SchemaParams, Schema>;
+type PostMapHandler = RequestHandler<SchemaParams, Tags, Tags>;
 
 @injectable()
 export class SchemaController {
   public constructor(@inject(SchemaManager) private readonly manager: SchemaManager) {}
 
-  public getSchemas: GetSchemasHandler = async (req, res, next) => {
+  public getSchemas: GetSchemasHandler = async (req, res) => {
     const schemas = await this.manager.getSchemas();
     res.status(httpStatus.OK).json(schemas);
     return;
@@ -39,9 +38,16 @@ export class SchemaController {
     return res.status(httpStatus.OK).json(schema);
   };
 
-  public postMap: PostMapHandler = async (req, res) => {
-    const { body: tags } = req;
+  public postMap: PostMapHandler = async (req, res, next) => {
+    const tags = req.body;
     const { name } = req.params;
+    const schema = await this.manager.getSchema(name);
+
+    if (!schema) {
+      const err: HttpError = new Error(`system ${name} not found`);
+      err.status = httpStatus.NOT_FOUND;
+      return next(err);
+    }
 
     const map = await this.manager.map(name, tags);
 
