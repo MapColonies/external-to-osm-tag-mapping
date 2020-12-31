@@ -8,11 +8,11 @@ import { Services } from './common/constants';
 import { ILogger } from './common/interfaces';
 
 interface IServerConfig {
-  port: string;
+  port: number;
 }
 
 const serverConfig = get<IServerConfig>('server');
-const port: number = parseInt(serverConfig.port) || DEFAULT_SERVER_PORT;
+const port: number = serverConfig.port || DEFAULT_SERVER_PORT;
 const app = getApp();
 const probe = container.resolve(Probe);
 const logger = container.resolve<ILogger>(Services.LOGGER);
@@ -22,4 +22,4 @@ probe
   .then(() => {
     logger.log('info', `app listening on port ${port}`);
   })
-  .catch(console.error);
+  .catch(() => logger.log('error', `app could not start`));
