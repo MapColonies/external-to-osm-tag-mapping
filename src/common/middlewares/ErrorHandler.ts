@@ -17,7 +17,7 @@ export class ErrorHandler {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       next: NextFunction
     ): void => {
-      this.logger.log('error', `${req.method} request to ${req.originalUrl}  has failed with error: ${err.message}`);
+      this.logger.log('error', `${req.method} request to ${req.originalUrl} has failed with error: ${err.message}`);
       res.status(err.status ?? StatusCodes.INTERNAL_SERVER_ERROR).json({ message: err.message });
     };
   }
