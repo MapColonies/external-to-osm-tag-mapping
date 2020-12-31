@@ -22,4 +22,4 @@ probe
   .then(() => {
     logger.log('info', `app listening on port ${port}`);
   })
-  .catch(e => logger.log('error', `app could not start`, e));
+  .catch((e) => logger.log('error', `app could not start`, e));

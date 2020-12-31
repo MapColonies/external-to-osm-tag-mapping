@@ -142,7 +142,7 @@ components:
           format: date-time
           description: UTC date/time of the schema's update
         mapping:
-          description: tags mapping 
+          description: tags mapping
           type: object
     Error:
       type: object
