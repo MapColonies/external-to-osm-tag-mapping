@@ -58,11 +58,10 @@ describe('SchemaManager', () => {
       schemaManager = new SchemaManager({ getSchemas, getSchema });
 
       const name = 'notFoundSchema';
-      const expected = undefined;
 
       const res = await schemaManager.getSchema(name);
 
-      expect(res).toBe(expected);
+      expect(res).toBeUndefined();
     });
   });
 
