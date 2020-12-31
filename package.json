@@ -1,7 +1,7 @@
 {
   "name": "@map-colonies/external-to-osm-tag-mapping",
   "version": "1.0.0",
-  "description": "",
+  "description": "map external tags to osm tags",
   "main": "./src/index.ts",
   "scripts": {
     "test:unit": "jest --config=./tests/configurations/unit/jest.config.js",
@@ -19,7 +19,15 @@
   "directories": {
     "test": "tests"
   },
-  "author": "MapColonies",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/mapcolonies/external-to-osm-tag-mapping.git"
+  },
+  "author": {
+    "name": "MapColonies",
+    "email": "mapcolonies@gmail.com",
+    "url": "https://github.com/MapColonies"
+  },
   "license": "ISC",
   "husky": {
     "hooks": {
