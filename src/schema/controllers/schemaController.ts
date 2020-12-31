@@ -8,9 +8,6 @@ import { HttpError } from '../../common/middlewares/ErrorHandler';
 interface SchemaParams {
   name: string;
 }
-interface SchemaParams {
-  name: string;
-}
 
 type GetSchemasHandler = RequestHandler<SchemaParams, Schema[]>;
 type GetSchemaHandler = RequestHandler<SchemaParams, Schema>;
