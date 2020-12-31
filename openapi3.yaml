@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: external-to-osm-tag-mapping
-  description: mapping  external tags to osm tags - json format
+  description: mapping external tags to osm tags - json format
   version: 1.0.0
 servers:
   - url: http://localhost:8080
@@ -131,6 +131,7 @@ components:
       type: object
       properties:
         name:
+          description: schema name
           type: string
         created_at:
           type: string
@@ -141,6 +142,7 @@ components:
           format: date-time
           description: UTC date/time of the schema's update
         mapping:
+          description: tags mapping 
           type: object
     Error:
       type: object
