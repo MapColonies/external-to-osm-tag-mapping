@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: external-to-osm-tag-mapping
-  description: mapping  external tags to osm tags - json format
+  description: mapping external tags to osm tags - json format
   version: 1.0.0
 servers:
   - url: http://localhost:8080
@@ -71,7 +71,7 @@ paths:
           $ref: '#/components/responses/NotFound'
         5XX:
           $ref: '#/components/responses/InternalError'
-          /schemas/{name}/map:
+  /schemas/{name}/map:
     post:
       tags:
         - schemas
@@ -84,13 +84,11 @@ paths:
           description: the service name
       summary: osm tags mapping
       requestBody:
-        required: true
         content:
           application/json:
             schema:
               type: object
-            example:
-              { externalKey1: externalValue1, externalKey2: externalValue2 }
+            example: { externalKey1: externalValue1, externalKey2: externalValue2 }
       responses:
         200:
           description: OK
@@ -98,13 +96,7 @@ paths:
             application/json:
               schema:
                 type: object
-              example:
-                {
-                  defaultOsmKey: defaultOsmValue,
-                  defaultOsmKey1: defaultOsmValue1,
-                  osmKey: externalValue,
-                  osmKey1: externalValue1,
-                }
+              example: { defaultOsmKey: defaultOsmValue, defaultOsmKey1: defaultOsmValue1, osmKey: externalValue, osmKey1: externalValue1 }
         400:
           $ref: '#/components/responses/BadRequest'
         404:
@@ -139,6 +131,7 @@ components:
       type: object
       properties:
         name:
+          description: schema name
           type: string
         created_at:
           type: string
@@ -149,6 +142,7 @@ components:
           format: date-time
           description: UTC date/time of the schema's update
         mapping:
+          description: tags mapping
           type: object
     Error:
       type: object
