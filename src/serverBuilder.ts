@@ -1,39 +1,50 @@
 import express from 'express';
-import { initAsync as validatorInit } from 'openapi-validator-middleware';
-import { MCLogger } from '@map-colonies/mc-logger';
-import { injectable } from 'tsyringe';
-import cors from 'cors';
-import * as bodyParser from 'body-parser';
-import { RequestLogger } from './middleware/RequestLogger';
-import { ErrorHandler } from './middleware/ErrorHandler';
-import { globalRouter } from './routers/global';
+import bodyParser from 'body-parser';
+import { middleware as OpenApiMiddleware } from 'express-openapi-validator';
+import { container, inject, injectable } from 'tsyringe';
+import { RequestLogger } from './common/middlewares/RequestLogger';
+import { ErrorHandler } from './common/middlewares/ErrorHandler';
+import { schemaRouterFactory } from './schema/routers/schemaRouter';
+import { swaggerRouterFactory } from './common/routes/swagger';
+import { IConfig, ILogger } from './common/interfaces';
+import { Services } from './common/constants';
 
 @injectable()
 export class ServerBuilder {
   private readonly serverInstance = express();
 
   public constructor(
-    private readonly logger: MCLogger,
+    @inject(Services.CONFIG) private readonly config: IConfig,
+    @inject(Services.LOGGER) private readonly logger: ILogger,
     private readonly requestLogger: RequestLogger,
     private readonly errorHandler: ErrorHandler
   ) {
     this.serverInstance = express();
   }
 
-  public async build(): Promise<express.Application> {
-    // Initiate swagger validator
-    await validatorInit('./docs/openapi3.yaml');
-
-    this.registerMiddlewares();
-    this.serverInstance.use(globalRouter);
-    this.serverInstance.use(this.errorHandler.getErrorHandlerMiddleware());
+  public build(): express.Application {
+    this.registerPreRoutesMiddleware();
+    this.buildRoutes();
+    this.registerPostRoutesMiddleware();
 
     return this.serverInstance;
   }
 
-  private registerMiddlewares(): void {
-    this.serverInstance.use(cors());
+  private registerPreRoutesMiddleware(): void {
     this.serverInstance.use(bodyParser.json());
+    const ignorePathRegex = new RegExp(`^${this.config.get<string>('swaggerConfig.basePath')}/.*`, 'i');
+    this.serverInstance.use(
+      OpenApiMiddleware({ apiSpec: this.config.get('swaggerConfig.filePath'), validateRequests: true, ignorePaths: ignorePathRegex })
+    );
     this.serverInstance.use(this.requestLogger.getLoggerMiddleware());
+  }
+
+  private buildRoutes(): void {
+    this.serverInstance.use('/schemas', schemaRouterFactory(container));
+    this.serverInstance.use(swaggerRouterFactory(container));
+  }
+
+  private registerPostRoutesMiddleware(): void {
+    this.serverInstance.use(this.errorHandler.getErrorHandlerMiddleware());
   }
 }
