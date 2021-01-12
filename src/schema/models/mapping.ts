@@ -17,6 +17,6 @@ export class Schemas {
 
   public async getSchema(name: string): Promise<Schema | undefined> {
     const schemas = await this.getSchemas();
-    return Promise.resolve(schemas.find((schema) => schema.name === name));
+    return schemas.find((schema) => schema.name === name);
   }
 }
