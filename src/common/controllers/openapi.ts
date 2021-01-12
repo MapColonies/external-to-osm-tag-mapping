@@ -14,9 +14,9 @@ export class SwaggerController {
   private readonly swaggerDoc: swaggerUi.JsonObject;
 
   public constructor(@inject(Services.CONFIG) private readonly config: IConfig) {
-    const swaggerConfig = config.get<SwaggerConfig>('swaggerConfig');
+    const openapiConfig = config.get<SwaggerConfig>('openapiConfig');
 
-    this.swaggerDoc = safeLoad(readFileSync(swaggerConfig.filePath, 'utf8')) as swaggerUi.JsonObject;
+    this.swaggerDoc = safeLoad(readFileSync(openapiConfig.filePath, 'utf8')) as swaggerUi.JsonObject;
     this.serveUi = swaggerUi.setup(this.swaggerDoc);
     this.uiMiddleware = swaggerUi.serve;
   }

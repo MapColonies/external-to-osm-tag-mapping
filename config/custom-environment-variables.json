@@ -1,5 +1,5 @@
 {
-  "swaggerConfig": {
+  "openapiConfig": {
     "filePath": "SWAGGER_FILE_PATH"
   },
   "logger": {

@@ -5,7 +5,7 @@ import { container, inject, injectable } from 'tsyringe';
 import { RequestLogger } from './common/middlewares/RequestLogger';
 import { ErrorHandler } from './common/middlewares/ErrorHandler';
 import { schemaRouterFactory } from './schema/routers/schemaRouter';
-import { swaggerRouterFactory } from './common/routes/swagger';
+import { swaggerRouterFactory } from './common/routes/openapi';
 import { IConfig, ILogger } from './common/interfaces';
 import { Services } from './common/constants';
 
@@ -32,9 +32,9 @@ export class ServerBuilder {
 
   private registerPreRoutesMiddleware(): void {
     this.serverInstance.use(bodyParser.json());
-    const ignorePathRegex = new RegExp(`^${this.config.get<string>('swaggerConfig.basePath')}/.*`, 'i');
+    const ignorePathRegex = new RegExp(`^${this.config.get<string>('openapiConfig.basePath')}/.*`, 'i');
     this.serverInstance.use(
-      OpenApiMiddleware({ apiSpec: this.config.get('swaggerConfig.filePath'), validateRequests: true, ignorePaths: ignorePathRegex })
+      OpenApiMiddleware({ apiSpec: this.config.get('openapiConfig.filePath'), validateRequests: true, ignorePaths: ignorePathRegex })
     );
     this.serverInstance.use(this.requestLogger.getLoggerMiddleware());
   }
