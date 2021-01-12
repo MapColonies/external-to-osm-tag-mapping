@@ -1,4 +1,3 @@
-
 lint:
   plugins:
     # This section is where you can import local plugins.
