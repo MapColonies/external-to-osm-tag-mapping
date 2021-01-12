@@ -3,6 +3,9 @@ info:
   title: external-to-osm-tag-mapping
   description: mapping external tags to osm tags - json format
   version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
 servers:
   - url: http://localhost:8080
 paths:
@@ -11,6 +14,7 @@ paths:
       tags:
         - schemas
       summary: get all existing schemas
+      operationId: get-schemas
       responses:
         200:
           description: Ok
@@ -44,6 +48,7 @@ paths:
       tags:
         - schemas
       summary: get schema by service name
+      operationId: get-schema-by-name
       parameters:
         - in: path
           name: name
@@ -75,6 +80,7 @@ paths:
     post:
       tags:
         - schemas
+      operationId: map-schema-attributes-to-osm-tags
       parameters:
         - in: path
           name: name

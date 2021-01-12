@@ -4,11 +4,11 @@ on: [pull_request]
 
 jobs:
   eslint:
-    name: Run TS Project eslint
+    name: Run eslint
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check out TS Project Git repository
+      - name: Check out Git repository
         uses: actions/checkout@v2
 
       - name: Set up Node.js
@@ -16,10 +16,10 @@ jobs:
         with:
           node-version: 12
 
-      - name: Install TS Project dependencies
+      - name: Install dependencies
         run: npm install
 
-      - name: Run TS Project linters
+      - name: Run linters
         uses: wearerequired/lint-action@v1
         with:
           github_token: ${{ secrets.github_token }}
@@ -27,3 +27,13 @@ jobs:
           eslint: true
           prettier: true
           eslint_extensions: ts
+  openapi:
+    name: Lint OpenAPI
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: OpenAPI Lint Checks
+        uses: nwestfall/openapi-action@v1.0.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          file: openapi3.yaml
