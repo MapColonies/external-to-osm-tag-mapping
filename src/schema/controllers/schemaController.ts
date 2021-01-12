@@ -1,9 +1,9 @@
 import { RequestHandler } from 'express';
 import httpStatus from 'http-status-codes';
 import { injectable, inject } from 'tsyringe';
+import { HttpError } from '@map-colonies/error-express-handler';
 import { SchemaManager } from '../models/schemaManager';
 import { Schema, Tags } from '../models/mapping';
-import { HttpError } from '../../common/middlewares/ErrorHandler';
 
 interface SchemaParams {
   name: string;
@@ -29,7 +29,7 @@ export class SchemaController {
 
     if (!schema) {
       const err: HttpError = new Error(`system ${name} not found`);
-      err.status = httpStatus.NOT_FOUND;
+      err.statusCode = httpStatus.NOT_FOUND;
       return next(err);
     }
     return res.status(httpStatus.OK).json(schema);
@@ -42,7 +42,7 @@ export class SchemaController {
 
     if (!schema) {
       const err: HttpError = new Error(`system ${name} not found`);
-      err.status = httpStatus.NOT_FOUND;
+      err.statusCode = httpStatus.NOT_FOUND;
       return next(err);
     }
 
