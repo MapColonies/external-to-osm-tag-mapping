@@ -43,9 +43,9 @@ describe('schemas', function () {
     });
     describe('POST /schemas/:name/map', function () {
       it('should return 404 status code for non-existent schema', async function () {
-        const tags = { key1: 'val2', externalKey2: 'val3', externalKey1: 'val1', key2: 'val4' };
+        const geoJson = { type: 'Feature', properties: { key1: 'val2', externalKey2: 'val3', externalKey1: 'val1', key2: 'val4', geometry: '' } };
 
-        const response = await requestSender.map('system1', tags);
+        const response = await requestSender.map('system1', geoJson);
 
         expect(response.status).toBe(httpStatusCodes.NOT_FOUND);
         const schemas = response.body as Schema;

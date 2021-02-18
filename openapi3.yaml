@@ -100,8 +100,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-              example: { defaultOsmKey: defaultOsmValue, defaultOsmKey1: defaultOsmValue1, osmKey: externalValue, osmKey1: externalValue1 }
+                $ref: '#/components/schemas/geoJson'
         400:
           $ref: '#/components/responses/BadRequest'
         404:
