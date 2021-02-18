@@ -45,7 +45,7 @@ export class SchemaController {
       err.statusCode = httpStatus.NOT_FOUND;
       return next(err);
     }
-   
+
     const newGeoJson = req.body;
     newGeoJson['properties'] = await this.manager.map(name, tags);
 

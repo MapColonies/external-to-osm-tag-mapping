@@ -93,8 +93,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-            example: { externalKey1: externalValue1, externalKey2: externalValue2 }
+              $ref: '#/components/schemas/geoJson'
       responses:
         200:
           description: OK
@@ -150,6 +149,17 @@ components:
         mapping:
           description: tags mapping
           type: object
+    geoJson:
+      type: object
+      properties:
+        type:
+          type: string
+        properties:
+          type: object
+        geometry:
+          type: object
+      required:
+        - properties
     Error:
       type: object
       properties:
