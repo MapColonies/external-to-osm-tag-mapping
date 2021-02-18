@@ -94,7 +94,13 @@ paths:
           application/json:
             schema:
               type: object
-            example: { externalKey1: externalValue1, externalKey2: externalValue2 }
+              properties:
+                properties:
+                  type: object
+              required:
+                - 'properties'
+              additionalProperties: true
+            example: { properties: { externalKey1: externalValue1, externalKey2: externalValue2 } }
       responses:
         200:
           description: OK
@@ -102,7 +108,14 @@ paths:
             application/json:
               schema:
                 type: object
-              example: { defaultOsmKey: defaultOsmValue, defaultOsmKey1: defaultOsmValue1, osmKey: externalValue, osmKey1: externalValue1 }
+                properties:
+                  properties:
+                    type: object
+                required:
+                  - 'properties'
+                additionalProperties: true
+              example:
+                { properties: { defaultOsmKey: defaultOsmValue, defaultOsmKey1: defaultOsmValue1, osmKey: externalValue, osmKey1: externalValue1 } }
         400:
           $ref: '#/components/responses/BadRequest'
         404:
