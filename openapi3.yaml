@@ -93,14 +93,29 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/geoJson'
+              type: object
+              properties:
+                properties:
+                  type: object
+              required:
+                - 'properties'
+              additionalProperties: true
+            example: { properties: { externalKey1: externalValue1, externalKey2: externalValue2 } }
       responses:
         200:
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/geoJson'
+                type: object
+                properties:
+                  properties:
+                    type: object
+                required:
+                  - 'properties'
+                additionalProperties: true
+              example:
+                { properties: { defaultOsmKey: defaultOsmValue, defaultOsmKey1: defaultOsmValue1, osmKey: externalValue, osmKey1: externalValue1 } }
         400:
           $ref: '#/components/responses/BadRequest'
         404:
@@ -148,17 +163,6 @@ components:
         mapping:
           description: tags mapping
           type: object
-    geoJson:
-      type: object
-      properties:
-        type:
-          type: string
-        properties:
-          type: object
-        geometry:
-          type: object
-      required:
-        - properties
     Error:
       type: object
       properties:
