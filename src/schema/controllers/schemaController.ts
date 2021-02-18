@@ -36,7 +36,7 @@ export class SchemaController {
   };
 
   public postMap: PostMapHandler = async (req, res, next) => {
-    const tags = req.body;
+    const tags = req.body.properties as Tags;
     const { name } = req.params;
     const schema = await this.manager.getSchema(name);
 
@@ -45,9 +45,10 @@ export class SchemaController {
       err.statusCode = httpStatus.NOT_FOUND;
       return next(err);
     }
+   
+    const newGeoJson = req.body;
+    newGeoJson['properties'] = await this.manager.map(name, tags);
 
-    const map = await this.manager.map(name, tags);
-
-    return res.status(httpStatus.OK).json(map);
+    return res.status(httpStatus.OK).json(newGeoJson);
   };
 }
