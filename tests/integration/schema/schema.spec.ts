@@ -24,7 +24,7 @@ describe('schemas', function () {
         const schemas = response.body as Schema[];
         expect(schemas).toBeInstanceOf(Array);
 
-        schemas.forEach(elm => {
+        schemas.forEach((elm) => {
           expect(elm).toHaveProperty('name');
           expect(elm).toHaveProperty('createdAt');
           expect(elm).toHaveProperty('updatedAt');
