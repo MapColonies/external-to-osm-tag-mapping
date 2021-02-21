@@ -12,7 +12,14 @@ export interface Schema {
 @injectable()
 export class Schemas {
   public async getSchemas(): Promise<Schema[]> {
-    return Promise.resolve([]); //get all schemas from db
+    return Promise.resolve([
+      {
+        name: 'avi',
+        createdAt: '2020-12-20T13:32:25Z',
+        updatedAt: '2020-12-20T13:32:25Z',
+        mapping: {},
+      },
+    ]); //get all schemas from db
   }
 
   public async getSchema(name: string): Promise<Schema | undefined> {
