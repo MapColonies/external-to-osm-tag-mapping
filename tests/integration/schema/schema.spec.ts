@@ -17,13 +17,20 @@ describe('schemas', function () {
 
   describe('Happy Path', function () {
     describe('GET /schemas', function () {
-      it('should return 200 status code with empty schemas array', async function () {
+      it('should return 200 status code with schemas array', async function () {
         const response = await requestSender.getSchemas();
-
         expect(response.status).toBe(httpStatusCodes.OK);
 
-        const schemas = response.body as Schema;
-        expect(schemas).toEqual([]);
+        const schemas = response.body as Schema[];
+        expect(schemas).toBeInstanceOf(Array);
+
+        schemas.forEach(elm => {
+          expect(elm).toHaveProperty('name');
+          expect(elm).toHaveProperty('createdAt');
+          expect(elm).toHaveProperty('updatedAt');
+          expect(elm).toHaveProperty('mapping');
+          expect(elm.mapping).toBeInstanceOf(Object);
+        });
       });
     });
   });
