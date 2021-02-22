@@ -1,11 +1,11 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import { middleware as OpenApiMiddleware } from 'express-openapi-validator';
+import { OpenapiViewerRouter, OpenapiRouterConfig } from '@map-colonies/openapi-express-viewer';
 import { container, inject, injectable } from 'tsyringe';
 import { getErrorHandlerMiddleware } from '@map-colonies/error-express-handler';
 import { RequestLogger } from './common/middlewares/RequestLogger';
 import { schemaRouterFactory } from './schema/routers/schemaRouter';
-import { swaggerRouterFactory } from './common/routes/openapi';
 import { IConfig, ILogger } from './common/interfaces';
 import { Services } from './common/constants';
 
@@ -31,16 +31,23 @@ export class ServerBuilder {
 
   private registerPreRoutesMiddleware(): void {
     this.serverInstance.use(bodyParser.json());
+
     const ignorePathRegex = new RegExp(`^${this.config.get<string>('openapiConfig.basePath')}/.*`, 'i');
-    this.serverInstance.use(
-      OpenApiMiddleware({ apiSpec: this.config.get('openapiConfig.filePath'), validateRequests: true, ignorePaths: ignorePathRegex })
-    );
+    const apiSpecPath = this.config.get<string>('openapiConfig.filePath');
+    this.serverInstance.use(OpenApiMiddleware({ apiSpec: apiSpecPath, validateRequests: true, ignorePaths: ignorePathRegex }));
+
     this.serverInstance.use(this.requestLogger.getLoggerMiddleware());
   }
 
   private buildRoutes(): void {
+    this.buildDocsRoutes();
     this.serverInstance.use('/schemas', schemaRouterFactory(container));
-    this.serverInstance.use(swaggerRouterFactory(container));
+  }
+
+  private buildDocsRoutes(): void {
+    const openapiRouter = new OpenapiViewerRouter(this.config.get<OpenapiRouterConfig>('openapiConfig'));
+    openapiRouter.setup();
+    this.serverInstance.use(this.config.get<string>('openapiConfig.basePath'), openapiRouter.getRouter());
   }
 
   private registerPostRoutesMiddleware(): void {
