@@ -7,11 +7,13 @@ import { Schemas } from './schema/models/mapping';
 import { Services } from './common/constants';
 
 function registerExternalValues(tracing: Tracing): void {
+  container.register(Services.CONFIG, { useValue: config });
+
   const loggerConfig = config.get<LoggerOptions>('logger');
   // @ts-expect-error the signature is wrong
   const logger = jsLogger({ ...loggerConfig, prettyPrint: false, hooks: { logMethod } });
 
-  container.register(Services.CONFIG, { useValue: config });
+  container.register(Services.LOGGER, { useValue: logger });
   container.register<SchemaManager>(SchemaManager, { useClass: SchemaManager });
   container.register<Schemas>(Schemas, { useClass: Schemas });
 
