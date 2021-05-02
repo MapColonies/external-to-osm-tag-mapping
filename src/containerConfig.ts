@@ -1,23 +1,31 @@
-import { readFileSync } from 'fs';
 import { container } from 'tsyringe';
 import config from 'config';
-import { Probe } from '@map-colonies/mc-probe';
-import { MCLogger, ILoggerConfig, IServiceConfig } from '@map-colonies/mc-logger';
+import { logMethod, Tracing, Metrics } from '@map-colonies/telemetry';
+import jsLogger, { LoggerOptions } from '@map-colonies/js-logger';
 import { SchemaManager } from './schema/models/schemaManager';
 import { Schemas } from './schema/models/mapping';
 import { Services } from './common/constants';
 
-function registerExternalValues(): void {
-  const loggerConfig = config.get<ILoggerConfig>('logger');
-  const packageContent = readFileSync('./package.json', 'utf8');
-  const service = JSON.parse(packageContent) as IServiceConfig;
-  const logger = new MCLogger(loggerConfig, service);
-
+function registerExternalValues(tracing: Tracing): void {
   container.register(Services.CONFIG, { useValue: config });
+
+  const loggerConfig = config.get<LoggerOptions>('logger');
+  // @ts-expect-error the signature is wrong
+  const logger = jsLogger({ ...loggerConfig, prettyPrint: false, hooks: { logMethod } });
+
   container.register(Services.LOGGER, { useValue: logger });
-  container.register<Probe>(Probe, { useValue: new Probe(logger, {}) });
   container.register<SchemaManager>(SchemaManager, { useClass: SchemaManager });
   container.register<Schemas>(Schemas, { useClass: Schemas });
+
+  const metrics = new Metrics('external-to-osm-tag-mapping');
+  const meter = metrics.start();
+  container.register(Services.METER, { useValue: meter });
+
+  container.register('onSignal', {
+    useValue: async (): Promise<void> => {
+      await Promise.all([tracing.stop(), metrics.stop()]);
+    },
+  });
 }
 
 export { registerExternalValues };
