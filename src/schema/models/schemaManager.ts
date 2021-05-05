@@ -1,10 +1,10 @@
 import _ from 'lodash';
 import { inject, injectable } from 'tsyringe';
-import { Schemas, Schema, Tags } from './mapping';
+import { Schemas, Schema, Tags, ISchemas } from './mapping';
 
 @injectable()
 export class SchemaManager {
-  public constructor(@inject(Schemas) private readonly schemas: Schemas) {}
+  public constructor(@inject(Schemas) private readonly schemas: ISchemas) {}
 
   public async getSchemas(): Promise<Schema[]> {
     return this.schemas.getSchemas();
