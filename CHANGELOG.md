@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.1.0](https://github.com/mapcolonies/external-to-osm-tag-mapping/compare/v1.0.2...v1.1.0) (2021-05-05)
+
+
+### Features
+
+* **schemas:** configurable schema name via config ([#52](https://github.com/mapcolonies/external-to-osm-tag-mapping/issues/52)) ([deaf527](https://github.com/mapcolonies/external-to-osm-tag-mapping/commit/deaf527a3a26d444491bd38329f18d7390f4a04d))
+
 ### [1.0.2](https://github.com/mapcolonies/external-to-osm-tag-mapping/compare/v1.0.1...v1.0.2) (2021-05-05)
 
 
