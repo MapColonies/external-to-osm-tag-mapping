@@ -21,5 +21,8 @@
         "options": null
       }
     }
+  },
+  "schema": {
+    "name": "avi"
   }
 }
