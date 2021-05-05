@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.1](https://github.com/mapcolonies/external-to-osm-tag-mapping/compare/v1.0.0...v1.0.1) (2021-05-05)
+
+
+### Bug Fixes
+
+* **configurations:** removed servers list from openapi3.yml ([2d3a0a9](https://github.com/mapcolonies/external-to-osm-tag-mapping/commit/2d3a0a9aa1bd96eb5eb09286faf4868ad9f29dc1))
+
 ## 1.0.0 (2021-05-04)
 
 
