@@ -1,4 +1,5 @@
-name: Build-and-push
+
+name: Publish release and push to ACR
 
 on:
   push:
@@ -7,9 +8,21 @@ on:
 
 jobs:
 
-  build_and_test:
+  publish_release:
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code for CHANGELOG.md
+        uses: actions/checkout@v2
 
+      - name: Publish Release to Github
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  push_image_to_ACR:
+    runs-on: ubuntu-latest
 
     steps:
         - name: Azure Pipelines Action
