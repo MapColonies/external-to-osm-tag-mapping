@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.2.0](https://github.com/mapcolonies/external-to-osm-tag-mapping/compare/v1.1.0...v1.2.0) (2021-05-25)
+
+
+### Features
+
+* **configurations:** updates openapi3 version on release ([16f8ee0](https://github.com/mapcolonies/external-to-osm-tag-mapping/commit/16f8ee07e29363e10c172b5ff2ec1001018a8d5a))
+
+
+### Bug Fixes
+
+* **configurations:** bump both openapi3 and package.json ([de2beff](https://github.com/mapcolonies/external-to-osm-tag-mapping/commit/de2befff37608a228209281ee9068633a9f8e62b))
+* **configurations:** updated node-alpine to reduce vulnerabilities ([#53](https://github.com/mapcolonies/external-to-osm-tag-mapping/issues/53)) ([14a09c2](https://github.com/mapcolonies/external-to-osm-tag-mapping/commit/14a09c224691b381cda74296e3170e7221e8e3e2))
+
 ## [1.1.0](https://github.com/mapcolonies/external-to-osm-tag-mapping/compare/v1.0.2...v1.1.0) (2021-05-05)
 
 

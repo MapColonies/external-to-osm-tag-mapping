@@ -2,11 +2,10 @@ openapi: 3.0.1
 info:
   title: external-to-osm-tag-mapping
   description: mapping external tags to osm tags - json format
-  version: 1.0.0
+  version: 1.2.0
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
-
 paths:
   /schemas:
     get:
@@ -15,30 +14,28 @@ paths:
       summary: get all existing schemas
       operationId: get-schemas
       responses:
-        200:
+        '200':
           description: Ok
           content:
             application/json:
               schema:
-                type: 'array'
+                type: array
                 items:
                   $ref: '#/components/schemas/schema'
               example:
-                [
-                  {
-                    name: system1,
-                    created_at: '2020-12-20T13:32:25Z',
-                    updated_at: '2020-12-20T13:32:25Z',
-                    mapping: { externalKey1: osmKey1, externalKey2: osmKey2 },
-                  },
-                  {
-                    name: system2,
-                    created_at: '2020-12-20T13:32:25Z',
-                    updated_at: '2020-12-20T13:32:25Z',
-                    mapping: { externalKey1: osmKey1, externalKey2: osmKey2 },
-                  },
-                ]
-        400:
+                - name: system1
+                  created_at: '2020-12-20T13:32:25Z'
+                  updated_at: '2020-12-20T13:32:25Z'
+                  mapping:
+                    externalKey1: osmKey1
+                    externalKey2: osmKey2
+                - name: system2
+                  created_at: '2020-12-20T13:32:25Z'
+                  updated_at: '2020-12-20T13:32:25Z'
+                  mapping:
+                    externalKey1: osmKey1
+                    externalKey2: osmKey2
+        '400':
           $ref: '#/components/responses/BadRequest'
         5XX:
           $ref: '#/components/responses/InternalError'
@@ -56,22 +53,22 @@ paths:
           required: true
           description: the service name
       responses:
-        200:
+        '200':
           description: OK
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/schema'
               example:
-                {
-                  name: system1,
-                  created_at: '2020-12-20T13:32:25Z',
-                  updated_at: '2020-12-20T13:32:25Z',
-                  mapping: { externalKey1: osmKey1, externalKey2: osmKey2 },
-                }
-        400:
+                name: system1
+                created_at: '2020-12-20T13:32:25Z'
+                updated_at: '2020-12-20T13:32:25Z'
+                mapping:
+                  externalKey1: osmKey1
+                  externalKey2: osmKey2
+        '400':
           $ref: '#/components/responses/BadRequest'
-        404:
+        '404':
           $ref: '#/components/responses/NotFound'
         5XX:
           $ref: '#/components/responses/InternalError'
@@ -97,11 +94,14 @@ paths:
                 properties:
                   type: object
               required:
-                - 'properties'
+                - properties
               additionalProperties: true
-            example: { properties: { externalKey1: externalValue1, externalKey2: externalValue2 } }
+            example:
+              properties:
+                externalKey1: externalValue1
+                externalKey2: externalValue2
       responses:
-        200:
+        '200':
           description: OK
           content:
             application/json:
@@ -111,13 +111,17 @@ paths:
                   properties:
                     type: object
                 required:
-                  - 'properties'
+                  - properties
                 additionalProperties: true
               example:
-                { properties: { defaultOsmKey: defaultOsmValue, defaultOsmKey1: defaultOsmValue1, osmKey: externalValue, osmKey1: externalValue1 } }
-        400:
+                properties:
+                  defaultOsmKey: defaultOsmValue
+                  defaultOsmKey1: defaultOsmValue1
+                  osmKey: externalValue
+                  osmKey1: externalValue1
+        '400':
           $ref: '#/components/responses/BadRequest'
-        404:
+        '404':
           $ref: '#/components/responses/NotFound'
         5XX:
           $ref: '#/components/responses/InternalError'
@@ -129,21 +133,24 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-          example: { message: bad request }
+          example:
+            message: bad request
     NotFound:
       description: The specified resource was not found
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-          example: { message: resource not found }
+          example:
+            message: resource not found
     InternalError:
       description: Unexpected error
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-          example: { message: internal server error }
+          example:
+            message: internal server error
   schemas:
     schema:
       type: object
