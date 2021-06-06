@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.2.1](https://github.com/mapcolonies/external-to-osm-tag-mapping/compare/v1.2.0...v1.2.1) (2021-06-06)
+
+
+### Bug Fixes
+
+* **configurations:** fixed broken liveness ([#56](https://github.com/mapcolonies/external-to-osm-tag-mapping/issues/56)) ([08f7b55](https://github.com/mapcolonies/external-to-osm-tag-mapping/commit/08f7b550f198ab873de690d3ded35d606d5b4194))
+
 ## [1.2.0](https://github.com/mapcolonies/external-to-osm-tag-mapping/compare/v1.1.0...v1.2.0) (2021-05-25)
 
 
