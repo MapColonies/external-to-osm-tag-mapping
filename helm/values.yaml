@@ -2,8 +2,10 @@ global:
   cloudProvider: {}
   tracing: {}
   metrics: {}
+  environment: {}
 
 enabled: true
+environment: development
 
 cloudProvider:
   dockerRegistryUrl: my-registry-url.io
@@ -11,7 +13,7 @@ cloudProvider:
 
 image:
   repository: external-to-osm-tag-mapping
-  tag: 'v1.2.2'
+  tag: 'latest'
 
 replicaCount: 1
 
