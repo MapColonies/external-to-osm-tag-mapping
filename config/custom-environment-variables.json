@@ -9,9 +9,9 @@
     "logger": {
       "level": "LOG_LEVEL",
       "prettyPrint": {
-      "__name": "LOG_PRETTY_PRINT_ENABLED",
-      "__format": "boolean"
-    }
+        "__name": "LOG_PRETTY_PRINT_ENABLED",
+        "__format": "boolean"
+      }
     },
     "tracing": {
       "enabled": "TELEMETRY_TRACING_ENABLED",

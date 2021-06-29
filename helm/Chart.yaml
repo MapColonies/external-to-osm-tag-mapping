@@ -3,3 +3,4 @@ name: external-to-osm-tag-mapping
 description: A Helm chart for Kubernetes
 type: application
 version: 1.2.2
+appVersion: 1.2.2

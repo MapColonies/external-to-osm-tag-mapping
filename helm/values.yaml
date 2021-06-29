@@ -6,6 +6,8 @@ global:
 
 enabled: true
 environment: development
+initialDelaySeconds: 60
+replicaCount: 1
 
 cloudProvider:
   dockerRegistryUrl: my-registry-url.io
@@ -14,8 +16,6 @@ cloudProvider:
 image:
   repository: external-to-osm-tag-mapping
   tag: 'latest'
-
-replicaCount: 1
 
 env:
   port: 8080
@@ -31,8 +31,6 @@ env:
   metrics:
     enabled: false
     url: http://localhost:55681/v1/metrics
-
-initialDelaySeconds: 60
 
 resources:
   enabled: false
