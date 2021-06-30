@@ -7,6 +7,7 @@ import httpLogger from '@map-colonies/express-access-log-middleware';
 import { OpenapiViewerRouter, OpenapiRouterConfig } from '@map-colonies/openapi-express-viewer';
 import { container, inject, injectable } from 'tsyringe';
 import { getErrorHandlerMiddleware } from '@map-colonies/error-express-handler';
+import { getTraceContexHeaderMiddleware } from '@map-colonies/telemetry';
 import { schemaRouterFactory } from './schema/routers/schemaRouter';
 import { IConfig } from './common/interfaces';
 import { Services } from './common/constants';
@@ -33,6 +34,7 @@ export class ServerBuilder {
       this.serverInstance.use(compression(this.config.get<compression.CompressionFilter>('server.response.compression.options')));
     }
     this.serverInstance.use(express.json(this.config.get<bodyParser.Options>('server.request.payload')));
+    this.serverInstance.use(getTraceContexHeaderMiddleware());
 
     const ignorePathRegex = new RegExp(`^${this.config.get<string>('openapiConfig.basePath')}/.*`, 'i');
     const apiSpecPath = this.config.get<string>('openapiConfig.filePath');
