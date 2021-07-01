@@ -1,17 +1,21 @@
 import { container } from 'tsyringe';
 import config from 'config';
-import { logMethod, Tracing, Metrics } from '@map-colonies/telemetry';
+import { logMethod, Metrics } from '@map-colonies/telemetry';
 import jsLogger, { LoggerOptions } from '@map-colonies/js-logger';
 import { SchemaManager } from './schema/models/schemaManager';
 import { Schemas } from './schema/models/mapping';
 import { Services } from './common/constants';
+import { tracing } from './common/tracing';
 
-function registerExternalValues(tracing: Tracing): void {
+function registerExternalValues(): void {
   container.register(Services.CONFIG, { useValue: config });
 
   const loggerConfig = config.get<LoggerOptions>('logger');
   // @ts-expect-error the signature is wrong
   const logger = jsLogger({ ...loggerConfig, prettyPrint: false, hooks: { logMethod } });
+
+  const tracer = tracing.start();
+  container.register(Services.TRACER, { useValue: tracer });
 
   container.register(Services.LOGGER, { useValue: logger });
   container.register<SchemaManager>(SchemaManager, { useClass: SchemaManager });
