@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.3.0](https://github.com/mapcolonies/external-to-osm-tag-mapping/compare/v1.2.2...v1.3.0) (2021-07-01)
+
+
+### Features
+
+* added traceparent header on response ([#66](https://github.com/mapcolonies/external-to-osm-tag-mapping/issues/66)) ([65b86ed](https://github.com/mapcolonies/external-to-osm-tag-mapping/commit/65b86edc89d3f8652c08f2f3bb76fd3f492a4461))
+
 ### [1.2.2](https://github.com/mapcolonies/external-to-osm-tag-mapping/compare/v1.2.1...v1.2.2) (2021-06-07)
 
 
