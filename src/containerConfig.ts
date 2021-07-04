@@ -10,7 +10,7 @@ import { tracing } from './common/tracing';
 function registerExternalValues(): void {
   container.register(Services.CONFIG, { useValue: config });
 
-  const loggerConfig = config.get<LoggerOptions>('logger');
+  const loggerConfig = config.get<LoggerOptions>('telemetry.logger');
   // @ts-expect-error the signature is wrong
   const logger = jsLogger({ ...loggerConfig, prettyPrint: false, hooks: { logMethod } });
 
