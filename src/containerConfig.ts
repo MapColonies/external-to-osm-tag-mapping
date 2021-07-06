@@ -2,6 +2,7 @@ import { container } from 'tsyringe';
 import config from 'config';
 import { logMethod, Metrics } from '@map-colonies/telemetry';
 import jsLogger, { LoggerOptions } from '@map-colonies/js-logger';
+import { trace } from '@opentelemetry/api';
 import { SchemaManager } from './schema/models/schemaManager';
 import { Schemas } from './schema/models/mapping';
 import { Services } from './common/constants';
@@ -14,7 +15,8 @@ function registerExternalValues(): void {
   // @ts-expect-error the signature is wrong
   const logger = jsLogger({ ...loggerConfig, prettyPrint: false, hooks: { logMethod } });
 
-  const tracer = tracing.start();
+  tracing.start();
+  const tracer = trace.getTracer('external-to-osm-tag-mapping');
   container.register(Services.TRACER, { useValue: tracer });
 
   container.register(Services.LOGGER, { useValue: logger });
