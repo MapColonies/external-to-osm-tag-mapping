@@ -15,7 +15,11 @@
       "skipFiles": ["${workspaceFolder}/node_modules/**/*.js", "<node_internals>/**/*.js"],
       "cwd": "${workspaceFolder}/dist",
       "outFiles": ["${workspaceFolder}/dist/**/*.js", "!**/node_modules/**"],
-      "program": "${workspaceFolder}/src/index.ts"
+      "program": "${workspaceFolder}/src/index.ts",
+      "env": {
+        "LOG_PRETTY_PRINT_ENABLED": "true",
+        "NODE_ENV": "development"
+      }
     }
   ]
 }
