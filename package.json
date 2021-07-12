@@ -61,7 +61,7 @@
     "config": "^3.3.6",
     "cors": "^2.8.5",
     "express": "^4.17.1",
-    "express-openapi-validator": "^4.12.12",
+    "express-openapi-validator": "^4.12.14",
     "http-status-codes": "^2.1.4",
     "lodash": "^4.17.21",
     "reflect-metadata": "^0.1.13",
