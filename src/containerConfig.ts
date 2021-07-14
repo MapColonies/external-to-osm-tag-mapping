@@ -4,11 +4,13 @@ import { logMethod, Metrics } from '@map-colonies/telemetry';
 import jsLogger, { LoggerOptions } from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
 import { SchemaManager } from './schema/models/schemaManager';
-import { Schemas } from './schema/models/mapping';
 import { Services } from './common/constants';
 import { tracing } from './common/tracing';
+import { schemaSymbol } from './schema/models/types';
+import { FileSchemaProvider } from './schema/providers/fileProvider/fileProvider';
+import { getSchemas } from './schema/providers/schemaLoader';
 
-function registerExternalValues(): void {
+async function registerExternalValues(): Promise<void> {
   container.register(Services.CONFIG, { useValue: config });
 
   const loggerConfig = config.get<LoggerOptions>('telemetry.logger');
@@ -20,9 +22,11 @@ function registerExternalValues(): void {
   container.register(Services.TRACER, { useValue: tracer });
 
   container.register(Services.LOGGER, { useValue: logger });
-  container.register<SchemaManager>(SchemaManager, { useClass: SchemaManager });
-  container.register<Schemas>(Schemas, { useClass: Schemas });
 
+  const schemas = await getSchemas(container);
+  container.register(schemaSymbol, { useValue: schemas });
+
+  container.register<SchemaManager>(SchemaManager, { useClass: SchemaManager });
   const metrics = new Metrics('external-to-osm-tag-mapping');
   const meter = metrics.start();
   container.register(Services.METER, { useValue: meter });

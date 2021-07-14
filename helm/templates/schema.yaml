@@ -1,0 +1,8 @@
+{{- if .Values.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-{{ $chartName }}-schema-configmap
+data:
+  schema.json: {{ .Values.schema | nindent 4 }} 
+{{- end }}

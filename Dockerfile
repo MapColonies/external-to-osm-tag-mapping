@@ -22,6 +22,7 @@ RUN npm install --only=production
 
 COPY --from=build /tmp/buildApp/dist .
 COPY --from=build /tmp/buildApp/node_modules ./node_modules
+COPY schemas.json schemas.json
 COPY ./config ./config
 
 CMD ["node", "--max_old_space_size=512", "./index.js"]

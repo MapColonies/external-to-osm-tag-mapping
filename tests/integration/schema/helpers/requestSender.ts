@@ -3,7 +3,7 @@ import { Application } from 'express';
 
 import { container } from 'tsyringe';
 import { ServerBuilder } from '../../../../src/serverBuilder';
-import { Tags } from '../../../../src/schema/models/mapping';
+import { Tags } from '../../../../src/schema/providers/fileProvider/fileProvider';
 
 let app: Application | null = null;
 
@@ -20,6 +20,6 @@ export async function getSchema(name: string): Promise<supertest.Response> {
   return supertest.agent(app).get(`/schemas/${name}`);
 }
 
-export async function map(name: string, tags: Tags): Promise<supertest.Response> {
-  return supertest.agent(app).post(`/schemas/${name}/map`).send(tags);
+export async function map(name: string, body: {properties:Tags}): Promise<supertest.Response> {
+  return supertest.agent(app).post(`/schemas/${name}/map`).send(body);
 }

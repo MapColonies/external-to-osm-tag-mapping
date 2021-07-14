@@ -3,8 +3,8 @@ import { Application } from 'express';
 import { registerExternalValues } from './containerConfig';
 import { ServerBuilder } from './serverBuilder';
 
-function getApp(): Application {
-  registerExternalValues();
+async function getApp(): Promise<Application> {
+  await registerExternalValues();
   const app = container.resolve(ServerBuilder).build();
   return app;
 }

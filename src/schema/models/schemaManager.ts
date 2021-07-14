@@ -1,24 +1,23 @@
 import _ from 'lodash';
 import { inject, injectable } from 'tsyringe';
-import { Schemas, Schema, Tags, ISchemas } from './mapping';
+import { Tags } from '../providers/fileProvider/fileProvider';
+import { Schema, schemaSymbol } from './types';
 
 @injectable()
 export class SchemaManager {
-  public constructor(@inject(Schemas) private readonly schemas: ISchemas) {}
+  public constructor(@inject(schemaSymbol) private readonly schemas: Schema[]) {}
 
-  public async getSchemas(): Promise<Schema[]> {
-    return this.schemas.getSchemas();
+  public getSchemas(): Schema[] {
+    return this.schemas;
   }
 
-  public async getSchema(name: string): Promise<Schema | undefined> {
-    return this.schemas.getSchema(name);
+  public getSchema(name: string): Schema | undefined {
+    return this.schemas.find((schema) => schema.name === name);
   }
 
-  public async map(name: string, tags: Tags): Promise<Tags> {
-    return Promise.resolve(
-      _.mapKeys(tags, (val, key) => {
+  public map(name: string, tags: Tags): Tags {
+    return _.mapKeys(tags, (val, key) => {
         return `${name}_${key}`;
       })
-    );
   }
 }

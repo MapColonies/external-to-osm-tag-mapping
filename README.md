@@ -23,6 +23,15 @@ Install deps with npm
 npm install
 ```
 
+## Configuration
+To load schemas you need to configure the provider.
+to select the provider use the `SCHEMA_PROVIDER` environment variable.
+
+### File provider
+this provider loads the schema from a file..
+to select it use `SCHEMA_PROVIDER=file`
+to configure the file location use the the `SCHEMA_FILE_PATH` environment variable.
+
 ## Run Locally
 
 Clone the project
