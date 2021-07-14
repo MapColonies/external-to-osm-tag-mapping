@@ -1,19 +1,22 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { SchemaManager } from '../../../../src/schema/models/schemaManager';
 
-const schemas = [{
-  name: 'system1',
-  createdAt: new Date(),
-},{
-  name: 'system2',
-  createdAt: new Date(),
-}];
+const schemas = [
+  {
+    name: 'system1',
+    createdAt: new Date(),
+  },
+  {
+    name: 'system2',
+    createdAt: new Date(),
+  },
+];
 
 describe('SchemaManager', () => {
   let schemaManager: SchemaManager;
   beforeAll(() => {
-    schemaManager = new SchemaManager(schemas)
-  })
+    schemaManager = new SchemaManager(schemas);
+  });
   describe('#getSchemas', () => {
     it('return all schemas', () => {
       const res = schemaManager.getSchemas();
@@ -23,13 +26,13 @@ describe('SchemaManager', () => {
   });
 
   describe('#getSchema', () => {
-    it('should return the specific schema',  () => {   
+    it('should return the specific schema', () => {
       const res = schemaManager.getSchema(schemas[0].name);
 
       expect(res).toMatchObject(schemas[0]);
     });
 
-    it('should return undefined for non-existent schema',  () => {
+    it('should return undefined for non-existent schema', () => {
       const name = 'notFoundSchema';
 
       const res = schemaManager.getSchema(name);

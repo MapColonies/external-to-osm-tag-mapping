@@ -20,6 +20,6 @@ export async function getSchema(name: string): Promise<supertest.Response> {
   return supertest.agent(app).get(`/schemas/${name}`);
 }
 
-export async function map(name: string, body: {properties:Tags}): Promise<supertest.Response> {
+export async function map(name: string, body: { properties: Tags }): Promise<supertest.Response> {
   return supertest.agent(app).post(`/schemas/${name}/map`).send(body);
 }

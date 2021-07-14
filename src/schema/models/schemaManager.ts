@@ -17,7 +17,7 @@ export class SchemaManager {
 
   public map(name: string, tags: Tags): Tags {
     return _.mapKeys(tags, (val, key) => {
-        return `${name}_${key}`;
-      })
+      return `${name}_${key}`;
+    });
   }
 }

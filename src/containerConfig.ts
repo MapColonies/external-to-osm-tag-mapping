@@ -7,13 +7,13 @@ import { SchemaManager } from './schema/models/schemaManager';
 import { Services } from './common/constants';
 import { tracing } from './common/tracing';
 import { schemaSymbol } from './schema/models/types';
-import { FileSchemaProvider } from './schema/providers/fileProvider/fileProvider';
 import { getSchemas } from './schema/providers/schemaLoader';
 
 async function registerExternalValues(): Promise<void> {
   container.register(Services.CONFIG, { useValue: config });
 
   const loggerConfig = config.get<LoggerOptions>('telemetry.logger');
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-expect-error the signature is wrong
   const logger = jsLogger({ ...loggerConfig, prettyPrint: loggerConfig.prettyPrint, hooks: { logMethod } });
 
