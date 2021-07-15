@@ -69,7 +69,7 @@ describe('schemas', function () {
         expect(mappedTags).toBeDefined();
         expect(mappedTags).toMatchObject(expected);
       });
-    })
+    });
   });
   describe('Bad Path', function () {
     // All requests with status code of 400
