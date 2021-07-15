@@ -42,7 +42,9 @@ describe('schemas', function () {
         expect(schema).toBeDefined();
         expect(schema).toHaveProperty('name', 'system1');
       });
+    });
 
+    describe('GET /schemas/:name/map', () => {
       it('should return 200 status code and map the tags', async function () {
         const tags = {
           properties: {
@@ -67,7 +69,7 @@ describe('schemas', function () {
         expect(mappedTags).toBeDefined();
         expect(mappedTags).toMatchObject(expected);
       });
-    });
+    })
   });
   describe('Bad Path', function () {
     // All requests with status code of 400
