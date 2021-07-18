@@ -20,4 +20,5 @@ data:
   TELEMETRY_METRICS_URL: {{ $metricsUrl }}
   {{ end }}
   LOG_LEVEL: {{ .Values.env.logLevel | quote }}
+  SCHEMA_FILE_NAME: /mnt/schemas/schema.json
 {{- end }}

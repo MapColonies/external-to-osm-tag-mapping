@@ -26,6 +26,7 @@
     }
   },
   "schema": {
-    "name": "avi"
+    "provider": "file",
+    "filePath": "schemas.json"
   }
 }

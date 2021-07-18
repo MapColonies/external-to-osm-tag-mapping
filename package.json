@@ -18,7 +18,7 @@
     "prebuild": "npm run clean",
     "build": "tsc --project tsconfig.build.json  && npm run assets:copy",
     "start": "npm run build && cd dist && node ./index.js",
-    "assets:copy": "copyfiles -f ./config/* ./dist/config && copyfiles -f ./openapi3.yaml ./dist/ && copyfiles ./package.json dist",
+    "assets:copy": "copyfiles -f ./config/* ./dist/config && copyfiles -f ./openapi3.yaml ./dist/ && copyfiles ./package.json dist && copyfiles -f ./schemas.json ./dist/",
     "clean": "rimraf dist"
   },
   "directories": {
@@ -56,6 +56,7 @@
     "@opentelemetry/api-metrics": "^0.22.0",
     "@opentelemetry/instrumentation-express": "^0.22.0",
     "@opentelemetry/instrumentation-http": "^0.22.0",
+    "ajv": "^8.6.1",
     "body-parser": "^1.19.0",
     "compression": "^1.7.4",
     "config": "^3.3.6",
