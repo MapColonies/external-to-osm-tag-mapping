@@ -16,12 +16,17 @@ interface IServerConfig {
 const serverConfig = get<IServerConfig>('server');
 const port: number = serverConfig.port || DEFAULT_SERVER_PORT;
 
-const app = getApp();
+void getApp()
+  .then((app) => {
+    const logger = container.resolve<Logger>(Services.LOGGER);
+    const stubHealthcheck = async (): Promise<void> => Promise.resolve();
+    const server = createTerminus(createServer(app), { healthChecks: { '/liveness': stubHealthcheck }, onSignal: container.resolve('onSignal') });
 
-const logger = container.resolve<Logger>(Services.LOGGER);
-const stubHealthcheck = async (): Promise<void> => Promise.resolve();
-const server = createTerminus(createServer(app), { healthChecks: { '/liveness': stubHealthcheck }, onSignal: container.resolve('onSignal') });
-
-server.listen(port, () => {
-  logger.info(`app started on port ${port}`);
-});
+    server.listen(port, () => {
+      logger.info(`app started on port ${port}`);
+    });
+  })
+  .catch((error: Error) => {
+    console.error('😢 - failed initializing the server');
+    console.error(error.message);
+  });

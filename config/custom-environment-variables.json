@@ -38,5 +38,9 @@
         }
       }
     }
+  },
+  "schema": {
+    "provider": "SCHEMA_PROVIDER",
+    "filePath": "SCHEMA_FILE_PATH"
   }
 }

@@ -9,6 +9,20 @@ environment: development
 initialDelaySeconds: 60
 replicaCount: 1
 
+schema: |
+  [
+    {
+      "name": "system1",
+      "createdAt": "2021-07-14T11:19:58Z",
+      "updatedAt": "2021-07-14T11:19:58Z"
+    },
+    {
+      "name": "system2",
+      "createdAt": "2021-07-14T11:19:58Z",
+      "updatedAt": "2021-07-14T11:19:58Z"
+    }
+  ]
+
 cloudProvider:
   dockerRegistryUrl: my-registry-url.io
   flavor: openshift
