@@ -63,9 +63,7 @@ paths:
                 name: system1
                 created_at: '2020-12-20T13:32:25Z'
                 updated_at: '2020-12-20T13:32:25Z'
-                mapping:
-                  externalKey1: osmKey1
-                  externalKey2: osmKey2
+                ignoreKeys: ['key1', 'key2']
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -166,9 +164,11 @@ components:
           type: string
           format: date-time
           description: UTC date/time of the schema's update
-        mapping:
-          description: tags mapping
-          type: object
+        ignoreKeys:
+          description: keys to remove from the tags object
+          type: array
+          items:
+            type: string
     Error:
       type: object
       properties:

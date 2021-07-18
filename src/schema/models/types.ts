@@ -4,6 +4,7 @@ export interface Schema {
   name: string;
   createdAt: Date;
   updatedAt?: Date;
+  ignoreKeys?: string[];
 }
 
 export const schemaSymbol = Symbol('schemas');
@@ -16,6 +17,7 @@ export const schemasTypeDefinition: JTDSchemaType<Schema[]> = {
     },
     optionalProperties: {
       updatedAt: { type: 'timestamp' },
+      ignoreKeys: {elements: {type: 'string'}}
     },
   },
 };

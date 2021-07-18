@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { SchemaManager } from '../../../../src/schema/models/schemaManager';
+import { Schema } from '../../../../src/schema/models/types';
 
-const schemas = [
+const schemas:Schema[] = [
   {
     name: 'system1',
     createdAt: new Date(),
@@ -9,6 +10,7 @@ const schemas = [
   {
     name: 'system2',
     createdAt: new Date(),
+    ignoreKeys: ['externalKey4']
   },
 ];
 
@@ -55,6 +57,25 @@ describe('SchemaManager', () => {
         system1_externalKey2: 'val2',
         system1_externalKey3: 'val3',
         system1_externalKey4: 'val4',
+      };
+
+      const res = schemaManager.map(name, tags);
+
+      expect(res).toMatchObject(expected);
+    });
+
+    it('should return mapped tags without the ignored key', () => {
+      const name = 'system2';
+      const tags = {
+        externalKey3: 'val3',
+        externalKey2: 'val2',
+        externalKey1: 'val1',
+        externalKey4: 'val4',
+      };
+      const expected = {
+        system2_externalKey1: 'val1',
+        system2_externalKey2: 'val2',
+        system2_externalKey3: 'val3',
       };
 
       const res = schemaManager.map(name, tags);
