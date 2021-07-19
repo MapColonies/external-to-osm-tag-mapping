@@ -7,6 +7,7 @@
   {
     "name": "system2",
     "createdAt": "2021-07-14T11:19:58Z",
-    "updatedAt": "2021-07-14T11:19:58Z"
+    "updatedAt": "2021-07-14T11:19:58Z",
+    "ignoreKeys": ["key1"]
   }
 ]

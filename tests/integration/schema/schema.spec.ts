@@ -69,6 +69,30 @@ describe('schemas', function () {
         expect(mappedTags).toBeDefined();
         expect(mappedTags).toMatchObject(expected);
       });
+
+      it('should return 200 status code and map the tags without the ignored key', async function () {
+        const tags = {
+          properties: {
+            externalKey3: 'val3',
+            externalKey2: 'val2',
+            externalKey1: 'val1',
+            key1: 'val4',
+          },
+        };
+        const expected = {
+          properties: {
+            system2_externalKey1: 'val1',
+            system2_externalKey2: 'val2',
+            system2_externalKey3: 'val3',
+          },
+        };
+        const response = await requestSender.map('system2', tags);
+        expect(response.status).toBe(httpStatusCodes.OK);
+
+        const mappedTags = response.body as Tags;
+        expect(mappedTags).toBeDefined();
+        expect(mappedTags).toMatchObject(expected);
+      });
     });
   });
   describe('Bad Path', function () {
