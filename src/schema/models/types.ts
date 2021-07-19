@@ -17,7 +17,7 @@ export const schemasTypeDefinition: JTDSchemaType<Schema[]> = {
     },
     optionalProperties: {
       updatedAt: { type: 'timestamp' },
-      ignoreKeys: {elements: {type: 'string'}}
+      ignoreKeys: { elements: { type: 'string' } },
     },
   },
 };

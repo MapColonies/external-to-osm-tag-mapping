@@ -2,7 +2,7 @@
 import { SchemaManager } from '../../../../src/schema/models/schemaManager';
 import { Schema } from '../../../../src/schema/models/types';
 
-const schemas:Schema[] = [
+const schemas: Schema[] = [
   {
     name: 'system1',
     createdAt: new Date(),
@@ -10,7 +10,7 @@ const schemas:Schema[] = [
   {
     name: 'system2',
     createdAt: new Date(),
-    ignoreKeys: ['externalKey4']
+    ignoreKeys: ['externalKey4'],
   },
 ];
 
