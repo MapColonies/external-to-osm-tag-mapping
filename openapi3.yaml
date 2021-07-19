@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: external-to-osm-tag-mapping
   description: mapping external tags to osm tags - json format
-  version: 1.4.0
+  version: 1.5.0
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
@@ -29,7 +29,8 @@ paths:
                 - name: system2
                   created_at: '2020-12-20T13:32:25Z'
                   updated_at: '2020-12-20T13:32:25Z'
-                  ignoreKeys: ['key1']
+                  ignoreKeys:
+                    - key1
         '400':
           $ref: '#/components/responses/BadRequest'
         5XX:
@@ -58,7 +59,9 @@ paths:
                 name: system1
                 created_at: '2020-12-20T13:32:25Z'
                 updated_at: '2020-12-20T13:32:25Z'
-                ignoreKeys: ['key1', 'key2']
+                ignoreKeys:
+                  - key1
+                  - key2
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
