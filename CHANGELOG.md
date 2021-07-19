@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.5.0](https://github.com/mapcolonies/external-to-osm-tag-mapping/compare/v1.4.0...v1.5.0) (2021-07-19)
+
+
+### Features
+
+* **schemas:** added option to ignore keys ([#75](https://github.com/mapcolonies/external-to-osm-tag-mapping/issues/75)) ([af9c4c4](https://github.com/mapcolonies/external-to-osm-tag-mapping/commit/af9c4c4e2cbff78be45ffa4be420b10121ec5223))
+* schema are now loaded on startup ([#73](https://github.com/mapcolonies/external-to-osm-tag-mapping/issues/73)) ([e7efda8](https://github.com/mapcolonies/external-to-osm-tag-mapping/commit/e7efda8d7a3255e28ad7e50da836eacb3f5017c8))
+
 ## [1.4.0](https://github.com/mapcolonies/external-to-osm-tag-mapping/compare/v1.3.1...v1.4.0) (2021-07-08)
 
 
