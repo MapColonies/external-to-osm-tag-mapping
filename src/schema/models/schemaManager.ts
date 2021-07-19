@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import { inject, injectable } from 'tsyringe';
 import { Tags } from '../providers/fileProvider/fileProvider';
 import { Schema, schemaSymbol } from './types';
