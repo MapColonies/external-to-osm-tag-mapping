@@ -34,14 +34,12 @@ stages:
         # the service connection name for the docker registry Default is ACR
         # dockerRegistryServiceConnection:
         # the path to the docker file Default is [root Folder]/DockerFile
-#         dockerfilePaths:
-#         - name: $(Build.Repository.Name)
-#           path: '$(Build.SourcesDirectory)/Dockerfile'
-#         - name: $(Build.Repository.Name)-migrations
-#           path: '$(Build.SourcesDirectory)/migrations.Dockerfile'
+         dockerfilePaths:
+         - name: external-to-osm-tag-mapping
+           path: '$(Build.SourcesDirectory)/Dockerfile'
         # the url of the helm registry Default [ACR non prod registry url]
         # helmrRegistryUrl:
         # the path to the helm folder. Default is [root Folder]/helm
         # helmFolderPath:
         # the name of the app. the name of the image and the name of the chart will be the same.
-        appName: $(Build.Repository.Name)
+        appName: external-to-osm-tag-mapping
