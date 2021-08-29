@@ -5,9 +5,9 @@
 trigger: none
 pr: none
 # can replace the git hub action build and push trigger
-  # tags:
-  #   include:
-  #   - v2.*
+# tags:
+#   include:
+#   - v2.*
 resources:
   repositories:
     - repository: devops
@@ -20,18 +20,18 @@ variables:
   HELM_EXPERIMENTAL_OCI: 1
 
 stages:
-- stage: Build
-  displayName: Build and push stage
-  jobs:
-  - job: Build
-    displayName: Build
-    pool:
-      name: aro-nonprod-pool
-    steps:
-    - checkout: self
-    - template: azure-pipelines/buildAndPush.yaml@devops
-      parameters:
-         dockerfilePaths:
-         - name: external-to-osm-tag-mapping
-           path: '$(Build.SourcesDirectory)/Dockerfile'
-         appName: 'external-to-osm-tag-mapping'
+  - stage: Build
+    displayName: Build and push stage
+    jobs:
+      - job: Build
+        displayName: Build
+        pool:
+          name: aro-nonprod-pool
+        steps:
+          - checkout: self
+          - template: azure-pipelines/buildAndPush.yaml@devops
+            parameters:
+              dockerfilePaths:
+                - name: external-to-osm-tag-mapping
+                  path: '$(Build.SourcesDirectory)/Dockerfile'
+              appName: 'external-to-osm-tag-mapping'
