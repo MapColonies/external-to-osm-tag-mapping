@@ -45,8 +45,8 @@ spec:
             - configMapRef:
                 name: {{ $releaseName }}-{{ $chartName }}-configmap
           volumeMounts:
-            name: schema
-            mountPath: /mnt/schemas
+            - name: schema
+              mountPath: /mnt/schemas
           ports:
             - name: http
               containerPort: {{ .Values.env.targetPort }}
@@ -60,8 +60,8 @@ spec:
           resources:
             {{- toYaml .Values.resources.value | nindent 12 }}
           {{- end }}
-  volumes:
-    - name: schema
-      configmap:
-        name: {{ .Release.Name }}-{{ $chartName }}-schema-configmap 
+      volumes:
+        - name: schema
+          configMap:
+            name: {{ .Release.Name }}-{{ $chartName }}-schema-configmap 
 {{- end -}}

@@ -9,7 +9,7 @@ environment: development
 initialDelaySeconds: 60
 replicaCount: 1
 
-schema: |
+schema: |-
   [
     {
       "name": "system1",
