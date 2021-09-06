@@ -19,6 +19,8 @@ interface WithoutExternalFetch extends SchemaMetadataBase {
 
 type SchemaMetadata = WithExternalFetch | WithoutExternalFetch;
 
+export class SchemaNotFoundError extends Error {}
+
 @injectable()
 export class SchemaManager {
   private readonly schemas: Record<string, SchemaMetadata>;
@@ -50,6 +52,9 @@ export class SchemaManager {
   }
 
   public async map(name: string, tags: Tags): Promise<Tags> {
+    if (this.getSchema(name) === undefined) {
+      throw new SchemaNotFoundError(`schema ${name} not found`);
+    }
     const schema = this.schemas[name];
     const redisKeysArr: string[] = []; //array to hold all domainFields keys for redis request
     const explodeKeysArr: string[] = []; ///array to hold all explode keys for redis request

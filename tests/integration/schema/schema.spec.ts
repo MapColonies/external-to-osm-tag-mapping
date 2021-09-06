@@ -237,13 +237,23 @@ describe('schemas', function () {
     });
     describe('POST /schemas/:name/map', function () {
       it('should return 404 status code for non-existent schema', async function () {
-        const geoJson = { type: 'Feature', properties: { key1: 'val2', externalKey2: 'val3', externalKey1: 'val1', key2: 'val4', geometry: '' } };
+        const geoJson = {
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: [125.6, 10.1] },
+          properties: {
+            key1: 'val2',
+            externalKey2: 'val3',
+            externalKey1: 'val1',
+            key2: 'val4',
+            wkt: 'POINT (125.6, 10.1)',
+          },
+        };
 
         const response = await requestSender.map('system4', geoJson);
 
         expect(response.status).toBe(httpStatusCodes.NOT_FOUND);
         const schemas = response.body as Schema;
-        expect(schemas).toEqual({ message: 'system system4 not found' });
+        expect(schemas).toEqual({ message: 'schema system4 not found' });
       });
       it('should return 500 status code for redis error', async function () {
         const tags = {
