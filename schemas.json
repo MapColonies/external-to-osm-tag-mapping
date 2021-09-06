@@ -2,12 +2,24 @@
   {
     "name": "system1",
     "createdAt": "2021-07-14T11:19:58Z",
-    "updatedAt": "2021-07-14T11:19:58Z"
+    "updatedAt": "2021-07-14T11:19:58Z",
+    "enableExternalFetch": "yes",
+    "domainFieldsListKey": "DISCRETE_ATTRIBUTES",
+    "explodeKeys": ["explode1", "explode2"]
   },
   {
     "name": "system2",
     "createdAt": "2021-07-14T11:19:58Z",
     "updatedAt": "2021-07-14T11:19:58Z",
-    "ignoreKeys": ["key1"]
+    "ignoreKeys": ["key1"],
+    "enableExternalFetch": "yes",
+    "domainFieldsListKey": "DISCRETE_ATTRIBUTES",
+    "explodeKeys": ["explode1", "explode2"]
+  },
+  {
+    "name": "system3",
+    "createdAt": "2021-07-14T11:19:58Z",
+    "updatedAt": "2021-07-14T11:19:58Z",
+    "enableExternalFetch": "no"
   }
 ]

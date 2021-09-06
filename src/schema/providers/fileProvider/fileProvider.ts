@@ -6,7 +6,7 @@ import { ISchemaProvider } from '../provider';
 import { Schema } from '../../models/types';
 import { parseSchema } from '../../utils/schemaParser';
 
-export type Tags = Record<string, unknown>;
+export type Tags = Record<string, string | number | boolean | null>;
 
 @injectable()
 export class FileSchemaProvider implements ISchemaProvider {

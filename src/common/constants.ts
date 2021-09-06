@@ -9,3 +9,5 @@ export enum Services {
   TRACER = 'TRACER',
   METER = 'METER',
 }
+
+export const REDIS_SYMBOL = Symbol('REDIS');

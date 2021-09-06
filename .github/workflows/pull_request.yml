@@ -6,6 +6,19 @@ jobs:
   tests:
     name: Run TS Project Tests
     runs-on: ubuntu-latest
+    container: node:12
+
+    services:
+      redis:
+        # Docker Hub image
+        image: redis
+        
+        # Set health checks to wait until redis has started
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - name: Check out TS Project Git repository

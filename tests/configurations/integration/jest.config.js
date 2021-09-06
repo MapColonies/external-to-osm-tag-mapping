@@ -2,7 +2,7 @@ module.exports = {
   transform: {
     '^.+\\.ts$': 'ts-jest',
   },
-  coverageReporters: ['text-summary', 'html', 'json'],
+  coverageReporters: ['text', 'text-summary', 'html', 'json'],
   rootDir: '../../../.',
   testMatch: ['<rootDir>/tests/integration/**/*.spec.ts'],
   setupFiles: ['<rootDir>/tests/configurations/jest.setup.js'],
