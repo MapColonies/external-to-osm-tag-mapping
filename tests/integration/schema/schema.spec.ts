@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import httpStatusCodes from 'http-status-codes';
 import { Redis } from 'ioredis';
+import { before } from 'lodash';
 import { container } from 'tsyringe';
 import { REDIS_SYMBOL } from '../../../src/common/constants';
 import { Schema } from '../../../src/schema/models/types';
@@ -252,23 +253,9 @@ describe('schemas', function () {
         const response = await requestSender.map('system4', geoJson);
 
         expect(response.status).toBe(httpStatusCodes.NOT_FOUND);
+        expect(response.status).toBe(httpStatusCodes.NOT_FOUND);
         const schemas = response.body as Schema;
         expect(schemas).toEqual({ message: 'schema system4 not found' });
-      });
-      it('should return 500 status code for redis error', async function () {
-        const tags = {
-          properties: {
-            externalKey3: 'val3',
-            externalKey2: 'val2',
-            externalKey1: 'val1',
-            key1: 'val4',
-          },
-        };
-        redisConnection.disconnect();
-
-        const response = await requestSender.map('system2', tags);
-        expect(response.status).toBe(httpStatusCodes.INTERNAL_SERVER_ERROR);
-        await redisConnection.connect();
       });
       it('should return 422 status code for not found explode field in redis', async function () {
         const tags = {
@@ -296,6 +283,31 @@ describe('schemas', function () {
 
         const response = await requestSender.map('system1', tags);
         expect(response.status).toBe(httpStatusCodes.UNPROCESSABLE_ENTITY);
+      });
+    });
+  });
+  describe('Sad Path', function() {
+    describe('POST /schemas/:name/map', function () {
+      describe('redis is not connected', function() {
+        beforeAll(function() {
+          redisConnection.disconnect();
+        });
+        it('should return 500 status code for redis error', async function () {
+          const tags = {
+            properties: {
+              externalKey3: 'val3',
+              externalKey2: 'val2',
+              externalKey1: 'val1',
+              key1: 'val4',
+            },
+          };
+
+          const response = await requestSender.map('system2', tags);
+          expect(response.status).toBe(httpStatusCodes.INTERNAL_SERVER_ERROR);
+        });
+        afterAll(async function() {
+          await redisConnection.connect();
+        });
       });
     });
   });
