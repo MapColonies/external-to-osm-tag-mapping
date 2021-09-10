@@ -1,6 +1,7 @@
 import { Tracing } from '@map-colonies/telemetry';
 import { ExpressInstrumentation } from '@opentelemetry/instrumentation-express';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
+import { IORedisInstrumentation } from '@opentelemetry/instrumentation-ioredis';
 import { IGNORED_INCOMING_TRACE_ROUTES, IGNORED_OUTGOING_TRACE_ROUTES } from './constants';
 
 export const tracing = new Tracing([
@@ -9,4 +10,5 @@ export const tracing = new Tracing([
     ignoreOutgoingUrls: IGNORED_OUTGOING_TRACE_ROUTES,
   }),
   new ExpressInstrumentation(),
+  new IORedisInstrumentation(),
 ]);

@@ -42,5 +42,10 @@
   "schema": {
     "provider": "SCHEMA_PROVIDER",
     "filePath": "SCHEMA_FILE_PATH"
+  },
+  "db": {
+    "host": "DB_HOST",
+    "port": "DB_PORT",
+    "db": "DB_INDEX"
   }
 }
