@@ -286,10 +286,10 @@ describe('schemas', function () {
       });
     });
   });
-  describe('Sad Path', function() {
+  describe('Sad Path', function () {
     describe('POST /schemas/:name/map', function () {
-      describe('redis is not connected', function() {
-        beforeAll(function() {
+      describe('redis is not connected', function () {
+        beforeAll(function () {
           redisConnection.disconnect();
         });
         it('should return 500 status code for redis error', async function () {
@@ -305,7 +305,7 @@ describe('schemas', function () {
           const response = await requestSender.map('system2', tags);
           expect(response.status).toBe(httpStatusCodes.INTERNAL_SERVER_ERROR);
         });
-        afterAll(async function() {
+        afterAll(async function () {
           await redisConnection.connect();
         });
       });
