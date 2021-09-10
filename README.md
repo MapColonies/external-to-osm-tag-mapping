@@ -13,6 +13,7 @@
 This is a RESTful service responssible for mapping between the external source feature metadata to our MapColonies tags schema.
 
 ## API
+
 Checkout the OpenAPI spec [here](/openapi3.yaml)
 
 ## Installation
@@ -24,10 +25,12 @@ npm install
 ```
 
 ## Configuration
+
 To load schemas you need to configure the provider.
 to select the provider use the `SCHEMA_PROVIDER` environment variable.
 
 ### File provider
+
 this provider loads the schema from a file..
 to select it use `SCHEMA_PROVIDER=file`
 to configure the file location use the the `SCHEMA_FILE_PATH` environment variable.
@@ -77,11 +80,13 @@ npm run test
 ```
 
 To only run unit tests:
+
 ```bash
 npm run test:unit
 ```
 
 To only run integration tests:
+
 ```bash
 npm run test:integration
 ```

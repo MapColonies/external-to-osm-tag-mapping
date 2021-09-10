@@ -28,5 +28,10 @@
   "schema": {
     "provider": "file",
     "filePath": "schemas.json"
+  },
+  "db": {
+    "host": "localhost",
+    "port": 6379,
+    "db": 0
   }
 }
