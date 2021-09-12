@@ -19,7 +19,6 @@ const port: number = serverConfig.port || DEFAULT_SERVER_PORT;
 void getApp()
   .then((app) => {
     const logger = container.resolve<Logger>(Services.LOGGER);
-    const stubHealthcheck = async (): Promise<void> => Promise.resolve();
     const server = createTerminus(createServer(app), {
       healthChecks: { '/liveness': container.resolve(Services.HEALTHCHECK) },
       onSignal: container.resolve('onSignal'),
