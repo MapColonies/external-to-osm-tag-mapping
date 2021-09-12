@@ -41,6 +41,12 @@ async function registerExternalValues(): Promise<void> {
       await Promise.all([tracing.stop(), metrics.stop(), redisConnection.disconnect()]);
     },
   });
+
+  container.register(Services.HEALTHCHECK, {
+    useValue: async (): Promise<void> => {
+      await redisConnection.ping();
+    },
+  });
 }
 
 export { registerExternalValues };
