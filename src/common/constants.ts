@@ -8,6 +8,6 @@ export enum Services {
   CONFIG = 'IConfig',
   TRACER = 'TRACER',
   METER = 'METER',
-  HEALTHCHECK = 'healthcheck'
+  HEALTHCHECK = 'healthcheck',
 }
 export const REDIS_SYMBOL = Symbol('REDIS');

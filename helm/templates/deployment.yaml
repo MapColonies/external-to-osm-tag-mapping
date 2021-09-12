@@ -63,5 +63,5 @@ spec:
       volumes:
         - name: schema
           configMap:
-            name: {{ .Release.Name }}-{{ $chartName }}-schema-configmap 
+            name: {{ .Release.Name }}-{{ $chartName }}-schema-configmap
 {{- end -}}
