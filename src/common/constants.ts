@@ -1,5 +1,5 @@
-import { readPackageSync } from 'read-pkg';
 import { hostname } from 'os';
+import { readPackageSync } from 'read-pkg';
 
 export const SERVICE_NAME = readPackageSync().name;
 export const HOSTNAME = hostname();

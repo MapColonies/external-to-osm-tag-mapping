@@ -3,15 +3,15 @@ import config from 'config';
 import jsLogger from '@map-colonies/js-logger';
 import { RedisOptions } from 'ioredis';
 import { getSchemas } from '../../src/schema/providers/schemaLoader';
-import { REDIS_SYMBOL, Services } from '../../src/common/constants';
+import { REDIS_SYMBOL, SERVICES } from '../../src/common/constants';
 import { schemaSymbol } from '../../src/schema/models/types';
 import { createConnection } from '../../src/common/db';
 import { IDOMAIN_FIELDS_REPO_SYMBOL } from '../../src/schema/DAL/domainFieldsRepository';
 import { RedisManager } from '../../src/schema/DAL/redisManager';
 
 async function registerTestValues(): Promise<void> {
-  container.register(Services.CONFIG, { useValue: config });
-  container.register(Services.LOGGER, { useValue: jsLogger({ enabled: false }) });
+  container.register(SERVICES.CONFIG, { useValue: config });
+  container.register(SERVICES.LOGGER, { useValue: jsLogger({ enabled: false }) });
 
   const schemas = await getSchemas(container);
   const redisConnection = createConnection(config.get<RedisOptions>('db'));
