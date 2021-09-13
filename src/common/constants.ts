@@ -1,7 +1,12 @@
 import { hostname } from 'os';
-import { readPackageSync } from 'read-pkg';
+import { readFileSync } from 'fs';
+import { PackageJson } from 'type-fest';
 
-export const SERVICE_NAME = readPackageSync().name;
+function readPackageJson(): PackageJson {
+  return JSON.parse(readFileSync('./package.json', { encoding: 'utf-8' })) as PackageJson;
+}
+
+export const SERVICE_NAME = readPackageJson().name;
 export const HOSTNAME = hostname();
 export const DEFAULT_SERVER_PORT = 80;
 
