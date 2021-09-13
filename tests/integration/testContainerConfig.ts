@@ -14,7 +14,7 @@ async function registerTestValues(): Promise<void> {
   container.register(SERVICES.LOGGER, { useValue: jsLogger({ enabled: false }) });
 
   const schemas = await getSchemas(container);
-  const redisConnection = createConnection(config.get<RedisOptions>('db'));
+  const redisConnection = createConnection(config.get<RedisOptions>('db.connection.options'));
 
   container.register(schemaSymbol, { useValue: schemas });
   container.register(REDIS_SYMBOL, { useValue: redisConnection });
