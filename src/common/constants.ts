@@ -6,7 +6,7 @@ function readPackageJson(): PackageJson {
   return JSON.parse(readFileSync('./package.json', { encoding: 'utf-8' })) as PackageJson;
 }
 
-export const SERVICE_NAME = readPackageJson().name;
+export const SERVICE_NAME = readPackageJson().name ?? 'unknown_service';
 export const HOSTNAME = hostname();
 export const DEFAULT_SERVER_PORT = 80;
 
