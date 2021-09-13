@@ -1,7 +1,8 @@
-
 import { readPackageSync } from 'read-pkg';
+import { hostname } from 'os';
 
-export const SERVICE_NAME = (readPackageSync()).name;
+export const SERVICE_NAME = readPackageSync().name;
+export const HOSTNAME = hostname();
 export const DEFAULT_SERVER_PORT = 80;
 
 export const IGNORED_OUTGOING_TRACE_ROUTES = [/^.*\/v1\/metrics.*$/];

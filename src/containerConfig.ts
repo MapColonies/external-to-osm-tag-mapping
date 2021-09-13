@@ -4,14 +4,13 @@ import { logMethod, Metrics } from '@map-colonies/telemetry';
 import jsLogger, { LoggerOptions } from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
 import { RedisOptions } from 'ioredis';
-import { ON_SIGNAL, REDIS_SYMBOL, SERVICES, SERVICE_NAME } from './common/constants';
+import { ON_SIGNAL, REDIS_SYMBOL, SERVICES, SERVICE_NAME, HOSTNAME } from './common/constants';
 import { tracing } from './common/tracing';
 import { schemaSymbol } from './schema/models/types';
 import { getSchemas } from './schema/providers/schemaLoader';
 import { createConnection } from './common/db';
 import { IDOMAIN_FIELDS_REPO_SYMBOL } from './schema/DAL/domainFieldsRepository';
 import { RedisManager } from './schema/DAL/redisManager';
-
 
 async function registerExternalValues(): Promise<void> {
   container.register(SERVICES.CONFIG, { useValue: config });
@@ -26,7 +25,12 @@ async function registerExternalValues(): Promise<void> {
   container.register(SERVICES.TRACER, { useValue: tracer });
   container.register(SERVICES.LOGGER, { useValue: logger });
 
-  const redisConnection = createConnection(config.get<RedisOptions>('db'));
+  const redisConnection = createConnection({
+    ...config.get<RedisOptions>('db.connection.options'),
+    retryStrategy: () => null,
+    reconnectOnError: () => 1,
+    connectionName: HOSTNAME,
+  });
   container.register(REDIS_SYMBOL, { useValue: redisConnection });
   container.register(IDOMAIN_FIELDS_REPO_SYMBOL, { useClass: RedisManager });
 
