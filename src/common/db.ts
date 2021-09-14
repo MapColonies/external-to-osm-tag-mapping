@@ -7,7 +7,7 @@ export const createConnection = (dbConfig: RedisOptions): Redis.Redis => {
       ...dbConfig,
       retryStrategy: (): null => null,
       reconnectOnError: (): 1 => 1,
-      connectionName: HOSTNAME
+      connectionName: HOSTNAME,
     });
   } catch (e) {
     throw new Error('Redis connection failed');
