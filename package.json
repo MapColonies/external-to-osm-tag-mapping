@@ -1,6 +1,6 @@
 {
   "name": "@map-colonies/external-to-osm-tag-mapping",
-  "version": "1.5.3",
+  "version": "1.6.0",
   "description": "map external tags to osm tags",
   "main": "./src/index.ts",
   "scripts": {
