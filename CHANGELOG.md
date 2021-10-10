@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.6.0](https://github.com/mapcolonies/external-to-osm-tag-mapping/compare/v1.5.3...v1.6.0) (2021-10-10)
+
+
+### Features
+
+* add liveness probe ([#93](https://github.com/mapcolonies/external-to-osm-tag-mapping/issues/93)) ([772fff3](https://github.com/mapcolonies/external-to-osm-tag-mapping/commit/772fff328934e536722944e111a569da278a7193))
+* **schemas:** added domain fields to tags ([#83](https://github.com/mapcolonies/external-to-osm-tag-mapping/issues/83)) ([5f791b4](https://github.com/mapcolonies/external-to-osm-tag-mapping/commit/5f791b4d34ec48fb3a0890c3bd48f0f3efd39ffe))
+
+
+### Bug Fixes
+
+* upgrade @types/multer from 1.4.5 to 1.4.7 ([#97](https://github.com/mapcolonies/external-to-osm-tag-mapping/issues/97)) ([8069909](https://github.com/mapcolonies/external-to-osm-tag-mapping/commit/806990961de000bc4d12aef99bf646e88139d769))
+
 ### [1.5.3](https://github.com/mapcolonies/external-to-osm-tag-mapping/compare/v1.5.2...v1.5.3) (2021-08-29)
 
 
