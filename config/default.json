@@ -30,8 +30,13 @@
     "filePath": "schemas.json"
   },
   "db": {
-    "host": "localhost",
-    "port": 6379,
-    "db": 0
+    "connection": {
+      "options": {
+        "host": "localhost",
+        "port": 6379,
+        "db": 0,
+        "maxRetriesPerRequest": 1
+      }
+    }
   }
 }

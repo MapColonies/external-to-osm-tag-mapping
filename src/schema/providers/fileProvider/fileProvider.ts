@@ -1,6 +1,6 @@
 import { promises as fsp } from 'fs';
 import { inject, injectable } from 'tsyringe';
-import { Services } from '../../../common/constants';
+import { SERVICES } from '../../../common/constants';
 import { IConfig } from '../../../common/interfaces';
 import { ISchemaProvider } from '../provider';
 import { Schema } from '../../models/types';
@@ -10,7 +10,7 @@ export type Tags = Record<string, string | number | boolean | null>;
 
 @injectable()
 export class FileSchemaProvider implements ISchemaProvider {
-  public constructor(@inject(Services.CONFIG) private readonly config: IConfig) {}
+  public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig) {}
   public async loadSchemas(): Promise<Schema[]> {
     const schemasRaw = await fsp.readFile(this.config.get('schema.filePath'), 'utf-8');
     const schemas = parseSchema(schemasRaw);

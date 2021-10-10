@@ -5,5 +5,12 @@
         "limit": "5mb"
       }
     }
+  },
+  "db": {
+    "connection": {
+      "options": {
+        "maxRetriesPerRequest": 3
+      }
+    }
   }
 }
