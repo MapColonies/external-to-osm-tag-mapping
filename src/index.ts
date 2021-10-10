@@ -6,7 +6,7 @@ import { createTerminus } from '@godaddy/terminus';
 import { Logger } from '@map-colonies/js-logger';
 import { container } from 'tsyringe';
 import { get } from 'config';
-import { DEFAULT_SERVER_PORT, Services } from './common/constants';
+import { DEFAULT_SERVER_PORT, ON_SIGNAL, SERVICES } from './common/constants';
 import { getApp } from './app';
 
 interface IServerConfig {
@@ -18,9 +18,11 @@ const port: number = serverConfig.port || DEFAULT_SERVER_PORT;
 
 void getApp()
   .then((app) => {
-    const logger = container.resolve<Logger>(Services.LOGGER);
-    const stubHealthcheck = async (): Promise<void> => Promise.resolve();
-    const server = createTerminus(createServer(app), { healthChecks: { '/liveness': stubHealthcheck }, onSignal: container.resolve('onSignal') });
+    const logger = container.resolve<Logger>(SERVICES.LOGGER);
+    const server = createTerminus(createServer(app), {
+      healthChecks: { '/liveness': container.resolve(SERVICES.HEALTHCHECK) },
+      onSignal: container.resolve(ON_SIGNAL),
+    });
 
     server.listen(port, () => {
       logger.info(`app started on port ${port}`);
@@ -29,6 +31,6 @@ void getApp()
   .catch((error: Error) => {
     console.error('😢 - failed initializing the server');
     console.error(error.message);
-    const shutDown: () => Promise<void> = container.resolve('onSignal');
+    const shutDown: () => Promise<void> = container.resolve(ON_SIGNAL);
     void shutDown();
   });

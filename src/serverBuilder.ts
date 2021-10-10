@@ -10,13 +10,13 @@ import { getErrorHandlerMiddleware } from '@map-colonies/error-express-handler';
 import { getTraceContexHeaderMiddleware } from '@map-colonies/telemetry';
 import { schemaRouterFactory } from './schema/routers/schemaRouter';
 import { IConfig } from './common/interfaces';
-import { Services } from './common/constants';
+import { SERVICES } from './common/constants';
 
 @injectable()
 export class ServerBuilder {
   private readonly serverInstance = express();
 
-  public constructor(@inject(Services.CONFIG) private readonly config: IConfig, @inject(Services.LOGGER) private readonly logger: Logger) {
+  public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig, @inject(SERVICES.LOGGER) private readonly logger: Logger) {
     this.serverInstance = express();
   }
 
