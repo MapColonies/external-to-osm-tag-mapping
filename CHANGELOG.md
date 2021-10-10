@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.6.1](https://github.com/mapcolonies/external-to-osm-tag-mapping/compare/v1.6.0...v1.6.1) (2021-10-10)
+
+
+### Bug Fixes
+
+* added missing await for redisConnection ([d951d6a](https://github.com/mapcolonies/external-to-osm-tag-mapping/commit/d951d6a4318e6f458b2cd60406292d4d7133b4ad))
+
 ## [1.6.0](https://github.com/mapcolonies/external-to-osm-tag-mapping/compare/v1.5.3...v1.6.0) (2021-10-10)
 
 
