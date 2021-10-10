@@ -24,7 +24,7 @@ async function registerExternalValues(): Promise<void> {
   const tracer = trace.getTracer(SERVICE_NAME);
   container.register(SERVICES.TRACER, { useValue: tracer });
   container.register(SERVICES.LOGGER, { useValue: logger });
-  const redisConnection = createConnection(config.get<RedisOptions>('db.connection.options'));
+  const redisConnection = await createConnection(config.get<RedisOptions>('db.connection.options'));
   redisConnection.on('error', (err) => {
     logger.fatal(err, `Redis connection failure, exiting with code ${REDIS_CONNECTION_ERROR_CODE}`);
     return process.exit(REDIS_CONNECTION_ERROR_CODE);
