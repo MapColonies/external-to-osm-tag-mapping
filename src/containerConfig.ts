@@ -1,16 +1,16 @@
-import { container } from 'tsyringe';
-import config from 'config';
-import { logMethod, Metrics } from '@map-colonies/telemetry';
 import jsLogger, { LoggerOptions } from '@map-colonies/js-logger';
+import { logMethod, Metrics } from '@map-colonies/telemetry';
 import { trace } from '@opentelemetry/api';
-import { RedisOptions } from 'ioredis';
 import { ON_SIGNAL, REDIS_CONNECTION_ERROR_CODE, REDIS_SYMBOL, SERVICES, SERVICE_NAME } from './common/constants';
-import { tracing } from './common/tracing';
-import { schemaSymbol } from './schema/models/types';
-import { getSchemas } from './schema/providers/schemaLoader';
+import config from 'config';
+import { Redis, RedisOptions } from 'ioredis';
+import { container } from 'tsyringe';
 import { createConnection } from './common/db';
+import { tracing } from './common/tracing';
 import { IDOMAIN_FIELDS_REPO_SYMBOL } from './schema/DAL/domainFieldsRepository';
 import { RedisManager } from './schema/DAL/redisManager';
+import { schemaSymbol } from './schema/models/types';
+import { getSchemas } from './schema/providers/schemaLoader';
 
 async function registerExternalValues(): Promise<void> {
   container.register(SERVICES.CONFIG, { useValue: config });
@@ -36,13 +36,27 @@ async function registerExternalValues(): Promise<void> {
   const schemas = await getSchemas(container);
   container.register(schemaSymbol, { useValue: schemas });
 
+  const connectToExternal = schemas.some((schema) => {
+    return schema.enableExternalFetch === 'yes';
+  });
+
+  let redisConnection: Redis;
+
+  if (connectToExternal) {
+    redisConnection = createConnection(config.get<RedisOptions>('db'));
+    container.register(REDIS_SYMBOL, { useValue: redisConnection });
+    container.register(IDOMAIN_FIELDS_REPO_SYMBOL, { useClass: RedisManager });
+  } else {
+    container.register(IDOMAIN_FIELDS_REPO_SYMBOL, { useValue: {} });
+  }
+
   const metrics = new Metrics(SERVICE_NAME);
   const meter = metrics.start();
   container.register(SERVICES.METER, { useValue: meter });
 
   container.register(ON_SIGNAL, {
     useValue: async (): Promise<void> => {
-      await Promise.all([tracing.stop(), metrics.stop(), redisConnection.disconnect()]);
+      await Promise.all([tracing.stop(), metrics.stop(), connectToExternal ? redisConnection.disconnect() : undefined]);
     },
   });
 

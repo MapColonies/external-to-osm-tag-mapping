@@ -19,7 +19,7 @@ export class RedisManager implements IDomainFieldsRepository {
     try {
       res = await this.redis.mget(fields);
     } catch (e) {
-      throw new Error('redis: faild to fetch keys');
+      throw new Error('redis: failed to fetch keys');
     }
     if (res.includes(null)) {
       throw new KeyNotFoundError(`one or more of those keys are not exists: ${fields.toString()}`);
@@ -30,11 +30,11 @@ export class RedisManager implements IDomainFieldsRepository {
   public async getDomainFieldsList(domainFieldsListName: string): Promise<Set<string>> {
     try {
       const domainSet: Set<string> = new Set();
-      const doaminArr = await this.redis.lrange(domainFieldsListName, this.lrangeFromIdx, this.lrangeToIdx);
-      doaminArr.forEach((key) => domainSet.add(key.toUpperCase()));
+      const domainArr = await this.redis.lrange(domainFieldsListName, this.lrangeFromIdx, this.lrangeToIdx);
+      domainArr.forEach((key) => domainSet.add(key.toUpperCase()));
       return domainSet;
     } catch (e) {
-      throw new Error('redis: faild to fetch keys');
+      throw new Error('redis: failed to fetch keys');
     }
   }
 }

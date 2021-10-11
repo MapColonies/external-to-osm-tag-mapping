@@ -3,8 +3,11 @@ import { IDomainFieldsRepository, IDOMAIN_FIELDS_REPO_SYMBOL } from '../DAL/doma
 import { Tags } from '../providers/fileProvider/fileProvider';
 import { Schema, schemaSymbol } from './types';
 
+const SEPARATOR = '_';
+
 interface SchemaMetadataBase {
   keyIgnoreSets: Set<string>;
+  addSchemaPrefix: boolean;
 }
 
 interface WithExternalFetch extends SchemaMetadataBase {
@@ -29,7 +32,11 @@ export class SchemaManager {
     @inject(IDOMAIN_FIELDS_REPO_SYMBOL) private readonly domainFieldsRepo: IDomainFieldsRepository
   ) {
     this.schemas = inputSchemas.reduce((acc, curr) => {
-      let schemaMetadata: SchemaMetadata = { keyIgnoreSets: new Set(curr.ignoreKeys), enableExternalFetch: false };
+      let schemaMetadata: SchemaMetadata = {
+        keyIgnoreSets: new Set(curr.ignoreKeys),
+        enableExternalFetch: false,
+        addSchemaPrefix: curr.addSchemaPrefix,
+      };
 
       if (curr.enableExternalFetch === 'yes') {
         schemaMetadata = {
@@ -71,7 +78,7 @@ export class SchemaManager {
       }
       if (!schema.enableExternalFetch) {
         //add system name prefix
-        return { ...acc, [`${name}_${key}`]: value };
+        return { ...acc, [this.concatenateKeysPrefix(schema.addSchemaPrefix, name, key)]: value };
       }
       //check each tag if it's an explode field and put it in explodeKeysArr
       if (schema.explodeKeysSet.has(key) && value !== null) {
@@ -81,34 +88,41 @@ export class SchemaManager {
       if (domainFields.has(key.toUpperCase()) && value !== null) {
         redisKeysArr.push(`${key.toUpperCase()}:${value.toString()}`);
       }
-      return { ...acc, [`${name}_${key}`]: value };
+      return { ...acc, [this.concatenateKeysPrefix(schema.addSchemaPrefix, name, key)]: value };
     }, {});
 
     let domainFieldsKeys = {};
     let explodeFieldsKeys = {};
 
     if (redisKeysArr.length > 0) {
-      domainFieldsKeys = await this.getDomainFields(redisKeysArr, name);
+      domainFieldsKeys = await this.getDomainFields(redisKeysArr, name, schema.addSchemaPrefix);
     }
     if (explodeKeysArr.length > 0) {
-      explodeFieldsKeys = await this.getExplodeFields(explodeKeysArr, name);
+      explodeFieldsKeys = await this.getExplodeFields(explodeKeysArr, name, schema.addSchemaPrefix);
     }
     finalTagsObj = { ...finalTagsObj, ...domainFieldsKeys, ...explodeFieldsKeys };
     return finalTagsObj;
   }
 
-  public getDomainFields = async (redisKeysArr: string[], name: string): Promise<Tags> => {
+  private readonly concatenateKeysPrefix = (addSchemaPrefix: boolean, prefix: string, ...keys: string[]): string => {
+    return addSchemaPrefix ? `${[prefix, ...keys].join(SEPARATOR)}` : keys[0];
+  };
+
+  private readonly getDomainFields = async (redisKeysArr: string[], name: string, addSchemaPrefix: boolean): Promise<Tags> => {
     let domainFieldsTags: Tags = {};
     const redisRes = await this.domainFieldsRepo.getFields(redisKeysArr);
 
     //for each domain field create new domain field tag with the correct value
     redisRes.forEach((key, index) => {
-      domainFieldsTags = { ...domainFieldsTags, [`${name}_${redisKeysArr[index].split(':')[0]}_DOMAIN`]: key };
+      domainFieldsTags = {
+        ...domainFieldsTags,
+        [`${this.concatenateKeysPrefix(addSchemaPrefix, name, redisKeysArr[index].split(':')[0], 'DOMAIN')}`]: key,
+      };
     });
     return domainFieldsTags;
   };
 
-  public getExplodeFields = async (explodeKeysArr: string[], name: string): Promise<Tags> => {
+  private readonly getExplodeFields = async (explodeKeysArr: string[], name: string, addSchemaPrefix: boolean): Promise<Tags> => {
     let explodeFieldsTags: Tags = {};
     const redisRes = await this.domainFieldsRepo.getFields(explodeKeysArr);
 
@@ -116,7 +130,7 @@ export class SchemaManager {
     redisRes.forEach((key) => {
       let explode = JSON.parse(key) as Record<string, string | number | null>;
       explode = Object.entries(explode).reduce((acc, [key, value]) => {
-        return { ...acc, [`${name}_${key}`]: value };
+        return { ...acc, [this.concatenateKeysPrefix(addSchemaPrefix, name, key)]: value };
       }, {});
       explodeFieldsTags = { ...explodeFieldsTags, ...explode };
     });
