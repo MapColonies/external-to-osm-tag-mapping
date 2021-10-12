@@ -1,10 +1,10 @@
 import jsLogger, { LoggerOptions } from '@map-colonies/js-logger';
 import { logMethod, Metrics } from '@map-colonies/telemetry';
 import { trace } from '@opentelemetry/api';
-import { ON_SIGNAL, REDIS_CONNECTION_ERROR_CODE, REDIS_SYMBOL, SERVICES, SERVICE_NAME } from './common/constants';
 import config from 'config';
 import { Redis, RedisOptions } from 'ioredis';
 import { container } from 'tsyringe';
+import { ON_SIGNAL, REDIS_CONNECTION_ERROR_CODE, REDIS_SYMBOL, SERVICES, SERVICE_NAME } from './common/constants';
 import { createConnection } from './common/db';
 import { tracing } from './common/tracing';
 import { IDOMAIN_FIELDS_REPO_SYMBOL } from './schema/DAL/domainFieldsRepository';
@@ -24,14 +24,6 @@ async function registerExternalValues(): Promise<void> {
   const tracer = trace.getTracer(SERVICE_NAME);
   container.register(SERVICES.TRACER, { useValue: tracer });
   container.register(SERVICES.LOGGER, { useValue: logger });
-  const redisConnection = await createConnection(config.get<RedisOptions>('db.connection.options'));
-  redisConnection.on('error', (err) => {
-    logger.fatal(err, `Redis connection failure, exiting with code ${REDIS_CONNECTION_ERROR_CODE}`);
-    return process.exit(REDIS_CONNECTION_ERROR_CODE);
-  });
-
-  container.register(REDIS_SYMBOL, { useValue: redisConnection });
-  container.register(IDOMAIN_FIELDS_REPO_SYMBOL, { useClass: RedisManager });
 
   const schemas = await getSchemas(container);
   container.register(schemaSymbol, { useValue: schemas });
@@ -43,7 +35,11 @@ async function registerExternalValues(): Promise<void> {
   let redisConnection: Redis;
 
   if (connectToExternal) {
-    redisConnection = createConnection(config.get<RedisOptions>('db'));
+    redisConnection = createConnection(config.get<RedisOptions>('db.connection.options'));
+    redisConnection.on('error', (err) => {
+      logger.fatal(err, `Redis connection failure, exiting with code ${REDIS_CONNECTION_ERROR_CODE}`);
+      return process.exit(REDIS_CONNECTION_ERROR_CODE);
+    });
     container.register(REDIS_SYMBOL, { useValue: redisConnection });
     container.register(IDOMAIN_FIELDS_REPO_SYMBOL, { useClass: RedisManager });
   } else {
