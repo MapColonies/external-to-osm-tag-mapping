@@ -116,7 +116,7 @@ export class SchemaManager {
     redisRes.forEach((key, index) => {
       domainFieldsTags = {
         ...domainFieldsTags,
-        [`${this.concatenateKeysPrefix(addSchemaPrefix, name, redisKeysArr[index].split(':')[0], 'DOMAIN')}`]: key,
+        [this.concatenateKeysPrefix(addSchemaPrefix, name, redisKeysArr[index].split(':')[0], 'DOMAIN')]: key,
       };
     });
     return domainFieldsTags;
