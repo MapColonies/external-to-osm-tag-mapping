@@ -1,9 +1,8 @@
 import { inject, injectable } from 'tsyringe';
 import { IDomainFieldsRepository, IDOMAIN_FIELDS_REPO_SYMBOL } from '../DAL/domainFieldsRepository';
 import { Tags } from '../providers/fileProvider/fileProvider';
+import { SEPARATOR } from '../../common/constants';
 import { Schema, schemaSymbol } from './types';
-
-const SEPARATOR = '_';
 
 interface SchemaMetadataBase {
   keyIgnoreSets: Set<string>;
@@ -78,7 +77,7 @@ export class SchemaManager {
       }
       if (!schema.enableExternalFetch) {
         //add system name prefix
-        return { ...acc, [this.concatenateKeysPrefix(schema.addSchemaPrefix, name, key)]: value };
+        return { ...acc, [this.concatenateKeysPrefix(name, key)]: value };
       }
       //check each tag if it's an explode field and put it in explodeKeysArr
       if (schema.explodeKeysSet.has(key) && value !== null) {
@@ -88,27 +87,27 @@ export class SchemaManager {
       if (domainFields.has(key.toUpperCase()) && value !== null) {
         redisKeysArr.push(`${key.toUpperCase()}:${value.toString()}`);
       }
-      return { ...acc, [this.concatenateKeysPrefix(schema.addSchemaPrefix, name, key)]: value };
+      return { ...acc, [this.concatenateKeysPrefix(name, key)]: value };
     }, {});
 
     let domainFieldsKeys = {};
     let explodeFieldsKeys = {};
 
     if (redisKeysArr.length > 0) {
-      domainFieldsKeys = await this.getDomainFields(redisKeysArr, name, schema.addSchemaPrefix);
+      domainFieldsKeys = await this.getDomainFields(redisKeysArr, name);
     }
     if (explodeKeysArr.length > 0) {
-      explodeFieldsKeys = await this.getExplodeFields(explodeKeysArr, name, schema.addSchemaPrefix);
+      explodeFieldsKeys = await this.getExplodeFields(explodeKeysArr, name);
     }
     finalTagsObj = { ...finalTagsObj, ...domainFieldsKeys, ...explodeFieldsKeys };
     return finalTagsObj;
   }
 
-  private readonly concatenateKeysPrefix = (addSchemaPrefix: boolean, prefix: string, ...keys: string[]): string => {
-    return addSchemaPrefix ? `${[prefix, ...keys].join(SEPARATOR)}` : keys[0];
+  private readonly concatenateKeysPrefix = (prefix: string, ...keys: string[]): string => {
+    return this.schemas[prefix].addSchemaPrefix ? `${[prefix, ...keys].join(SEPARATOR)}` : keys[0];
   };
 
-  private readonly getDomainFields = async (redisKeysArr: string[], name: string, addSchemaPrefix: boolean): Promise<Tags> => {
+  private readonly getDomainFields = async (redisKeysArr: string[], name: string): Promise<Tags> => {
     let domainFieldsTags: Tags = {};
     const redisRes = await this.domainFieldsRepo.getFields(redisKeysArr);
 
@@ -116,13 +115,13 @@ export class SchemaManager {
     redisRes.forEach((key, index) => {
       domainFieldsTags = {
         ...domainFieldsTags,
-        [this.concatenateKeysPrefix(addSchemaPrefix, name, redisKeysArr[index].split(':')[0], 'DOMAIN')]: key,
+        [this.concatenateKeysPrefix(name, redisKeysArr[index].split(':')[0], 'DOMAIN')]: key,
       };
     });
     return domainFieldsTags;
   };
 
-  private readonly getExplodeFields = async (explodeKeysArr: string[], name: string, addSchemaPrefix: boolean): Promise<Tags> => {
+  private readonly getExplodeFields = async (explodeKeysArr: string[], name: string): Promise<Tags> => {
     let explodeFieldsTags: Tags = {};
     const redisRes = await this.domainFieldsRepo.getFields(explodeKeysArr);
 
@@ -130,7 +129,7 @@ export class SchemaManager {
     redisRes.forEach((key) => {
       let explode = JSON.parse(key) as Record<string, string | number | null>;
       explode = Object.entries(explode).reduce((acc, [key, value]) => {
-        return { ...acc, [this.concatenateKeysPrefix(addSchemaPrefix, name, key)]: value };
+        return { ...acc, [this.concatenateKeysPrefix(name, key)]: value };
       }, {});
       explodeFieldsTags = { ...explodeFieldsTags, ...explode };
     });

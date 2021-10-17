@@ -52,7 +52,7 @@ async function registerExternalValues(): Promise<void> {
 
   container.register(ON_SIGNAL, {
     useValue: async (): Promise<void> => {
-      await Promise.all([tracing.stop(), metrics.stop(), connectToExternal ? redisConnection.disconnect() : undefined]);
+      await Promise.all([tracing.stop(), metrics.stop(), connectToExternal ? redisConnection.disconnect() : Promise.resolve()]);
     },
   });
 
