@@ -1,12 +1,15 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import { SchemaManager } from '../../../../src/schema/models/schemaManager';
-import { Schema } from '../../../../src/schema/models/types';
+import { container } from 'tsyringe';
+import { IDOMAIN_FIELDS_REPO_SYMBOL } from '../../../../src/schema/DAL/domainFieldsRepository';
+import { SchemaManager, SchemaNotFoundError } from '../../../../src/schema/models/schemaManager';
+import { Schema, schemaSymbol } from '../../../../src/schema/models/types';
 
 const schemas: Schema[] = [
   {
     name: 'system1',
     createdAt: new Date(),
     enableExternalFetch: 'yes',
+    addSchemaPrefix: true,
     domainFieldsListKey: 'DISCRETE_ATTRIBUTES',
     explodeKeys: ['explode1', 'explode2'],
   },
@@ -15,6 +18,7 @@ const schemas: Schema[] = [
     createdAt: new Date(),
     ignoreKeys: ['externalKey4'],
     enableExternalFetch: 'yes',
+    addSchemaPrefix: true,
     domainFieldsListKey: 'DISCRETE_ATTRIBUTES',
     explodeKeys: ['explode1', 'explode2'],
   },
@@ -22,6 +26,13 @@ const schemas: Schema[] = [
     name: 'system3',
     createdAt: new Date(),
     enableExternalFetch: 'no',
+    addSchemaPrefix: true,
+  },
+  {
+    name: 'system4',
+    createdAt: new Date(),
+    enableExternalFetch: 'no',
+    addSchemaPrefix: false,
   },
 ];
 
@@ -33,7 +44,10 @@ describe('SchemaManager', () => {
   beforeAll(() => {
     getFields = jest.fn();
     getDomainFieldsList = jest.fn();
-    schemaManager = new SchemaManager(schemas, { getFields, getDomainFieldsList });
+    container.register(schemaSymbol, { useValue: schemas });
+    container.register(IDOMAIN_FIELDS_REPO_SYMBOL, { useValue: { getFields, getDomainFieldsList } });
+
+    schemaManager = container.resolve(SchemaManager);
   });
 
   afterEach(() => {
@@ -85,7 +99,27 @@ describe('SchemaManager', () => {
       expect(res).toMatchObject(expected);
     });
 
-    it('should return mapped tags with system name prefix without doamin key', async () => {
+    it('should return mapped tags without system name prefix', async () => {
+      const name = 'system4';
+      const tags = {
+        externalKey3: 'val3',
+        externalKey2: 'val2',
+        externalKey1: 'val1',
+        externalKey4: 'val4',
+      };
+      const expected = {
+        externalKey1: 'val1',
+        externalKey2: 'val2',
+        externalKey3: 'val3',
+        externalKey4: 'val4',
+      };
+
+      const res = await schemaManager.map(name, tags);
+
+      expect(res).toMatchObject(expected);
+    });
+
+    it('should return mapped tags with system name prefix without domain key', async () => {
       const name = 'system1';
       const tags = {
         externalKey3: 'val3',
@@ -178,6 +212,15 @@ describe('SchemaManager', () => {
       const res = await schemaManager.map(name, tags);
 
       expect(res).toMatchObject(expected);
+    });
+
+    it('when system name not in schemas, should throw an error', async () => {
+      const name = 'system5';
+      const tags = {};
+
+      const res = schemaManager.map(name, tags);
+
+      await expect(res).rejects.toThrow(SchemaNotFoundError);
     });
   });
 });

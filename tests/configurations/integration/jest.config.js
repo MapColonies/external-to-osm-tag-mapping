@@ -6,6 +6,7 @@ module.exports = {
   rootDir: '../../../.',
   testMatch: ['<rootDir>/tests/integration/**/*.spec.ts'],
   setupFiles: ['<rootDir>/tests/configurations/jest.setup.js'],
+  coverageDirectory: '<rootDir>/coverage/integration',
   reporters: [
     'default',
     [

@@ -4,6 +4,7 @@ interface BaseSchema {
   createdAt: Date;
   updatedAt?: Date;
   ignoreKeys?: string[];
+  addSchemaPrefix: boolean;
   name: string;
 }
 
@@ -31,6 +32,7 @@ export const schemasTypeDefinition: JTDSchemaType<Schema[]> = {
           createdAt: { type: 'timestamp' },
           explodeKeys: { elements: { type: 'string' } },
           domainFieldsListKey: { type: 'string' },
+          addSchemaPrefix: { type: 'boolean' },
         },
         optionalProperties: {
           updatedAt: { type: 'timestamp' },
@@ -41,6 +43,7 @@ export const schemasTypeDefinition: JTDSchemaType<Schema[]> = {
         properties: {
           name: { type: 'string', metadata: { minLength: 2, maxLength: 15 } },
           createdAt: { type: 'timestamp' },
+          addSchemaPrefix: { type: 'boolean' },
         },
         optionalProperties: {
           updatedAt: { type: 'timestamp' },
