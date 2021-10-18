@@ -1,4 +1,4 @@
-import Redis, { RedisOptions} from 'ioredis';
+import Redis, { RedisOptions } from 'ioredis';
 import { HOSTNAME } from './constants';
 
 export const createConnection = async (dbConfig: RedisOptions): Promise<Redis.Redis> => {

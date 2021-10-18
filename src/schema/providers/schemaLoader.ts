@@ -1,7 +1,7 @@
-import { Schema } from 'ajv';
 import { DependencyContainer } from 'tsyringe';
 import { SERVICES } from '../../common/constants';
-import { IConfig, Constructor } from '../../common/interfaces';
+import { Constructor, IConfig } from '../../common/interfaces';
+import { Schema } from '../models/types';
 import { FileSchemaProvider } from './fileProvider/fileProvider';
 import { ISchemaProvider } from './provider';
 

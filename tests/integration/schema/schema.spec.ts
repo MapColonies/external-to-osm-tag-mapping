@@ -104,6 +104,29 @@ describe('schemas', function () {
         expect(mappedTags).toMatchObject(expected);
       });
 
+      it('should return 200 status code and map the tags without prefixing system name', async function () {
+        const tags = {
+          properties: {
+            externalKey3: 'val3',
+            externalKey2: 'val2',
+            externalKey1: 'val1',
+          },
+        };
+        const expected = {
+          properties: {
+            externalKey1: 'val1',
+            externalKey2: 'val2',
+            externalKey3: 'val3',
+          },
+        };
+        const response = await requestSender.map('system4', tags);
+        expect(response.status).toBe(httpStatusCodes.OK);
+
+        const mappedTags = response.body as Tags;
+        expect(mappedTags).toBeDefined();
+        expect(mappedTags).toMatchObject(expected);
+      });
+
       it('should return 200 status code and map the tags without the ignored key', async function () {
         const tags = {
           properties: {
@@ -227,12 +250,12 @@ describe('schemas', function () {
     // All requests with status code of 400
     describe('GET /schemas/:name', function () {
       it('should return 404 status code for non-existent schema', async function () {
-        const response = await requestSender.getSchema('system4');
+        const response = await requestSender.getSchema('system5');
 
         expect(response.status).toBe(httpStatusCodes.NOT_FOUND);
 
         const schemas = response.body as Schema;
-        expect(schemas).toEqual({ message: 'system system4 not found' });
+        expect(schemas).toEqual({ message: 'system system5 not found' });
       });
     });
     describe('POST /schemas/:name/map', function () {
@@ -249,12 +272,12 @@ describe('schemas', function () {
           },
         };
 
-        const response = await requestSender.map('system4', geoJson);
+        const response = await requestSender.map('system5', geoJson);
 
         expect(response.status).toBe(httpStatusCodes.NOT_FOUND);
         expect(response.status).toBe(httpStatusCodes.NOT_FOUND);
         const schemas = response.body as Schema;
-        expect(schemas).toEqual({ message: 'schema system4 not found' });
+        expect(schemas).toEqual({ message: 'schema system5 not found' });
       });
       it('should return 422 status code for not found explode field in redis', async function () {
         const tags = {
