@@ -35,7 +35,7 @@ async function registerExternalValues(): Promise<void> {
   let redisConnection: Redis;
 
   if (connectToExternal) {
-    redisConnection = createConnection(config.get<RedisOptions>('db.connection.options'));
+    redisConnection = await createConnection(config.get<RedisOptions>('db.connection.options'));
     redisConnection.on('error', (err) => {
       logger.fatal(err, `Redis connection failure, exiting with code ${REDIS_CONNECTION_ERROR_CODE}`);
       return process.exit(REDIS_CONNECTION_ERROR_CODE);
