@@ -12,6 +12,7 @@ const schemas: Schema[] = [
     addSchemaPrefix: true,
     domainFieldsListKey: 'DISCRETE_ATTRIBUTES',
     explodeKeys: ['explode1', 'explode2'],
+    renameKeys: { externalKey1: 'renamedExternalKey1' },
   },
   {
     name: 'system2',
@@ -128,7 +129,7 @@ describe('SchemaManager', () => {
         externalKey4: 'val4',
       };
       const expected = {
-        system1_externalKey1: 'val1',
+        system1_renamedExternalKey1: 'val1',
         system1_externalKey2: 'val2',
         system1_externalKey3: 'val3',
         system1_externalKey4: 'val4',
@@ -151,7 +152,7 @@ describe('SchemaManager', () => {
         explode1: 'val5',
       };
       const expected = {
-        system1_externalKey1: 'val1',
+        system1_renamedExternalKey1: 'val1',
         system1_externalKey2: 'val2',
         system1_externalKey3: 'val3',
         system1_externalKey4: 'val4',
