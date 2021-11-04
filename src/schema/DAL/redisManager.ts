@@ -21,10 +21,12 @@ export class RedisManager implements IDomainFieldsRepository {
     } catch (e) {
       throw new Error('redis: failed to fetch keys');
     }
-    if (res.includes(null)) {
-      throw new KeyNotFoundError(`one or more of those keys are not exists: ${fields.toString()}`);
+
+    if (!this.isArrayOfStrings(res)) {
+      throw new KeyNotFoundError(`redis: one or more of those keys do not exist: ${fields.toString()}`);
     }
-    return res as string[];
+
+    return res;
   }
 
   public async getDomainFieldsList(domainFieldsListName: string): Promise<Set<string>> {
@@ -36,5 +38,9 @@ export class RedisManager implements IDomainFieldsRepository {
     } catch (e) {
       throw new Error('redis: failed to fetch keys');
     }
+  }
+
+  private isArrayOfStrings(array: (string | null)[]): array is string[] {
+    return array.every((item) => typeof item === 'string');
   }
 }
