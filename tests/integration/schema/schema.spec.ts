@@ -61,7 +61,7 @@ describe('schemas', function () {
         };
         const expected = {
           properties: {
-            system1_externalKey1: 'val1',
+            system1_renamedExternalKey1: 'val1',
             system1_externalKey2: 'val2',
             system1_externalKey3: 'val3',
             system1_externalKey4: 'val4',
@@ -191,7 +191,7 @@ describe('schemas', function () {
         };
         const expected = {
           properties: {
-            system1_externalKey1: 'val1',
+            system1_renamedExternalKey1: 'val1',
             system1_externalKey2: 'val2',
             system1_externalKey3: 'val3',
             system1_explode1: 'val4',
