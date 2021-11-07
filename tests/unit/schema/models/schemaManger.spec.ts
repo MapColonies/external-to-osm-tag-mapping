@@ -125,11 +125,9 @@ describe('SchemaManager', () => {
       const tags = {
         externalKey3: 'val3',
         externalKey2: 'val2',
-        externalKey1: 'val1',
         externalKey4: 'val4',
       };
       const expected = {
-        system1_renamedExternalKey1: 'val1',
         system1_externalKey2: 'val2',
         system1_externalKey3: 'val3',
         system1_externalKey4: 'val4',
@@ -142,7 +140,7 @@ describe('SchemaManager', () => {
       expect(res).toMatchObject(expected);
     });
 
-    it('should return mapped tags with system name prefix & domain key & explode key', async () => {
+    it('should return mapped tags with system name prefix & domain key & explode key & renamed key', async () => {
       const name = 'system1';
       const tags = {
         externalKey3: 'val3',
