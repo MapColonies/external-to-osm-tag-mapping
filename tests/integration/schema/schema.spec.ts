@@ -242,7 +242,7 @@ describe('schemas', function () {
             externalKey1: 'val1',
             explode1: 'val4',
             key1: 'val4',
-            rename1: 'val1'
+            rename1: 'val1',
           },
         };
         const expected = {
@@ -254,7 +254,7 @@ describe('schemas', function () {
             system2_explode1: 'val4',
             system2_exploded1: 2,
             system2_exploded2: 3,
-            system2_renamedKey1: 'val1'
+            system2_renamedKey1: 'val1',
           },
         };
 
