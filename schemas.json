@@ -6,7 +6,8 @@
     "enableExternalFetch": "yes",
     "addSchemaPrefix": true,
     "domainFieldsListKey": "DISCRETE_ATTRIBUTES",
-    "explodeKeys": ["explode1", "explode2"]
+    "explodeKeys": ["explode1", "explode2"],
+    "renameKeys": { "externalKey1": "renamedExternalKey1" }
   },
   {
     "name": "system2",
@@ -16,7 +17,8 @@
     "enableExternalFetch": "yes",
     "addSchemaPrefix": true,
     "domainFieldsListKey": "DISCRETE_ATTRIBUTES",
-    "explodeKeys": ["explode1", "explode2"]
+    "explodeKeys": ["explode1", "explode2"],
+    "renameKeys": { "rename1": "renamedKey1" }
   },
   {
     "name": "system3",

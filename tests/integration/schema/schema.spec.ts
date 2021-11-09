@@ -61,7 +61,7 @@ describe('schemas', function () {
         };
         const expected = {
           properties: {
-            system1_externalKey1: 'val1',
+            system1_renamedExternalKey1: 'val1',
             system1_externalKey2: 'val2',
             system1_externalKey3: 'val3',
             system1_externalKey4: 'val4',
@@ -191,16 +191,40 @@ describe('schemas', function () {
         };
         const expected = {
           properties: {
-            system1_externalKey1: 'val1',
-            system1_externalKey2: 'val2',
-            system1_externalKey3: 'val3',
-            system1_explode1: 'val4',
-            system1_exploded1: 2,
-            system1_exploded2: 3,
+            system2_externalKey1: 'val1',
+            system2_externalKey2: 'val2',
+            system2_externalKey3: 'val3',
+            system2_explode1: 'val4',
+            system2_exploded1: 2,
+            system2_exploded2: 3,
           },
         };
 
         await redisConnection.set('val4', '{ "exploded1": 2, "exploded2": 3 }');
+
+        const response = await requestSender.map('system2', tags);
+        expect(response.status).toBe(httpStatusCodes.OK);
+
+        const mappedTags = response.body as Tags;
+        expect(mappedTags).toBeDefined();
+        expect(mappedTags).toMatchObject(expected);
+      });
+
+      it('should return 200 status code and map the tags with renamed keys', async function () {
+        const tags = {
+          properties: {
+            externalKey3: 'val3',
+            externalKey2: 'val2',
+            externalKey1: 'val1',
+          },
+        };
+        const expected = {
+          properties: {
+            system1_renamedExternalKey1: 'val1',
+            system1_externalKey2: 'val2',
+            system1_externalKey3: 'val3',
+          },
+        };
 
         const response = await requestSender.map('system1', tags);
         expect(response.status).toBe(httpStatusCodes.OK);
@@ -210,7 +234,7 @@ describe('schemas', function () {
         expect(mappedTags).toMatchObject(expected);
       });
 
-      it('should return 200 status code and map the tags without the ignored key, with exploded fields, with domain fields', async function () {
+      it('should return 200 status code and map the tags without the ignored key, with exploded fields, with domain fields, with renamed key', async function () {
         const tags = {
           properties: {
             externalKey3: 'val3',
@@ -218,6 +242,7 @@ describe('schemas', function () {
             externalKey1: 'val1',
             explode1: 'val4',
             key1: 'val4',
+            rename1: 'val1',
           },
         };
         const expected = {
@@ -229,6 +254,7 @@ describe('schemas', function () {
             system2_explode1: 'val4',
             system2_exploded1: 2,
             system2_exploded2: 3,
+            system2_renamedKey1: 'val1',
           },
         };
 
