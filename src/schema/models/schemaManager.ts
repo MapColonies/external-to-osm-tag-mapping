@@ -7,6 +7,7 @@ import { Schema, schemaSymbol } from './types';
 interface SchemaMetadataBase {
   keyIgnoreSets: Set<string>;
   addSchemaPrefix: boolean;
+  renameKeys?: Record<string, string>;
 }
 
 interface WithExternalFetch extends SchemaMetadataBase {
@@ -35,6 +36,7 @@ export class SchemaManager {
         keyIgnoreSets: new Set(curr.ignoreKeys),
         enableExternalFetch: false,
         addSchemaPrefix: curr.addSchemaPrefix,
+        ...(curr.renameKeys && { renameKeys: curr.renameKeys }),
       };
 
       if (curr.enableExternalFetch === 'yes') {
@@ -75,18 +77,24 @@ export class SchemaManager {
       if (schema.keyIgnoreSets.has(key)) {
         return acc;
       }
-      if (!schema.enableExternalFetch) {
-        //add system name prefix
-        return { ...acc, [key]: value };
+
+      //check if tag's key should be renamed
+      if (schema.renameKeys && Object.prototype.hasOwnProperty.call(schema.renameKeys, key)) {
+        key = schema.renameKeys[key];
       }
-      //check each tag if it's an explode field and put it in explodeKeysArr
-      if (schema.explodeKeysSet.has(key) && value !== null) {
-        explodeKeysArr.push(value.toString());
+
+      if (schema.enableExternalFetch) {
+        //check each tag if it's an explode field and put it in explodeKeysArr
+        if (schema.explodeKeysSet.has(key) && value !== null) {
+          explodeKeysArr.push(value.toString());
+        }
+
+        //check each tag if it's a domain field and put it in redisKeysArr
+        if (domainFields.has(key.toUpperCase()) && value !== null) {
+          redisKeysArr.push(`${key.toUpperCase()}:${value.toString()}`);
+        }
       }
-      //check each tag if it's a domain field and put it in redisKeysArr
-      if (domainFields.has(key.toUpperCase()) && value !== null) {
-        redisKeysArr.push(`${key.toUpperCase()}:${value.toString()}`);
-      }
+
       return { ...acc, [key]: value };
     }, {});
 
@@ -96,9 +104,11 @@ export class SchemaManager {
     if (redisKeysArr.length > 0) {
       domainFieldsKeys = await this.getDomainFields(redisKeysArr);
     }
+
     if (explodeKeysArr.length > 0) {
       explodeFieldsKeys = await this.getExplodeFields(explodeKeysArr);
     }
+
     finalTagsObj = { ...finalTagsObj, ...domainFieldsKeys, ...explodeFieldsKeys };
 
     if (this.schemas[name].addSchemaPrefix) {
@@ -107,6 +117,7 @@ export class SchemaManager {
         return { ...acc, [this.concatenateKeysPrefix(name, key)]: value };
       }, {});
     }
+
     return finalTagsObj;
   }
 
@@ -125,6 +136,7 @@ export class SchemaManager {
         [redisKeysArr[index].split(':')[0] + '_DOMAIN']: key,
       };
     });
+
     return domainFieldsTags;
   };
 
@@ -140,6 +152,7 @@ export class SchemaManager {
       }, {});
       explodeFieldsTags = { ...explodeFieldsTags, ...explode };
     });
+
     return explodeFieldsTags;
   };
 }

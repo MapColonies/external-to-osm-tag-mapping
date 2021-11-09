@@ -6,6 +6,7 @@ interface BaseSchema {
   ignoreKeys?: string[];
   addSchemaPrefix: boolean;
   name: string;
+  renameKeys?: Record<string, string>;
 }
 
 interface DisableExternalFetching extends BaseSchema {
@@ -37,6 +38,7 @@ export const schemasTypeDefinition: JTDSchemaType<Schema[]> = {
         optionalProperties: {
           updatedAt: { type: 'timestamp' },
           ignoreKeys: { elements: { type: 'string' } },
+          renameKeys: { values: { type: 'string' } },
         },
       },
       no: {
@@ -48,6 +50,7 @@ export const schemasTypeDefinition: JTDSchemaType<Schema[]> = {
         optionalProperties: {
           updatedAt: { type: 'timestamp' },
           ignoreKeys: { elements: { type: 'string' } },
+          renameKeys: { values: { type: 'string' } },
         },
       },
     },
