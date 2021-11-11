@@ -14,10 +14,12 @@ export class RedisManager implements IDomainFieldsRepository {
     this.lrangeToIdx = -1;
   }
 
-  public async getFields(fields: string[]): Promise<string[]> {
+  public async getFields(fields: string[], key: string | undefined): Promise<string[]>;
+  public async getFields(fields: string[]): Promise<string[]>;
+  public async getFields(fields: string[], key?: string): Promise<string[]> {
     let res: (string | null)[];
     try {
-      res = await this.redis.mget(fields);
+      res = key !== undefined ? await this.redis.hmget(key, fields) : await this.redis.mget(fields);
     } catch (e) {
       throw new Error('redis: failed to fetch keys');
     }

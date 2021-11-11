@@ -165,7 +165,7 @@ describe('schemas', function () {
             system2_externalKey1: 'val1',
             system2_externalKey2: 'val2',
             system2_externalKey3: 'val3',
-            system2_EXTERNALKEY2_DOMAIN: '2',
+            system2_EXTERNALKEY2: '2',
           },
         };
 
@@ -248,7 +248,7 @@ describe('schemas', function () {
         const expected = {
           properties: {
             system2_externalKey2: 'val2',
-            system2_EXTERNALKEY2_DOMAIN: '2',
+            system2_EXTERNALKEY2: '2',
             system2_externalKey1: 'val1',
             system2_externalKey3: 'val3',
             system2_explode1: 'val4',
@@ -276,12 +276,12 @@ describe('schemas', function () {
     // All requests with status code of 400
     describe('GET /schemas/:name', function () {
       it('should return 404 status code for non-existent schema', async function () {
-        const response = await requestSender.getSchema('system5');
+        const response = await requestSender.getSchema('system');
 
         expect(response.status).toBe(httpStatusCodes.NOT_FOUND);
 
         const schemas = response.body as Schema;
-        expect(schemas).toEqual({ message: 'system system5 not found' });
+        expect(schemas).toEqual({ message: 'system system not found' });
       });
     });
     describe('POST /schemas/:name/map', function () {
@@ -298,12 +298,12 @@ describe('schemas', function () {
           },
         };
 
-        const response = await requestSender.map('system5', geoJson);
+        const response = await requestSender.map('system', geoJson);
 
         expect(response.status).toBe(httpStatusCodes.NOT_FOUND);
         expect(response.status).toBe(httpStatusCodes.NOT_FOUND);
         const schemas = response.body as Schema;
-        expect(schemas).toEqual({ message: 'schema system5 not found' });
+        expect(schemas).toEqual({ message: 'schema system not found' });
       });
       it('should return 422 status code for not found explode field in redis', async function () {
         const tags = {
@@ -318,6 +318,20 @@ describe('schemas', function () {
 
         const response = await requestSender.map('system1', tags);
         expect(response.status).toBe(httpStatusCodes.UNPROCESSABLE_ENTITY);
+      });
+      it('should return 422 status code for malformed JSON response of exploded field in redis', async function () {
+        const tags = {
+          properties: {
+            explode1: 'val5',
+          },
+        };
+
+        await redisConnection.lpush('DISCRETE_ATTRIBUTES', 'EXPLODED1');
+        await redisConnection.hset('hkey1', 'val5', '{ "exploded1": 2 "exploded2": 3 }');
+
+        const response = await requestSender.map('system1', tags);
+        expect(response.status).toBe(httpStatusCodes.UNPROCESSABLE_ENTITY);
+        expect(response.body).toEqual({ message: `failed to parse fetched json for value: val5` });
       });
       it('should return 422 status code for not found domain field in redis', async function () {
         const tags = {

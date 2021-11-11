@@ -14,6 +14,7 @@ interface WithExternalFetch extends SchemaMetadataBase {
   enableExternalFetch: true;
   explodeKeysSet: Set<string>;
   domainFieldsListKey: string;
+  defaultHashKey?: string;
 }
 
 interface WithoutExternalFetch extends SchemaMetadataBase {
@@ -23,6 +24,7 @@ interface WithoutExternalFetch extends SchemaMetadataBase {
 type SchemaMetadata = WithExternalFetch | WithoutExternalFetch;
 
 export class SchemaNotFoundError extends Error {}
+export class JSONSyntaxError extends SyntaxError {}
 
 @injectable()
 export class SchemaManager {
@@ -45,6 +47,7 @@ export class SchemaManager {
           enableExternalFetch: true,
           explodeKeysSet: new Set(curr.explodeKeys),
           domainFieldsListKey: curr.domainFieldsListKey,
+          ...(curr.defaultHashKey !== undefined && { defaultHashKey: curr.defaultHashKey }),
         };
       }
       return { ...acc, [curr.name]: schemaMetadata };
@@ -64,12 +67,14 @@ export class SchemaManager {
       throw new SchemaNotFoundError(`schema ${name} not found`);
     }
     const schema = this.schemas[name];
-    const redisKeysArr: string[] = []; //array to hold all domainFields keys for redis request
-    const explodeKeysArr: string[] = []; ///array to hold all explode keys for redis request
+    const domainFieldsKeys: string[] = []; //array to hold all domainFields keys for domain repo request
+    const explodeKeys: string[] = []; ///array to hold all explode keys for domain repo request
     let domainFields: Set<string>;
+    let defaultHashKey: string | undefined;
 
     if (schema.enableExternalFetch) {
       domainFields = await this.domainFieldsRepo.getDomainFieldsList(schema.domainFieldsListKey);
+      defaultHashKey = schema.defaultHashKey;
     }
 
     let finalTagsObj: Tags = Object.entries(tags).reduce((acc, [key, value]) => {
@@ -84,32 +89,32 @@ export class SchemaManager {
       }
 
       if (schema.enableExternalFetch) {
-        //check each tag if it's an explode field and put it in explodeKeysArr
+        //check each tag if it's an explode field and put it in explodeKeys
         if (schema.explodeKeysSet.has(key) && value !== null) {
-          explodeKeysArr.push(value.toString());
+          explodeKeys.push(value.toString());
         }
 
-        //check each tag if it's a domain field and put it in redisKeysArr
+        //check each tag if it's a domain field and put it in domainFieldsKeys
         if (domainFields.has(key.toUpperCase()) && value !== null) {
-          redisKeysArr.push(`${key.toUpperCase()}:${value.toString()}`);
+          domainFieldsKeys.push(`${key.toUpperCase()}:${value.toString()}`);
         }
       }
 
       return { ...acc, [key]: value };
     }, {});
 
-    let domainFieldsKeys = {};
+    let mappedDomainFields = {};
     let explodeFieldsKeys = {};
 
-    if (redisKeysArr.length > 0) {
-      domainFieldsKeys = await this.getDomainFields(redisKeysArr);
+    if (domainFieldsKeys.length > 0) {
+      mappedDomainFields = await this.getDomainFieldsCodedValues(domainFieldsKeys, defaultHashKey);
     }
 
-    if (explodeKeysArr.length > 0) {
-      explodeFieldsKeys = await this.getExplodeFields(explodeKeysArr);
+    if (explodeKeys.length > 0) {
+      explodeFieldsKeys = await this.getExplodeFields(explodeKeys, defaultHashKey);
     }
 
-    finalTagsObj = { ...finalTagsObj, ...domainFieldsKeys, ...explodeFieldsKeys };
+    finalTagsObj = { ...finalTagsObj, ...mappedDomainFields, ...explodeFieldsKeys };
 
     if (this.schemas[name].addSchemaPrefix) {
       //for each key add a system name prefix
@@ -125,32 +130,36 @@ export class SchemaManager {
     return `${[prefix, ...keys].join(SEPARATOR)}`;
   };
 
-  private readonly getDomainFields = async (redisKeysArr: string[]): Promise<Tags> => {
+  private readonly getDomainFieldsCodedValues = async (domainFieldsKeys: string[], hashKey: string | undefined): Promise<Tags> => {
     let domainFieldsTags: Tags = {};
-    const redisRes = await this.domainFieldsRepo.getFields(redisKeysArr);
+    const fieldsCodedValuesRes = await this.domainFieldsRepo.getFields(domainFieldsKeys, hashKey);
 
     //for each domain field create new domain field tag with the correct value
-    redisRes.forEach((key, index) => {
+    fieldsCodedValuesRes.forEach((codedValue, index) => {
       domainFieldsTags = {
         ...domainFieldsTags,
-        [redisKeysArr[index].split(':')[0] + '_DOMAIN']: key,
+        [domainFieldsKeys[index].split(':')[0]]: codedValue,
       };
     });
 
     return domainFieldsTags;
   };
 
-  private readonly getExplodeFields = async (explodeKeysArr: string[]): Promise<Tags> => {
+  private readonly getExplodeFields = async (explodeKeys: string[], hashKey: string | undefined): Promise<Tags> => {
     let explodeFieldsTags: Tags = {};
-    const redisRes = await this.domainFieldsRepo.getFields(explodeKeysArr);
+    const explodeRes = await this.domainFieldsRepo.getFields(explodeKeys, hashKey);
 
     //for each domain field parse for new Object.
-    redisRes.forEach((key) => {
-      let explode = JSON.parse(key) as Record<string, string | number | null>;
-      explode = Object.entries(explode).reduce((acc, [key, value]) => {
-        return { ...acc, [key]: value };
-      }, {});
-      explodeFieldsTags = { ...explodeFieldsTags, ...explode };
+    explodeRes.forEach((json, index) => {
+      try {
+        let explode = JSON.parse(json) as Record<string, string | number | null>;
+        explode = Object.entries(explode).reduce((acc, [key, value]) => {
+          return { ...acc, [key]: value };
+        }, {});
+        explodeFieldsTags = { ...explodeFieldsTags, ...explode };
+      } catch (error) {
+        throw new JSONSyntaxError(`failed to parse fetched json for value: ${explodeKeys[index]}`);
+      }
     });
 
     return explodeFieldsTags;

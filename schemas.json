@@ -7,7 +7,8 @@
     "addSchemaPrefix": true,
     "domainFieldsListKey": "DISCRETE_ATTRIBUTES",
     "explodeKeys": ["explode1", "explode2"],
-    "renameKeys": { "externalKey1": "renamedExternalKey1" }
+    "renameKeys": { "externalKey1": "renamedExternalKey1" },
+    "defaultHashKey": "hkey1"
   },
   {
     "name": "system2",
@@ -33,5 +34,15 @@
     "updatedAt": "2021-07-14T11:19:58Z",
     "enableExternalFetch": "no",
     "addSchemaPrefix": false
+  },
+  {
+    "name": "system5",
+    "createdAt": "2021-07-14T11:19:58Z",
+    "updatedAt": "2021-07-14T11:19:58Z",
+    "enableExternalFetch": "yes",
+    "addSchemaPrefix": true,
+    "domainFieldsListKey": "DISCRETE_ATTRIBUTES",
+    "explodeKeys": ["explode1", "explode2"],
+    "renameKeys": { "externalKey1": "renamedExternalKey1" }
   }
 ]

@@ -5,7 +5,7 @@ import { HttpError } from '@map-colonies/error-express-handler';
 import { Feature, Geometry } from 'geojson';
 import { Logger } from '@map-colonies/js-logger';
 import { SERVICES } from '../../common/constants';
-import { SchemaManager, SchemaNotFoundError } from '../models/schemaManager';
+import { JSONSyntaxError, SchemaManager, SchemaNotFoundError } from '../models/schemaManager';
 import { Tags } from '../providers/fileProvider/fileProvider';
 import { Schema } from '../models/types';
 import { KeyNotFoundError } from '../DAL/errors';
@@ -58,7 +58,7 @@ export class SchemaController {
       if (e instanceof SchemaNotFoundError) {
         httpError.statusCode = httpStatus.NOT_FOUND;
       }
-      if (e instanceof KeyNotFoundError) {
+      if (e instanceof KeyNotFoundError || e instanceof JSONSyntaxError) {
         httpError.statusCode = httpStatus.UNPROCESSABLE_ENTITY;
       }
       return next(httpError);

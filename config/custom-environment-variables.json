@@ -44,8 +44,13 @@
     "filePath": "SCHEMA_FILE_PATH"
   },
   "db": {
-    "host": "DB_HOST",
-    "port": "DB_PORT",
-    "db": "DB_INDEX"
+    "connection": {
+      "options": {
+        "host": "DB_HOST",
+        "port": "DB_PORT",
+        "db": "DB_INDEX",
+        "maxRetriesPerRequest": "DB_MAX_RETRIES_PER_REQUEST"
+      }
+    }
   }
 }

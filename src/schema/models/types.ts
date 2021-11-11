@@ -17,6 +17,7 @@ interface EnableExternalFetching extends BaseSchema {
   enableExternalFetch: 'yes';
   explodeKeys: string[];
   domainFieldsListKey: string;
+  defaultHashKey?: string;
 }
 
 export type Schema = DisableExternalFetching | EnableExternalFetching;
@@ -39,6 +40,7 @@ export const schemasTypeDefinition: JTDSchemaType<Schema[]> = {
           updatedAt: { type: 'timestamp' },
           ignoreKeys: { elements: { type: 'string' } },
           renameKeys: { values: { type: 'string' } },
+          defaultHashKey: { type: 'string' },
         },
       },
       no: {
