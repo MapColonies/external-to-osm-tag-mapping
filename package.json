@@ -76,7 +76,7 @@
     "@commitlint/config-conventional": "^10.0.0",
     "@map-colonies/eslint-config": "^3.0.1",
     "@map-colonies/standard-version-update-helm-version": "^2.0.1",
-    "@map-colonies/standard-version-update-openapi3-version": "0.0.1",
+    "@map-colonies/standard-version-update-openapi3-version": "0.0.2",
     "@redocly/openapi-cli": "^1.0.0-beta.28",
     "@types/compression": "^1.7.0",
     "@types/config": "0.0.36",
