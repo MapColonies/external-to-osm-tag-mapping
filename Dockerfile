@@ -1,6 +1,5 @@
 FROM node:12 as build
 
-
 WORKDIR /tmp/buildApp
 
 COPY ./package*.json ./
