@@ -36,7 +36,8 @@
         "port": 6379,
         "db": 0,
         "maxRetriesPerRequest": 1
-      }
+      },
+      "connectionString": "redis://localhost:6379/0?maxRetriesPerRequest=1&lazyConnect=true"
     }
   }
 }
