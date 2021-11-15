@@ -23,6 +23,9 @@ export const createConnection = async (dbConfig: RedisOptions | string): Promise
     await redis.connect();
     return redis;
   } catch (e) {
+    if (e instanceof TypeError) {
+      throw e;
+    }
     throw new Error('Redis connection failed');
   }
 };
