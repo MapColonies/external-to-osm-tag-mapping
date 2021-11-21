@@ -29,10 +29,6 @@ export const createConnection = async (dbConfig: RedisOptions | string): Promise
     if (e instanceof Object) {
       logger.error(e, 'Redis connection failed');
     }
-    if (e instanceof TypeError || e instanceof Error) {
-      //catch redis connection errors
-      process.exit(REDIS_CONNECTION_ERROR_CODE);
-    }
     throw e;
   }
 };
