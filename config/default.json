@@ -30,14 +30,9 @@
     "filePath": "schemas.json"
   },
   "db": {
-    "connection": {
-      "options": {
-        "host": "localhost",
-        "port": 6379,
-        "db": 0,
-        "maxRetriesPerRequest": 1
-      },
-      "connectionString": "redis://localhost:6379/0?maxRetriesPerRequest=1&lazyConnect=true"
-    }
+    "host": "localhost",
+    "port": 6379,
+    "db": 0,
+    "maxRetriesPerRequest": 1
   }
 }

@@ -1,5 +1,7 @@
+import { Logger } from '@map-colonies/js-logger';
 import Redis, { RedisOptions } from 'ioredis';
-import { HOSTNAME } from './constants';
+import { container } from 'tsyringe';
+import { HOSTNAME, REDIS_CONNECTION_ERROR_CODE, SERVICES } from './constants';
 
 export const createConnection = async (dbConfig: RedisOptions | string): Promise<Redis.Redis> => {
   try {
@@ -23,9 +25,14 @@ export const createConnection = async (dbConfig: RedisOptions | string): Promise
     await redis.connect();
     return redis;
   } catch (e) {
-    if (e instanceof TypeError) {
-      throw e;
+    const logger = container.resolve<Logger>(SERVICES.LOGGER);
+    if (e instanceof Object) {
+      logger.error(e, 'Redis connection failed');
     }
-    throw new Error('Redis connection failed');
+    if (e instanceof TypeError || e instanceof Error) {
+      //catch redis connection errors
+      process.exit(REDIS_CONNECTION_ERROR_CODE);
+    }
+    throw e;
   }
 };

@@ -14,7 +14,6 @@ interface WithExternalFetch extends SchemaMetadataBase {
   enableExternalFetch: true;
   explodeKeysSet: Set<string>;
   domainFieldsListKey: string;
-  defaultHashKey?: string;
 }
 
 interface WithoutExternalFetch extends SchemaMetadataBase {
@@ -47,7 +46,6 @@ export class SchemaManager {
           enableExternalFetch: true,
           explodeKeysSet: new Set(curr.explodeKeys),
           domainFieldsListKey: curr.domainFieldsListKey,
-          ...(curr.defaultHashKey !== undefined && { defaultHashKey: curr.defaultHashKey }),
         };
       }
       return { ...acc, [curr.name]: schemaMetadata };
@@ -70,11 +68,9 @@ export class SchemaManager {
     const domainFieldsKeys: string[] = []; //array to hold all domainFields keys for domain repo request
     const explodeKeys: string[] = []; ///array to hold all explode keys for domain repo request
     let domainFields: Set<string>;
-    let defaultHashKey: string | undefined;
 
     if (schema.enableExternalFetch) {
       domainFields = await this.domainFieldsRepo.getDomainFieldsList(schema.domainFieldsListKey);
-      defaultHashKey = schema.defaultHashKey;
     }
 
     let finalTagsObj: Tags = Object.entries(tags).reduce((acc, [key, value]) => {
@@ -107,11 +103,11 @@ export class SchemaManager {
     let explodeFieldsKeys = {};
 
     if (domainFieldsKeys.length > 0) {
-      mappedDomainFields = await this.getDomainFieldsCodedValues(domainFieldsKeys, defaultHashKey);
+      mappedDomainFields = await this.getDomainFieldsCodedValues(domainFieldsKeys);
     }
 
     if (explodeKeys.length > 0) {
-      explodeFieldsKeys = await this.getExplodeFields(explodeKeys, defaultHashKey);
+      explodeFieldsKeys = await this.getExplodeFields(explodeKeys);
     }
 
     finalTagsObj = { ...finalTagsObj, ...mappedDomainFields, ...explodeFieldsKeys };
@@ -130,33 +126,33 @@ export class SchemaManager {
     return `${[prefix, ...keys].join(SEPARATOR)}`;
   };
 
-  private readonly getDomainFieldsCodedValues = async (domainFieldsKeys: string[], hashKey: string | undefined): Promise<Tags> => {
+  private readonly getDomainFieldsCodedValues = async (domainFieldsKeys: string[]): Promise<Tags> => {
     let domainFieldsTags: Tags = {};
-    const fieldsCodedValuesRes = await this.domainFieldsRepo.getFields(domainFieldsKeys, hashKey);
+    const fieldsCodedValuesRes = await this.domainFieldsRepo.getFields(domainFieldsKeys);
 
     //for each domain field create new domain field tag with the correct value
     fieldsCodedValuesRes.forEach((codedValue, index) => {
       domainFieldsTags = {
         ...domainFieldsTags,
-        [domainFieldsKeys[index].split(':')[0]]: codedValue,
+        [domainFieldsKeys[index].split(':')[0] + '_DOMAIN']: codedValue,
       };
     });
 
     return domainFieldsTags;
   };
 
-  private readonly getExplodeFields = async (explodeKeys: string[], hashKey: string | undefined): Promise<Tags> => {
+  private readonly getExplodeFields = async (explodeKeys: string[]): Promise<Tags> => {
     let explodeFieldsTags: Tags = {};
-    const explodeRes = await this.domainFieldsRepo.getFields(explodeKeys, hashKey);
+    const explodeRes = await this.domainFieldsRepo.getFields(explodeKeys);
 
     //for each domain field parse for new Object.
-    explodeRes.forEach((json, index) => {
+    explodeRes.forEach((jsonString, index) => {
       try {
-        let explode = JSON.parse(json) as Record<string, string | number | null>;
-        explode = Object.entries(explode).reduce((acc, [key, value]) => {
-          return { ...acc, [key]: value };
+        const json = JSON.parse(jsonString) as Record<string, string | number | null>;
+        const explodedFields = Object.entries(json).reduce((acc, [key, value]) => {
+          return { ...acc, [key + '_DOMAIN']: value };
         }, {});
-        explodeFieldsTags = { ...explodeFieldsTags, ...explode };
+        explodeFieldsTags = { ...explodeFieldsTags, ...explodedFields };
       } catch (error) {
         throw new JSONSyntaxError(`failed to parse fetched json for value: ${explodeKeys[index]}`);
       }

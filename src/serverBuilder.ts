@@ -9,8 +9,8 @@ import { container, inject, injectable } from 'tsyringe';
 import { getErrorHandlerMiddleware } from '@map-colonies/error-express-handler';
 import { getTraceContexHeaderMiddleware } from '@map-colonies/telemetry';
 import { schemaRouterFactory } from './schema/routers/schemaRouter';
-import { IConfig } from './common/interfaces';
 import { SERVICES } from './common/constants';
+import { IConfig } from './common/interfaces';
 
 @injectable()
 export class ServerBuilder {

@@ -7,8 +7,7 @@
     "addSchemaPrefix": true,
     "domainFieldsListKey": "DISCRETE_ATTRIBUTES",
     "explodeKeys": ["explode1", "explode2"],
-    "renameKeys": { "externalKey1": "renamedExternalKey1" },
-    "defaultHashKey": "hkey1"
+    "renameKeys": { "externalKey1": "renamedExternalKey1" }
   },
   {
     "name": "system2",

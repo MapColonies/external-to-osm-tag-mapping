@@ -3,9 +3,10 @@ import { logMethod, Metrics } from '@map-colonies/telemetry';
 import { trace } from '@opentelemetry/api';
 import config from 'config';
 import { Redis, RedisOptions } from 'ioredis';
-import { container } from 'tsyringe';
-import { ON_SIGNAL, REDIS_CONNECTION_ERROR_CODE, REDIS_SYMBOL, SERVICES, SERVICE_NAME } from './common/constants';
+import { container, FactoryFunction } from 'tsyringe';
+import { DEFAULT_EXIT_CODE, ON_SIGNAL, REDIS_SYMBOL, SERVICES, SERVICE_NAME } from './common/constants';
 import { createConnection } from './common/db';
+import { IApplication } from './common/interfaces';
 import { tracing } from './common/tracing';
 import { IDOMAIN_FIELDS_REPO_SYMBOL } from './schema/DAL/domainFieldsRepository';
 import { RedisManager } from './schema/DAL/redisManager';
@@ -13,7 +14,21 @@ import { schemaSymbol } from './schema/models/types';
 import { getSchemas } from './schema/providers/schemaLoader';
 
 async function registerExternalValues(): Promise<void> {
+  // catch unhandled rejections and stop the service
+  process.on('unhandledRejection', (reason) => {
+    logger.fatal(reason ?? {}, `Unhandled rejection, exiting with code ${DEFAULT_EXIT_CODE}`);
+    return process.exit(DEFAULT_EXIT_CODE);
+  });
+
   container.register(SERVICES.CONFIG, { useValue: config });
+  if (config.has('app')) {
+    container.register(SERVICES.APPLICATION, { useValue: config.get<IApplication>('app') });
+  } else {
+    const factory: FactoryFunction<undefined> = () => {
+      return undefined;
+    };
+    container.register(SERVICES.APPLICATION, { useFactory: factory });
+  }
 
   const loggerConfig = config.get<LoggerOptions>('telemetry.logger');
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -35,16 +50,14 @@ async function registerExternalValues(): Promise<void> {
   let redisConnection: Redis;
 
   if (connectToExternal) {
-    if (config.has('db.connection.connectionString')) {
-      redisConnection = await createConnection(config.get<string>('db.connection.connectionString'));
-    } else {
-      redisConnection = await createConnection(config.get<RedisOptions>('db.connection.options'));
-    }
+    redisConnection = await createConnection(config.get<RedisOptions>('db'));
 
+    //handle redis connectivity errors
     redisConnection.on('error', (err) => {
-      logger.fatal(err, `Redis connection failure, exiting with code ${REDIS_CONNECTION_ERROR_CODE}`);
-      return process.exit(REDIS_CONNECTION_ERROR_CODE);
+      //don't throw errors here, allow them to be thrown when redis commands are sent
+      logger.fatal(err, 'Redis connection failed');
     });
+
     container.register(REDIS_SYMBOL, { useValue: redisConnection });
     container.register(IDOMAIN_FIELDS_REPO_SYMBOL, { useClass: RedisManager });
   } else {

@@ -1,9 +1,5 @@
 {
   "db": {
-    "connection": {
-      "options": {
-        "host": "redis"
-      }
-    }
+    "host": "localhost"
   }
 }

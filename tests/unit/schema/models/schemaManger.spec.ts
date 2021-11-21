@@ -13,16 +13,16 @@ const schemas: Schema[] = [
     domainFieldsListKey: 'DISCRETE_ATTRIBUTES',
     explodeKeys: ['explode1', 'explode2'],
     renameKeys: { externalKey1: 'renamedExternalKey1' },
-    defaultHashKey: 'hkey1',
   },
   {
     name: 'system2',
     createdAt: new Date(),
-    ignoreKeys: ['externalKey4'],
+    ignoreKeys: ['key1'],
     enableExternalFetch: 'yes',
     addSchemaPrefix: true,
     domainFieldsListKey: 'DISCRETE_ATTRIBUTES',
     explodeKeys: ['explode1', 'explode2'],
+    renameKeys: { rename1: 'renamedKey1' },
   },
   {
     name: 'system3',
@@ -167,9 +167,9 @@ describe('SchemaManager', () => {
         system1_externalKey3: 'val3',
         system1_externalKey4: 'val4',
         system1_explode1: 'val5',
-        system1_EXTERNALKEY2: 2,
-        system1_exploded1: 2,
-        system1_exploded2: 3,
+        system1_EXTERNALKEY2_DOMAIN: 2,
+        system1_exploded1_DOMAIN: 2,
+        system1_exploded2_DOMAIN: 3,
       };
 
       getDomainFieldsList.mockResolvedValue(new Set(['EXTERNALKEY2', 'EXTERNALKEY5']));
@@ -196,9 +196,9 @@ describe('SchemaManager', () => {
         system5_externalKey3: 'val3',
         system5_externalKey4: 'val4',
         system5_explode1: 'val5',
-        system5_EXTERNALKEY2: 2,
-        system5_exploded1: 2,
-        system5_exploded2: 3,
+        system5_EXTERNALKEY2_DOMAIN: 2,
+        system5_exploded1_DOMAIN: 2,
+        system5_exploded2_DOMAIN: 3,
       };
 
       getDomainFieldsList.mockResolvedValue(new Set(['EXTERNALKEY2', 'EXTERNALKEY5']));
@@ -217,11 +217,13 @@ describe('SchemaManager', () => {
         externalKey2: 'val2',
         externalKey1: 'val1',
         externalKey4: 'val4',
+        key1: 'val1',
       };
       const expected = {
         system2_externalKey1: 'val1',
         system2_externalKey2: 'val2',
         system2_externalKey3: 'val3',
+        system2_externalKey4: 'val4',
       };
 
       getDomainFieldsList.mockResolvedValue(new Set());
@@ -238,20 +240,25 @@ describe('SchemaManager', () => {
         externalKey2: 'val2',
         externalKey1: 'val1',
         externalKey4: 'val4',
+        key1: 'val1',
       };
       const expected = {
         system2_externalKey1: 'val1',
         system2_externalKey2: 'val2',
         system2_externalKey3: 'val3',
-        system2_EXTERNALKEY2: 2,
+        system2_externalKey4: 'val4',
+        system2_EXTERNALKEY2_DOMAIN: 2,
       };
 
       getDomainFieldsList.mockResolvedValue(new Set(['EXTERNALKEY2']));
       getFields.mockResolvedValue([2]);
+      const expectedKeysLength = Object.keys(expected).length;
 
       const res = await schemaManager.map(name, tags);
+      const keysLength = Object.keys(res).length;
 
       expect(res).toMatchObject(expected);
+      expect(keysLength).toBe(expectedKeysLength);
     });
 
     it('when system name not in schemas, should throw an error', async () => {

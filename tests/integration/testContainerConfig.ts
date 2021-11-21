@@ -1,20 +1,31 @@
-import { container } from 'tsyringe';
+import { container, FactoryFunction } from 'tsyringe';
 import config from 'config';
 import jsLogger from '@map-colonies/js-logger';
-import { RedisOptions } from 'ioredis';
+import { Redis, RedisOptions } from 'ioredis';
 import { getSchemas } from '../../src/schema/providers/schemaLoader';
 import { REDIS_SYMBOL, SERVICES } from '../../src/common/constants';
 import { schemaSymbol } from '../../src/schema/models/types';
 import { createConnection } from '../../src/common/db';
 import { IDOMAIN_FIELDS_REPO_SYMBOL } from '../../src/schema/DAL/domainFieldsRepository';
 import { RedisManager } from '../../src/schema/DAL/redisManager';
+import { IApplication } from '../../src/common/interfaces';
 
-async function registerTestValues(): Promise<void> {
+async function registerTestValues(options?: object): Promise<void> {
   container.register(SERVICES.CONFIG, { useValue: config });
   container.register(SERVICES.LOGGER, { useValue: jsLogger({ enabled: false }) });
 
+  if (config.has('app')) {
+    container.register(SERVICES.APPLICATION, { useValue: config.get<IApplication>('app') });
+  } else {
+    const factory: FactoryFunction<object | undefined> = () => {
+      return options;
+    };
+    container.register(SERVICES.APPLICATION, { useFactory: factory });
+  }
+
   const schemas = await getSchemas(container);
-  const redisConnection = await createConnection(config.get<RedisOptions>('db.connection.options'));
+
+  const redisConnection: Redis = await createConnection(config.get<RedisOptions>('db'));
 
   container.register(schemaSymbol, { useValue: schemas });
   container.register(REDIS_SYMBOL, { useValue: redisConnection });
