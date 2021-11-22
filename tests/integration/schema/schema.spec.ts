@@ -84,7 +84,7 @@ describe('schemas', function () {
       hashKeyOptions.forEach((hashKeyOption) => {
         describe(`${hashKeyOption.switch} hash keys`, () => {
           beforeAll(async function () {
-            redisConnection.disconnect();
+            await redisConnection.quit();
             container.clearInstances();
             if (hashKeyOption.hashKey !== undefined) {
               await registerTestValues({ hashKey: hashKeyOption.hashKey });
@@ -364,7 +364,7 @@ describe('schemas', function () {
       hashKeyOptions.forEach((hashKeyOption) => {
         describe(`${hashKeyOption.switch} hash keys`, () => {
           beforeAll(async function () {
-            redisConnection.disconnect();
+            await redisConnection.quit();
             container.clearInstances();
             if (hashKeyOption.hashKey !== undefined) {
               await registerTestValues({ hashKey: hashKeyOption.hashKey });
