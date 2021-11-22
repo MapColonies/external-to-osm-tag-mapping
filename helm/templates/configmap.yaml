@@ -20,5 +20,13 @@ data:
   TELEMETRY_METRICS_URL: {{ $metricsUrl }}
   {{- end }}
   SCHEMA_FILE_PATH: /mnt/schemas/schema.json
-  DB_CONNECTION_STRING: redis://user:password@hostname:6379/0?maxRetriesPerRequest=1&lazyConnect=false
+  {{- with .Values.dbConfig }}
+  DB_HOST: {{ .host | quote }}
+  DB_PORT: {{ .port | quote }}
+  DB_INDEX: {{ .index | quote }}
+  DB_MAX_RETRIES_PER_REQUEST: {{ .maxRetriesPerRequest | quote }}
+  {{- end }}
+  {{- if .Values.app.enabled }}
+  DB_HASH_KEY: {{ .Values.app.hashKey | quote }}
+  {{- end }}
 {{- end }}

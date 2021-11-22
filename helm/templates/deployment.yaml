@@ -44,6 +44,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ $releaseName }}-{{ $chartName }}-configmap
+            - secretRef:
+                name: {{ $releaseName }}-{{ $chartName }}-secret
           volumeMounts:
             - name: schema
               mountPath: /mnt/schemas

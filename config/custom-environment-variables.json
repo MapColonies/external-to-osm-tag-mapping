@@ -45,8 +45,16 @@
   },
   "db": {
     "host": "DB_HOST",
-    "port": "DB_PORT",
-    "db": "DB_INDEX",
+    "port": {
+      "__name": "DB_PORT",
+      "__format": "number"
+    },
+    "index": {
+      "__name": "DB_INDEX",
+      "__format": "number"
+    },
+    "username": "DB_USERNAME",
+    "password": "DB_PASSWORD",
     "maxRetriesPerRequest": {
       "__name": "DB_MAX_RETRIES_PER_REQUEST",
       "__format": "number"

@@ -52,6 +52,18 @@ env:
     enabled: false
     url: http://localhost:55681/v1/metrics
 
+dbConfig:
+  host: redis
+  port: 6379
+  index: 0
+  username: '' #pass '' (empty string) when username is not needed
+  password: '' #pass '' (empty string) when password is not needed
+  maxRetriesPerRequest: '0'
+
+app:
+  enabled: false
+  hashKey: system1
+
 resources:
   enabled: false
   value:
