@@ -150,7 +150,7 @@ export class SchemaManager {
       try {
         const json = JSON.parse(jsonString) as Record<string, string | number | null>;
         const explodedFields = Object.entries(json).reduce((acc, [key, value]) => {
-          return { ...acc, [key + '_DOMAIN']: value };
+          return { ...acc, [key + '_DOMAIN']: value?.toString() };
         }, {});
         explodeFieldsTags = { ...explodeFieldsTags, ...explodedFields };
       } catch (error) {
