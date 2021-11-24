@@ -49,7 +49,7 @@
       "__name": "DB_PORT",
       "__format": "number"
     },
-    "index": {
+    "db": {
       "__name": "DB_INDEX",
       "__format": "number"
     },

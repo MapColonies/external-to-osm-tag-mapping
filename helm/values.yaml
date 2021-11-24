@@ -58,7 +58,7 @@ dbConfig:
   index: 0
   username: '' #pass '' (empty string) when username is not needed
   password: '' #pass '' (empty string) when password is not needed
-  maxRetriesPerRequest: '0'
+  maxRetriesPerRequest: 0
 
 app:
   enabled: false
