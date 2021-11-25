@@ -214,8 +214,8 @@ describe('schemas', function () {
                 system2_externalKey2: 'val2',
                 system2_externalKey3: 'val3',
                 system2_explode1: 'val4',
-                system2_exploded1_DOMAIN: 2,
-                system2_exploded2_DOMAIN: 3,
+                system2_exploded1_DOMAIN: '2',
+                system2_exploded2_DOMAIN: '3',
               },
             };
 
@@ -257,13 +257,14 @@ describe('schemas', function () {
             expect(mappedTags).toMatchObject(expected);
           });
 
-          it('should return 200 status code and map the tags without the ignored key, with exploded fields, with domain fields, with renamed key', async function () {
+          it('should return 200 status code and map the tags without the ignored key, with exploded fields, with domain fields, with renamed key, with values containing non-ascii characters', async function () {
             const tags = {
               properties: {
-                externalKey3: 'val3',
+                externalKey3: 'שלום שלום/מנכ"ל',
                 externalKey2: 'val2',
                 externalKey1: 'val1',
                 explode1: 'val4',
+                explode2: 'שלום שלום/מנכ"ל',
                 key1: 'val4',
                 rename1: 'val1',
               },
@@ -273,21 +274,29 @@ describe('schemas', function () {
                 system2_externalKey2: 'val2',
                 system2_EXTERNALKEY2_DOMAIN: '2',
                 system2_externalKey1: 'val1',
-                system2_externalKey3: 'val3',
+                system2_externalKey3: 'שלום שלום/מנכ"ל',
+                system2_EXTERNALKEY3_DOMAIN: '2',
                 system2_explode1: 'val4',
-                system2_exploded1_DOMAIN: 2,
-                system2_exploded2_DOMAIN: 3,
-                system2_renamedKey1: 'val1',
+                system2_explode2: 'שלום שלום/מנכ"ל',
+                system2_exploded1_DOMAIN: '2',
+                system2_exploded1_heb_DOMAIN: '2',
+                system2_exploded2_DOMAIN: '3',
+                system2_exploded2_heb_DOMAIN: '3',
+                system2_renamedKey1: 'val1'
               },
             };
 
-            await redisConnection.lpush('DISCRETE_ATTRIBUTES', 'EXTERNALKEY2');
+            await redisConnection.lpush('DISCRETE_ATTRIBUTES', 'EXTERNALKEY2', 'EXTERNALKEY3');
             if (hashKeyOption.hashKey !== undefined) {
               await redisConnection.hset(hashKeyOption.hashKey, 'EXTERNALKEY2:val2', '2');
+              await redisConnection.hset(hashKeyOption.hashKey, 'EXTERNALKEY3:שלום שלום/מנכ"ל', '2');
               await redisConnection.hset(hashKeyOption.hashKey, 'val4', '{ "exploded1": 2, "exploded2": 3 }');
+              await redisConnection.hset(hashKeyOption.hashKey, 'שלום שלום/מנכ"ל', '{ "exploded1_heb": 2, "exploded2_heb": 3 }');
             } else {
               await redisConnection.set('EXTERNALKEY2:val2', '2');
+              await redisConnection.set('EXTERNALKEY3:שלום שלום/מנכ"ל', '2');
               await redisConnection.set('val4', '{ "exploded1": 2, "exploded2": 3 }');
+              await redisConnection.set('שלום שלום/מנכ"ל', '{ "exploded1_heb": 2, "exploded2_heb": 3 }');
             }
 
             const response = await requestSender.map('system2', tags);

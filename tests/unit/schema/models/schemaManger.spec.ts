@@ -167,13 +167,13 @@ describe('SchemaManager', () => {
         system1_externalKey3: 'val3',
         system1_externalKey4: 'val4',
         system1_explode1: 'val5',
-        system1_EXTERNALKEY2_DOMAIN: 2,
-        system1_exploded1_DOMAIN: 2,
-        system1_exploded2_DOMAIN: 3,
+        system1_EXTERNALKEY2_DOMAIN: '2',
+        system1_exploded1_DOMAIN: '2',
+        system1_exploded2_DOMAIN: '3',
       };
 
       getDomainFieldsList.mockResolvedValue(new Set(['EXTERNALKEY2', 'EXTERNALKEY5']));
-      getFields.mockReturnValueOnce([2]);
+      getFields.mockReturnValueOnce(['2']);
       getFields.mockReturnValueOnce(['{ "exploded1": 2, "exploded2": 3 }']);
 
       const res = await schemaManager.map(name, tags);
@@ -196,13 +196,13 @@ describe('SchemaManager', () => {
         system5_externalKey3: 'val3',
         system5_externalKey4: 'val4',
         system5_explode1: 'val5',
-        system5_EXTERNALKEY2_DOMAIN: 2,
-        system5_exploded1_DOMAIN: 2,
-        system5_exploded2_DOMAIN: 3,
+        system5_EXTERNALKEY2_DOMAIN: '2',
+        system5_exploded1_DOMAIN: '2',
+        system5_exploded2_DOMAIN: '3',
       };
 
       getDomainFieldsList.mockResolvedValue(new Set(['EXTERNALKEY2', 'EXTERNALKEY5']));
-      getFields.mockReturnValueOnce([2]);
+      getFields.mockReturnValueOnce(['2']);
       getFields.mockReturnValueOnce(['{ "exploded1": 2, "exploded2": 3 }']);
 
       const res = await schemaManager.map(name, tags);
@@ -247,11 +247,11 @@ describe('SchemaManager', () => {
         system2_externalKey2: 'val2',
         system2_externalKey3: 'val3',
         system2_externalKey4: 'val4',
-        system2_EXTERNALKEY2_DOMAIN: 2,
+        system2_EXTERNALKEY2_DOMAIN: '2',
       };
 
       getDomainFieldsList.mockResolvedValue(new Set(['EXTERNALKEY2']));
-      getFields.mockResolvedValue([2]);
+      getFields.mockResolvedValue(['2']);
       const expectedKeysLength = Object.keys(expected).length;
 
       const res = await schemaManager.map(name, tags);
@@ -259,6 +259,37 @@ describe('SchemaManager', () => {
 
       expect(res).toMatchObject(expected);
       expect(keysLength).toBe(expectedKeysLength);
+    });
+
+    it('should return mapped tags with system name prefix & domain key & explode key & values with non-ascii characters', async () => {
+      const name = 'system5';
+      const tags = {
+        externalKey3: 'val3',
+        externalKey2: 'val2',
+        externalKey1: 'בדיקה',
+        externalKey4: 'val4',
+        externalKey5: 'שלום שלום/מנכ"ל',
+        explode1: 'שלום\\עולם',
+      };
+      const expected = {
+        system5_renamedExternalKey1: 'בדיקה',
+        system5_externalKey2: 'val2',
+        system5_externalKey3: 'val3',
+        system5_externalKey4: 'val4',
+        system5_externalKey5: 'שלום שלום/מנכ"ל',
+        system5_explode1: 'שלום\\עולם',
+        system5_EXTERNALKEY2_DOMAIN: '2',
+        system5_EXTERNALKEY5_DOMAIN: 'בדיקה',
+        system5_exploded1_DOMAIN: '2',
+        system5_exploded2_DOMAIN: '3',
+      };
+
+      getDomainFieldsList.mockResolvedValue(new Set(['EXTERNALKEY2', 'EXTERNALKEY5']));
+      getFields.mockReturnValueOnce(['2', 'בדיקה']);
+      getFields.mockReturnValueOnce(['{ "exploded1": "2", "exploded2": "3" }']);
+      const res = await schemaManager.map(name, tags);
+
+      expect(res).toMatchObject(expected);
     });
 
     it('when system name not in schemas, should throw an error', async () => {
@@ -276,7 +307,7 @@ describe('SchemaManager', () => {
         explode1: 'val1',
       };
 
-      getFields.mockResolvedValue(['{ "exploded1": 2 "exploded2": 3 }']);
+      getFields.mockResolvedValue(['{"exploded1": "2" "exploded2": "3"}']);
 
       const res = schemaManager.map(name, tags);
 
