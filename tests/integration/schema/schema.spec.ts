@@ -282,7 +282,7 @@ describe('schemas', function () {
                 system2_exploded1_heb_DOMAIN: '2',
                 system2_exploded2_DOMAIN: '3',
                 system2_exploded2_heb_DOMAIN: '3',
-                system2_renamedKey1: 'val1'
+                system2_renamedKey1: 'val1',
               },
             };
 
