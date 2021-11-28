@@ -34,5 +34,10 @@
     "port": 6379,
     "db": 0,
     "maxRetriesPerRequest": 1
+  },
+  "application": {
+    "hashKey": {
+      "enabled": false
+    }
   }
 }

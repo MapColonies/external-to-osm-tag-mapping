@@ -60,9 +60,13 @@
       "__format": "number"
     }
   },
-  "app": {
-    "dataAccessLayer": {
-      "hashKey": "DB_HASH_KEY"
+  "application": {
+    "hashKey": {
+      "value": "APP_HASH_KEY",
+      "enabled": {
+        "__name": "APP_HASH_KEY_ENABLED",
+        "__format": "boolean"
+      }
     }
   }
 }

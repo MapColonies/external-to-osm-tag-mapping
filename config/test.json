@@ -1,5 +1,6 @@
 {
-  "db": {
-    "host": "redis"
-  }
+    "schema": {
+        "provider": "file",
+        "filePath": "schemas.json"
+      }
 }

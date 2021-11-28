@@ -10,17 +10,17 @@ import { IDOMAIN_FIELDS_REPO_SYMBOL } from '../../src/schema/DAL/domainFieldsRep
 import { RedisManager } from '../../src/schema/DAL/redisManager';
 import { IApplication } from '../../src/common/interfaces';
 
-async function registerTestValues(options?: object): Promise<void> {
+async function registerTestValues(appConfig?: IApplication): Promise<void> {
   container.register(SERVICES.CONFIG, { useValue: config });
   container.register(SERVICES.LOGGER, { useValue: jsLogger({ enabled: false }) });
 
-  if (config.has('app')) {
-    container.register(SERVICES.APPLICATION, { useValue: config.get<IApplication>('app') });
-  } else {
+  if (appConfig) {
     const factory: FactoryFunction<object | undefined> = () => {
-      return options;
+      return appConfig;
     };
     container.register(SERVICES.APPLICATION, { useFactory: factory });
+  } else {
+    container.register(SERVICES.APPLICATION, { useValue: config.get<IApplication>('application') });
   }
 
   const schemas = await getSchemas(container);

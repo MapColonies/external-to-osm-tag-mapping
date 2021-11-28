@@ -1,26 +1,27 @@
-import { Logger } from '@map-colonies/js-logger';
 import Redis, { RedisOptions } from 'ioredis';
-import { container } from 'tsyringe';
-import { HOSTNAME, SERVICES } from './constants';
+import { HOSTNAME } from './constants';
+
+let redis: Redis.Redis;
+
+const retryFunction =  (times: number): number => {
+  const delay = Math.min(times * 50, 2000);
+  return delay;
+}
 
 export const createConnection = async (redisOptions: RedisOptions): Promise<Redis.Redis> => {
   try {
     redisOptions = {
       ...redisOptions,
-      retryStrategy: (): null => null,
-      reconnectOnError: (): 1 => 1,
+      retryStrategy: retryFunction,
       lazyConnect: true,
       connectionName: HOSTNAME,
     };
-    const redis: Redis.Redis = new Redis(redisOptions);
 
+    redis = new Redis(redisOptions);
     await redis.connect();
     return redis;
-  } catch (e) {
-    const logger = container.resolve<Logger>(SERVICES.LOGGER);
-    if (e instanceof Object) {
-      logger.error(e, 'Redis connection failed');
-    }
-    throw e;
+  } catch (err) {
+    redis.disconnect();
+    throw new Error(`Redis connection failed with the following error: ${err}`);
   }
 };

@@ -26,7 +26,8 @@ data:
   DB_INDEX: {{ .index | quote }}
   DB_MAX_RETRIES_PER_REQUEST: {{ .maxRetriesPerRequest | quote }}
   {{- end }}
-  {{- if .Values.app.enabled }}
-  DB_HASH_KEY: {{ .Values.app.hashKey | quote }}
+  {{- if .Values.env.hashKey.enabled }}
+  APP_HASH_KEY_ENABLED: 'true'
+  APP_HASH_KEY: {{ .Values.env.hashKey.value | quote }}
   {{- end }}
 {{- end }}

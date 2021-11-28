@@ -9,6 +9,51 @@ environment: development
 initialDelaySeconds: 60
 replicaCount: 1
 
+cloudProvider:
+  dockerRegistryUrl: my-registry-url.io
+  flavor: openshift
+
+image:
+  repository: external-to-osm-tag-mapping
+  # Overrides the image tag whose default is the chart appVersion.
+  # tag: "v1.0.0"
+
+resources:
+  enabled: false
+  value:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+env:
+  port: 8080
+  targetPort: 8080
+  protocol: TCP
+  logLevel: info
+  logPrettyPrintEnabled: false
+  responseCompressionEnabled: true
+  requestPayloadLimit: 1mb
+  tracing:
+    enabled: false
+    url: http://localhost:55681/v1/trace
+  metrics:
+    enabled: false
+    url: http://localhost:55681/v1/metrics
+  hashKey:
+    enabled: false
+    value: hashKeyValue
+
+dbConfig:
+  host: redis
+  port: 6379
+  index: 0
+  username: '' #pass '' (empty string) when username is not needed
+  password: '' #pass '' (empty string) when password is not needed
+  maxRetriesPerRequest: 0
+
 schema: |-
   [
     {
@@ -29,51 +74,9 @@ schema: |-
     }
   ]
 
-cloudProvider:
-  dockerRegistryUrl: my-registry-url.io
-  flavor: openshift
-
-image:
-  repository: external-to-osm-tag-mapping
-  tag: 'latest'
-
-env:
-  port: 8080
-  targetPort: 8080
-  protocol: TCP
-  logLevel: info
-  logPrettyPrintEnabled: false
-  responseCompressionEnabled: true
-  requestPayloadLimit: 1mb
-  tracing:
-    enabled: false
-    url: http://localhost:55681/v1/trace
-  metrics:
-    enabled: false
-    url: http://localhost:55681/v1/metrics
-
-dbConfig:
-  host: redis
-  port: 6379
-  index: 0
-  username: '' #pass '' (empty string) when username is not needed
-  password: '' #pass '' (empty string) when password is not needed
-  maxRetriesPerRequest: 0
-
-app:
-  enabled: false
-  hashKey: system1
-
-resources:
-  enabled: false
-  value:
-    limits:
-      cpu: 100m
-      memory: 128Mi
-    requests:
-      cpu: 100m
-      memory: 128Mi
-
 route:
   enabled: true
   path: /
+  timeout:
+    enabled: false # defaults to 30s by openshift
+    duration: 60s # supported units (us, ms, s, m, h, d)
