@@ -1,12 +1,14 @@
 import Redis, { RedisOptions } from 'ioredis';
 import { HOSTNAME } from './constants';
 
+const RETRY_DELAY_INCREASE = 50;
+const RETRY_DELAY_TOP = 2000;
 let redis: Redis.Redis;
 
-const retryFunction =  (times: number): number => {
-  const delay = Math.min(times * 50, 2000);
+const retryFunction = (times: number): number => {
+  const delay = Math.min(times * RETRY_DELAY_INCREASE, RETRY_DELAY_TOP);
   return delay;
-}
+};
 
 export const createConnection = async (redisOptions: RedisOptions): Promise<Redis.Redis> => {
   try {
@@ -22,6 +24,10 @@ export const createConnection = async (redisOptions: RedisOptions): Promise<Redi
     return redis;
   } catch (err) {
     redis.disconnect();
-    throw new Error(`Redis connection failed with the following error: ${err}`);
+    let errorMessage = 'Redis connection failed';
+    if (err instanceof Error) {
+      errorMessage += ` with the following error: ${err.message}`;
+    }
+    throw new Error(errorMessage);
   }
 };

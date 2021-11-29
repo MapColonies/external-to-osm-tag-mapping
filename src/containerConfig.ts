@@ -1,5 +1,5 @@
 import jsLogger, { LoggerOptions } from '@map-colonies/js-logger';
-import { logMethod, Metrics } from '@map-colonies/telemetry';
+import { logMethod } from '@map-colonies/telemetry';
 import { trace } from '@opentelemetry/api';
 import config from 'config';
 import { Redis, RedisOptions } from 'ioredis';
@@ -33,26 +33,25 @@ async function registerExternalValues(): Promise<void> {
     return schema.enableExternalFetch === 'yes';
   });
 
-  const metrics = new Metrics(SERVICE_NAME);
-  const meter = metrics.start();
-  container.register(SERVICES.METER, { useValue: meter });
-
-  let redisConnection: Redis;
+  let redisConnection: Redis | undefined;
 
   container.register(ON_SIGNAL, {
     useValue: async (): Promise<void> => {
-      if (redisConnection !== undefined) {
+      const promises: Promise<void>[] = [tracing.stop()];
+      if (connectToExternal && redisConnection !== undefined) {
         redisConnection.disconnect();
+
+        const promisifyQuit = new Promise<void>((resolve) => {
+          redisConnection = redisConnection as Redis;
+          redisConnection.once('end', () => {
+            resolve();
+          });
+          void redisConnection.quit();
+        });
+
+        promises.push(promisifyQuit);
       }
-
-      const promisifyQuit = new Promise<void>((resolve, reject) => {
-        redisConnection.once('end', () => {
-          resolve()
-        })
-        redisConnection.quit();
-      })
-
-      await Promise.all([metrics.stop, tracing.stop, (connectToExternal && redisConnection) ? promisifyQuit : Promise.resolve()]);
+      await Promise.all(promises);
     },
   });
 
@@ -63,12 +62,12 @@ async function registerExternalValues(): Promise<void> {
       logger.info(`redis client is connected.`);
     });
 
-    redisConnection.on('error', (err) => {
-      logger.error(`redis client got the following error: ${err}`);
+    redisConnection.on('error', (err: Error) => {
+      logger.error(`redis client got the following error: ${err.message}`);
     });
 
-    redisConnection.on('reconnecting', (delay) => {
-      logger.info(`redis client next reconnection attemp in ${delay}ms`);
+    redisConnection.on('reconnecting', (delay: number) => {
+      logger.info(`redis client reconnecting, next reconnection attemp in ${delay}ms`);
     });
 
     container.register(REDIS_SYMBOL, { useValue: redisConnection });
@@ -79,7 +78,7 @@ async function registerExternalValues(): Promise<void> {
 
   container.register(SERVICES.HEALTHCHECK, {
     useValue: async (): Promise<void> => {
-      await redisConnection.ping();
+      await (redisConnection as Redis).ping();
     },
   });
 }

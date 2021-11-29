@@ -23,7 +23,7 @@ describe('schemas', function () {
 
   beforeEach(async function () {
     await redisConnection.flushall();
-  })
+  });
 
   describe('Happy Path', function () {
     describe('GET /schemas', function () {
@@ -102,19 +102,13 @@ describe('schemas', function () {
         expect(mappedTags).toBeDefined();
         expect(mappedTags).toMatchObject(expected);
       });
-    });
-
-    describe('POST /schemas/:name/map', () => {
-      afterEach(async function () {
-        await redisConnection.flushall();
-      });
 
       applicationConfigs.forEach((appConfig) => {
         describe(`${appConfig.hashKey.enabled ? 'with' : 'without'} hash keys`, () => {
           beforeAll(async function () {
             await redisConnection.quit();
             container.clearInstances();
-            await registerTestValues(appConfig)
+            await registerTestValues(appConfig);
             requestSender.init();
             redisConnection = container.resolve<Redis>(REDIS_SYMBOL);
             await redisConnection.flushall();
@@ -320,7 +314,7 @@ describe('schemas', function () {
 
             await redisConnection.lpush('DISCRETE_ATTRIBUTES', 'EXTERNALKEY2', 'EXTERNALKEY3');
             if (appConfig.hashKey.enabled) {
-              const { value } = appConfig.hashKey
+              const { value } = appConfig.hashKey;
               await redisConnection.hset(value as string, 'EXTERNALKEY2:val2', '2');
               await redisConnection.hset(value as string, 'EXTERNALKEY3:שלום שלום/מנכ"ל', '2');
               await redisConnection.hset(value as string, 'val4', '{ "exploded1": 2, "exploded2": 3 }');
@@ -382,7 +376,7 @@ describe('schemas', function () {
             externalKey3: 'val3',
             externalKey2: 'val2',
             externalKey1: 'val1',
-            explode1: 'val1'
+            explode1: 'val1',
           },
         };
 

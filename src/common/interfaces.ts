@@ -5,9 +5,9 @@ export interface IConfig {
 
 export interface IApplication {
   hashKey: {
-    value?: string,
-    enabled: boolean
-  }
+    value?: string;
+    enabled: boolean;
+  };
 }
 
 export interface Constructor<T> {

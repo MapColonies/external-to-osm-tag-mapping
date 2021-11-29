@@ -1,6 +1,6 @@
 {
-    "schema": {
-        "provider": "file",
-        "filePath": "schemas.json"
-      }
+  "schema": {
+    "provider": "file",
+    "filePath": "schemas.json"
+  }
 }
