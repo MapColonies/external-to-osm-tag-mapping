@@ -78,7 +78,10 @@ async function registerExternalValues(): Promise<void> {
 
   container.register(SERVICES.HEALTHCHECK, {
     useValue: async (): Promise<void> => {
-      await (redisConnection as Redis).ping();
+      if (redisConnection === undefined) {
+        return Promise.resolve();
+      }
+      await redisConnection.ping();
     },
   });
 }
