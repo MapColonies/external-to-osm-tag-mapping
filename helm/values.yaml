@@ -50,8 +50,8 @@ dbConfig:
   host: redis
   port: 6379
   index: 0
-  username: '' #pass '' (empty string) when username is not needed
-  password: '' #pass '' (empty string) when password is not needed
+  # username: '' #pass '' (empty string) when username is not needed
+  # password: '' #pass '' (empty string) when password is not needed
   maxRetriesPerRequest: 0
 
 schema: |-
