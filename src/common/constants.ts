@@ -9,7 +9,6 @@ function readPackageJson(): PackageJson {
 export const SERVICE_NAME = readPackageJson().name ?? 'unknown_service';
 export const HOSTNAME = hostname();
 export const DEFAULT_SERVER_PORT = 80;
-export const REDIS_CONNECTION_ERROR_CODE = 1337;
 
 export const IGNORED_OUTGOING_TRACE_ROUTES = [/^.*\/v1\/metrics.*$/];
 export const IGNORED_INCOMING_TRACE_ROUTES = [/^.*\/docs.*$/];
@@ -21,6 +20,7 @@ export const SERVICES: Record<string, symbol> = {
   CONFIG: Symbol('CONFIG'),
   TRACER: Symbol('TRACER'),
   METER: Symbol('METER'),
+  APPLICATION: Symbol('APPLICATION'),
 };
 /* eslint-enable @typescript-eslint/naming-convention */
 

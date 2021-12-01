@@ -30,13 +30,14 @@
     "filePath": "schemas.json"
   },
   "db": {
-    "connection": {
-      "options": {
-        "host": "localhost",
-        "port": 6379,
-        "db": 0,
-        "maxRetriesPerRequest": 1
-      }
+    "host": "localhost",
+    "port": 6379,
+    "db": 0,
+    "maxRetriesPerRequest": 1
+  },
+  "application": {
+    "hashKey": {
+      "enabled": false
     }
   }
 }

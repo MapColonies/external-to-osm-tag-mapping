@@ -5,7 +5,7 @@ import { HttpError } from '@map-colonies/error-express-handler';
 import { Feature, Geometry } from 'geojson';
 import { Logger } from '@map-colonies/js-logger';
 import { SERVICES } from '../../common/constants';
-import { SchemaManager, SchemaNotFoundError } from '../models/schemaManager';
+import { JSONSyntaxError, SchemaManager, SchemaNotFoundError } from '../models/schemaManager';
 import { Tags } from '../providers/fileProvider/fileProvider';
 import { Schema } from '../models/types';
 import { KeyNotFoundError } from '../DAL/errors';
@@ -34,9 +34,9 @@ export class SchemaController {
     const schema = this.manager.getSchema(name);
 
     if (!schema) {
-      const err: HttpError = new Error(`system ${name} not found`);
-      err.statusCode = httpStatus.NOT_FOUND;
-      return next(err);
+      const error: HttpError = new Error(`system ${name} not found`);
+      error.statusCode = httpStatus.NOT_FOUND;
+      return next(error);
     }
     return res.status(httpStatus.OK).json(schema);
   };
@@ -48,20 +48,14 @@ export class SchemaController {
 
     try {
       response.properties = await this.manager.map(name, tags);
-    } catch (e) {
-      if (!(e instanceof Error)) {
-        return next(new Error('Unexpected object thrown'));
+    } catch (error) {
+      if (error instanceof SchemaNotFoundError) {
+        (error as HttpError).statusCode = httpStatus.NOT_FOUND;
       }
-      this.logger.error({}, e.message);
-      const httpError: HttpError = new Error(e.message);
-      httpError.statusCode = httpStatus.INTERNAL_SERVER_ERROR;
-      if (e instanceof SchemaNotFoundError) {
-        httpError.statusCode = httpStatus.NOT_FOUND;
+      if (error instanceof KeyNotFoundError || error instanceof JSONSyntaxError) {
+        (error as HttpError).statusCode = httpStatus.UNPROCESSABLE_ENTITY;
       }
-      if (e instanceof KeyNotFoundError) {
-        httpError.statusCode = httpStatus.UNPROCESSABLE_ENTITY;
-      }
-      return next(httpError);
+      return next(error);
     }
     return res.status(httpStatus.OK).json(response);
   };

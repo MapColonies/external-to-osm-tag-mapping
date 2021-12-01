@@ -1,11 +1,12 @@
 import jsLogger, { LoggerOptions } from '@map-colonies/js-logger';
-import { logMethod, Metrics } from '@map-colonies/telemetry';
+import { logMethod } from '@map-colonies/telemetry';
 import { trace } from '@opentelemetry/api';
 import config from 'config';
 import { Redis, RedisOptions } from 'ioredis';
 import { container } from 'tsyringe';
-import { ON_SIGNAL, REDIS_CONNECTION_ERROR_CODE, REDIS_SYMBOL, SERVICES, SERVICE_NAME } from './common/constants';
+import { ON_SIGNAL, REDIS_SYMBOL, SERVICES, SERVICE_NAME } from './common/constants';
 import { createConnection } from './common/db';
+import { IApplication } from './common/interfaces';
 import { tracing } from './common/tracing';
 import { IDOMAIN_FIELDS_REPO_SYMBOL } from './schema/DAL/domainFieldsRepository';
 import { RedisManager } from './schema/DAL/redisManager';
@@ -14,16 +15,16 @@ import { getSchemas } from './schema/providers/schemaLoader';
 
 async function registerExternalValues(): Promise<void> {
   container.register(SERVICES.CONFIG, { useValue: config });
-
+  container.register(SERVICES.APPLICATION, { useValue: config.get<IApplication>('application') });
   const loggerConfig = config.get<LoggerOptions>('telemetry.logger');
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-expect-error the signature is wrong
-  const logger = jsLogger({ ...loggerConfig, prettyPrint: loggerConfig.prettyPrint, hooks: { logMethod } });
+  const logger = jsLogger({ ...loggerConfig, hooks: { logMethod } });
+  container.register(SERVICES.LOGGER, { useValue: logger });
 
   tracing.start();
   const tracer = trace.getTracer(SERVICE_NAME);
   container.register(SERVICES.TRACER, { useValue: tracer });
-  container.register(SERVICES.LOGGER, { useValue: logger });
 
   const schemas = await getSchemas(container);
   container.register(schemaSymbol, { useValue: schemas });
@@ -32,32 +33,54 @@ async function registerExternalValues(): Promise<void> {
     return schema.enableExternalFetch === 'yes';
   });
 
-  let redisConnection: Redis;
+  let redisConnection: Redis | undefined;
+
+  container.register(ON_SIGNAL, {
+    useValue: async (): Promise<void> => {
+      const promises: Promise<void>[] = [tracing.stop()];
+      if (connectToExternal && redisConnection !== undefined) {
+        redisConnection.disconnect();
+
+        const promisifyQuit = new Promise<void>((resolve) => {
+          redisConnection = redisConnection as Redis;
+          redisConnection.once('end', () => {
+            resolve();
+          });
+          void redisConnection.quit();
+        });
+
+        promises.push(promisifyQuit);
+      }
+      await Promise.all(promises);
+    },
+  });
 
   if (connectToExternal) {
-    redisConnection = await createConnection(config.get<RedisOptions>('db.connection.options'));
-    redisConnection.on('error', (err) => {
-      logger.fatal(err, `Redis connection failure, exiting with code ${REDIS_CONNECTION_ERROR_CODE}`);
-      return process.exit(REDIS_CONNECTION_ERROR_CODE);
+    redisConnection = await createConnection(config.get<RedisOptions>('db'));
+
+    redisConnection.on('connect', () => {
+      logger.info(`redis client is connected.`);
     });
+
+    redisConnection.on('error', (err: Error) => {
+      logger.error(`redis client got the following error: ${err.message}`);
+    });
+
+    redisConnection.on('reconnecting', (delay: number) => {
+      logger.info(`redis client reconnecting, next reconnection attemp in ${delay}ms`);
+    });
+
     container.register(REDIS_SYMBOL, { useValue: redisConnection });
     container.register(IDOMAIN_FIELDS_REPO_SYMBOL, { useClass: RedisManager });
   } else {
     container.register(IDOMAIN_FIELDS_REPO_SYMBOL, { useValue: {} });
   }
 
-  const metrics = new Metrics(SERVICE_NAME);
-  const meter = metrics.start();
-  container.register(SERVICES.METER, { useValue: meter });
-
-  container.register(ON_SIGNAL, {
-    useValue: async (): Promise<void> => {
-      await Promise.all([tracing.stop(), metrics.stop(), connectToExternal ? redisConnection.disconnect() : Promise.resolve()]);
-    },
-  });
-
   container.register(SERVICES.HEALTHCHECK, {
     useValue: async (): Promise<void> => {
+      if (redisConnection === undefined) {
+        return Promise.resolve();
+      }
       await redisConnection.ping();
     },
   });

@@ -2,6 +2,7 @@
 {{- $chartName := include "external-to-osm-tag-mapping.name" . -}}
 {{- $cloudProviderFlavor := include "external-to-osm-tag-mapping.cloudProviderFlavor" . -}}
 {{- $cloudProviderDockerRegistryUrl := include "external-to-osm-tag-mapping.cloudProviderDockerRegistryUrl" . -}}
+{{- $tag := include "external-to-osm-tag-mapping.tag" . -}}
 {{- if .Values.enabled -}}
 apiVersion: apps/v1
 kind: Deployment
@@ -33,9 +34,9 @@ spec:
         - name: {{ $releaseName }}-{{ $chartName }}-deployment
           {{- with .Values.image }}
           {{- if ne $cloudProviderFlavor "minikube" }}
-          image: {{ $cloudProviderDockerRegistryUrl }}/{{ .repository }}:{{ .tag }}
+          image: {{ $cloudProviderDockerRegistryUrl }}/{{ .repository }}:{{ $tag }}
           {{- else }}
-          image: {{ .repository }}:{{ .tag }}
+          image: {{ .repository }}:{{ $tag }}
           {{- end }}
           {{- end }}
           env:
@@ -44,6 +45,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ $releaseName }}-{{ $chartName }}-configmap
+            - secretRef:
+                name: {{ $releaseName }}-{{ $chartName }}-secret
           volumeMounts:
             - name: schema
               mountPath: /mnt/schemas
