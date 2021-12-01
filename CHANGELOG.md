@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.7.0](https://github.com/mapcolonies/external-to-osm-tag-mapping/compare/v1.6.1...v1.7.0) (2021-12-01)
+
+
+### Features
+
+* **schemas:** rename keys ([#107](https://github.com/mapcolonies/external-to-osm-tag-mapping/issues/107)) ([f5a5bea](https://github.com/mapcolonies/external-to-osm-tag-mapping/commit/f5a5bea2fc2cf82991bdbea56c6f1cbae8a4308c))
+* **schemas:** schema name prefix flag and remote connection behavior ([#100](https://github.com/mapcolonies/external-to-osm-tag-mapping/issues/100)) ([2dd25d4](https://github.com/mapcolonies/external-to-osm-tag-mapping/commit/2dd25d43b75ab911a4e47237be17bccfc3cbc3e2))
+
+
+### Bug Fixes
+
+* added missing await for redisConnection ([#102](https://github.com/mapcolonies/external-to-osm-tag-mapping/issues/102)) ([1c5ee35](https://github.com/mapcolonies/external-to-osm-tag-mapping/commit/1c5ee35cac4e3a805dafee0b68c955d493534293))
+
 ### [1.6.1](https://github.com/mapcolonies/external-to-osm-tag-mapping/compare/v1.6.0...v1.6.1) (2021-10-10)
 
 
