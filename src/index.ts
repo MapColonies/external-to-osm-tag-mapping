@@ -28,9 +28,9 @@ void getApp()
       logger.info(`app started on port ${port}`);
     });
   })
-  .catch((error: Error) => {
+  .catch(async (error: Error) => {
     console.error('😢 - failed initializing the server');
     console.error(error.message);
     const shutDown: () => Promise<void> = container.resolve(ON_SIGNAL);
-    void shutDown();
+    await shutDown();
   });

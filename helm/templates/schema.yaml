@@ -6,5 +6,5 @@ metadata:
   name: {{ .Release.Name }}-{{ $chartName }}-schema-configmap
 data:
   schema.json: |-
-{{ .Values.schema | indent 4 }} 
+{{ .Values.schema | indent 4 }}
 {{- end }}

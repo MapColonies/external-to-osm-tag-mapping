@@ -1,9 +1,9 @@
 {
+  "schema": {
+    "provider": "file",
+    "filePath": "schemas.json"
+  },
   "db": {
-    "connection": {
-      "options": {
-        "host": "redis"
-      }
-    }
+    "host": "redis"
   }
 }

@@ -7,10 +7,6 @@
     }
   },
   "db": {
-    "connection": {
-      "options": {
-        "maxRetriesPerRequest": 3
-      }
-    }
+    "maxRetriesPerRequest": 3
   }
 }
