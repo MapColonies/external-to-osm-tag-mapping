@@ -8,7 +8,7 @@ RUN npm install
 COPY . .
 RUN npm run build
 
-FROM node:12.22.5-slim as production
+FROM node:12-slim as production
 
 ARG SERVICE_NAME=external-to-osm-tag-mapping
 ENV NODE_ENV=production
