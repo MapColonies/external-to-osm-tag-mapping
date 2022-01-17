@@ -4,7 +4,7 @@ import { trace } from '@opentelemetry/api';
 import config from 'config';
 import { Redis, RedisOptions } from 'ioredis';
 import { container } from 'tsyringe';
-import { ON_SIGNAL, REDIS_SYMBOL, SERVICES, SERVICE_NAME } from './common/constants';
+import { DOMAIN_PREFIX, EXPLODE_PREFIX, ON_SIGNAL, REDIS_SYMBOL, SERVICES, SERVICE_NAME } from './common/constants';
 import { createConnection } from './common/db';
 import { IApplication } from './common/interfaces';
 import { tracing } from './common/tracing';
@@ -75,6 +75,9 @@ async function registerExternalValues(): Promise<void> {
   } else {
     container.register(IDOMAIN_FIELDS_REPO_SYMBOL, { useValue: {} });
   }
+
+  container.register(EXPLODE_PREFIX, { useValue: config.get<string>('application.keys.explodePrefix') });
+  container.register(DOMAIN_PREFIX, { useValue: config.get<string>('application.keys.domainPrefix') });
 
   container.register(SERVICES.HEALTHCHECK, {
     useValue: async (): Promise<void> => {

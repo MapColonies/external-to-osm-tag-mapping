@@ -8,7 +8,6 @@ import { SERVICES } from '../../common/constants';
 import { JSONSyntaxError, SchemaManager, SchemaNotFoundError } from '../models/schemaManager';
 import { Tags } from '../providers/fileProvider/fileProvider';
 import { Schema } from '../models/types';
-import { KeyNotFoundError } from '../DAL/errors';
 
 interface SchemaParams {
   name: string;
@@ -52,7 +51,7 @@ export class SchemaController {
       if (error instanceof SchemaNotFoundError) {
         (error as HttpError).statusCode = httpStatus.NOT_FOUND;
       }
-      if (error instanceof KeyNotFoundError || error instanceof JSONSyntaxError) {
+      if (error instanceof JSONSyntaxError) {
         (error as HttpError).statusCode = httpStatus.UNPROCESSABLE_ENTITY;
       }
       return next(error);

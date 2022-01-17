@@ -38,6 +38,10 @@
   "application": {
     "hashKey": {
       "enabled": false
+    },
+    "keys": {
+      "explodePrefix": "",
+      "domainPrefix": "att"
     }
   }
 }

@@ -16,7 +16,6 @@ interface DisableExternalFetching extends BaseSchema {
 interface EnableExternalFetching extends BaseSchema {
   enableExternalFetch: 'yes';
   explodeKeys: string[];
-  domainFieldsListKey: string;
 }
 
 export type Schema = DisableExternalFetching | EnableExternalFetching;
@@ -32,7 +31,6 @@ export const schemasTypeDefinition: JTDSchemaType<Schema[]> = {
           name: { type: 'string', metadata: { minLength: 2, maxLength: 15 } },
           createdAt: { type: 'timestamp' },
           explodeKeys: { elements: { type: 'string' } },
-          domainFieldsListKey: { type: 'string' },
           addSchemaPrefix: { type: 'boolean' },
         },
         optionalProperties: {
