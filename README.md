@@ -68,6 +68,8 @@ helm install external-to-osm-tag-mapping -f values.yaml .
 
 ## Running Tests
 
+For integration tests to run correctly modify `test.json` in `config` folder to point to your Redis instance.
+
 ```bash
 npm run test
 ```
