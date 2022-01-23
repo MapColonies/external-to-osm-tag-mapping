@@ -67,10 +67,6 @@
         "__name": "APP_HASH_KEY_ENABLED",
         "__format": "boolean"
       }
-    },
-    "keys": {
-      "explodePrefix": "EXPLODE_PREFIX",
-      "domainPrefix": "DOMAIN_PREFIX"
     }
   }
 }

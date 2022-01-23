@@ -29,5 +29,3 @@ export const ON_SIGNAL = Symbol('onSignal');
 
 export const KEYS_SEPARATOR = '_';
 export const REDIS_KEYS_SEPARATOR = ':';
-export const EXPLODE_PREFIX = Symbol('EXPLODE_PREFIX');
-export const DOMAIN_PREFIX = Symbol('DOMAIN_PREFIX');

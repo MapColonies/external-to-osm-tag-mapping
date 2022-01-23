@@ -22,12 +22,10 @@ export class RedisManager implements IDomainFieldsRepository {
   }
 
   public async getFields(fields: string[]): Promise<(string | null)[]> {
-    let res: (string | null)[];
     try {
-      res = await this.getData(fields);
+      return await this.getData(fields);
     } catch (e) {
       throw new Error('redis: failed to fetch keys');
     }
-    return res;
   }
 }

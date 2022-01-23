@@ -22,6 +22,8 @@ required:
 * `createdAt` timestamp when the schema was created (currently unused)
 * `addSchemaPrefix` boolean whether to append schema's `name` to the property
 * `explodeKeys` list of keys to explode by with a combination of an object's value to append a set of new properties. e.g. an `explodeKeys` of ['explode1'] with incoming {"explode1": "val1"} object, with a mapping of "explode1:val1" --> {"key1":"newval1"} will append the mapped value to object's new representation
+* `explodePrefix` prefix to add to exploded keys when querying an external source
+* `domainPrefix` prefix to add to domain keys when querying an external source
 
 optional:
 * *`updatedAt`* timestamp when the schema was updated (currently unused)

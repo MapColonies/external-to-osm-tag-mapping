@@ -1,7 +1,7 @@
 import { inject, injectable } from 'tsyringe';
 import { IDomainFieldsRepository, IDOMAIN_FIELDS_REPO_SYMBOL } from '../DAL/domainFieldsRepository';
 import { Tags } from '../providers/fileProvider/fileProvider';
-import { KEYS_SEPARATOR, REDIS_KEYS_SEPARATOR, DOMAIN_PREFIX, EXPLODE_PREFIX } from '../../common/constants';
+import { KEYS_SEPARATOR, REDIS_KEYS_SEPARATOR } from '../../common/constants';
 import { KeyNotFoundError } from '../DAL/errors';
 import { keyConstructor } from '../DAL/keys';
 import { Schema, schemaSymbol } from './types';
@@ -15,6 +15,8 @@ interface SchemaMetadataBase {
 interface WithExternalFetch extends SchemaMetadataBase {
   enableExternalFetch: true;
   explodeKeysSet: Set<string>;
+  explodePrefix: string;
+  domainPrefix: string;
 }
 
 interface WithoutExternalFetch extends SchemaMetadataBase {
@@ -31,9 +33,7 @@ export class SchemaManager {
   private readonly schemas: Record<string, SchemaMetadata>;
   public constructor(
     @inject(schemaSymbol) private readonly inputSchemas: Schema[],
-    @inject(IDOMAIN_FIELDS_REPO_SYMBOL) private readonly domainFieldsRepo: IDomainFieldsRepository,
-    @inject(EXPLODE_PREFIX) private readonly explodePrefix: string,
-    @inject(DOMAIN_PREFIX) private readonly domainPrefix: string
+    @inject(IDOMAIN_FIELDS_REPO_SYMBOL) private readonly domainFieldsRepo: IDomainFieldsRepository
   ) {
     this.schemas = inputSchemas.reduce((acc, curr) => {
       let schemaMetadata: SchemaMetadata = {
@@ -48,6 +48,8 @@ export class SchemaManager {
           ...schemaMetadata,
           enableExternalFetch: true,
           explodeKeysSet: new Set(curr.explodeKeys),
+          explodePrefix: curr.explodePrefix,
+          domainPrefix: curr.domainPrefix,
         };
       }
       return { ...acc, [curr.name]: schemaMetadata };
@@ -84,9 +86,9 @@ export class SchemaManager {
       if (schema.enableExternalFetch) {
         //check each tag if it's an explode field and put it in explodeKeys
         if (schema.explodeKeysSet.has(key) && value !== null) {
-          explodeKeys.push(`${keyConstructor(this.explodePrefix, key, value.toString())}`);
+          explodeKeys.push(`${keyConstructor(schema.explodePrefix, key, value.toString())}`);
         } else if (value !== null) {
-          domainKeys.push(`${keyConstructor(this.domainPrefix, key.toUpperCase(), value.toString())}`);
+          domainKeys.push(`${keyConstructor(schema.domainPrefix, key.toUpperCase(), value.toString())}`);
         }
       }
 
@@ -108,8 +110,9 @@ export class SchemaManager {
 
     if (this.schemas[name].addSchemaPrefix) {
       // for each key add a system name prefix
-      finalTags = Object.entries(finalTags).reduce((acc, [key, value]) => {
-        return { ...acc, [this.concatenateKeysPrefix(name, key)]: value };
+      finalTags = Object.entries(finalTags).reduce((acc: Tags, [key, value]) => {
+        acc[this.concatenateKeysPrefix(name, key)] = value;
+        return acc;
       }, {});
     }
 

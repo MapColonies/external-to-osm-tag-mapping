@@ -6,7 +6,9 @@
     "enableExternalFetch": "yes",
     "addSchemaPrefix": true,
     "explodeKeys": ["explode1", "explode2"],
-    "renameKeys": { "externalKey1": "renamedExternalKey1", "externalKeyRename": "explode2" }
+    "renameKeys": { "externalKey1": "renamedExternalKey1", "externalKeyRename": "explode2" },
+    "explodePrefix": "",
+    "domainPrefix": "att"
   },
   {
     "name": "system2",
@@ -16,7 +18,9 @@
     "enableExternalFetch": "yes",
     "addSchemaPrefix": true,
     "explodeKeys": ["explode1", "explode2"],
-    "renameKeys": { "rename1": "renamedKey1" }
+    "renameKeys": { "rename1": "renamedKey1" },
+    "explodePrefix": "",
+    "domainPrefix": "att"
   },
   {
     "name": "system3",
@@ -39,6 +43,8 @@
     "enableExternalFetch": "yes",
     "addSchemaPrefix": true,
     "explodeKeys": ["explode1", "explode2"],
-    "renameKeys": { "externalKey1": "renamedExternalKey1" }
+    "renameKeys": { "externalKey1": "renamedExternalKey1" },
+    "explodePrefix": "",
+    "domainPrefix": "att"
   }
 ]
