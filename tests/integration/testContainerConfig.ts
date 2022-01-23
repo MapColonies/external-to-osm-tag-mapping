@@ -3,7 +3,7 @@ import config from 'config';
 import jsLogger from '@map-colonies/js-logger';
 import { Redis, RedisOptions } from 'ioredis';
 import { getSchemas } from '../../src/schema/providers/schemaLoader';
-import { DOMAIN_PREFIX, EXPLODE_PREFIX, REDIS_SYMBOL, SERVICES } from '../../src/common/constants';
+import { REDIS_SYMBOL, SERVICES } from '../../src/common/constants';
 import { schemaSymbol } from '../../src/schema/models/types';
 import { createConnection } from '../../src/common/db';
 import { IDOMAIN_FIELDS_REPO_SYMBOL } from '../../src/schema/DAL/domainFieldsRepository';
@@ -30,8 +30,6 @@ async function registerTestValues(appConfig?: IApplication): Promise<void> {
   container.register(schemaSymbol, { useValue: schemas });
   container.register(REDIS_SYMBOL, { useValue: redisConnection });
   container.register(IDOMAIN_FIELDS_REPO_SYMBOL, { useClass: RedisManager });
-  container.register(EXPLODE_PREFIX, { useValue: config.get<string>('application.keys.explodePrefix') });
-  container.register(DOMAIN_PREFIX, { useValue: config.get<string>('application.keys.domainPrefix') });
 }
 
 export { registerTestValues };
