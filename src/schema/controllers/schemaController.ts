@@ -6,7 +6,7 @@ import { Feature, Geometry } from 'geojson';
 import { Logger } from '@map-colonies/js-logger';
 import { SERVICES } from '../../common/constants';
 import { JSONSyntaxError, SchemaManager, SchemaNotFoundError } from '../models/schemaManager';
-import { Tags } from '../providers/fileProvider/fileProvider';
+import { Tags } from '../../common/types';
 import { Schema } from '../models/types';
 
 interface SchemaParams {

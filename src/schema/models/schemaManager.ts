@@ -1,6 +1,6 @@
 import { inject, injectable } from 'tsyringe';
 import { IDomainFieldsRepository, IDOMAIN_FIELDS_REPO_SYMBOL } from '../DAL/domainFieldsRepository';
-import { Tags } from '../providers/fileProvider/fileProvider';
+import { Tags } from '../../common/types';
 import { KEYS_SEPARATOR, REDIS_KEYS_SEPARATOR } from '../../common/constants';
 import { KeyNotFoundError } from '../DAL/errors';
 import { keyConstructor } from '../DAL/keys';
@@ -72,7 +72,7 @@ export class SchemaManager {
     const domainKeys: string[] = []; // array to hold all domain keys
     const explodeKeys: string[] = []; // array to hold all explode keys
 
-    let finalTags: Tags = Object.entries(tags).reduce((acc, [key, value]) => {
+    let finalTags: Tags = Object.entries(tags).reduce((acc: Tags, [key, value]) => {
       //remove tag if it's an ignored key
       if (schema.keyIgnoreSets.has(key)) {
         return acc;
@@ -92,7 +92,8 @@ export class SchemaManager {
         }
       }
 
-      return { ...acc, [key]: value };
+      acc[key] = value;
+      return acc;
     }, {});
 
     let domainFieldsTags = {};
@@ -152,12 +153,11 @@ export class SchemaManager {
 
       try {
         const json = JSON.parse(jsonString) as Record<string, string | number | null>;
-        const explodedFields = Object.entries(json).reduce((acc, [key, value]) => {
+        const explodedFields = Object.entries(json).reduce((acc: Tags, [key, value]) => {
           if (typeof value === 'string' || typeof value === 'number') {
-            return { ...acc, [key + '_DOMAIN']: value.toString() };
-          } else {
-            return acc;
+            acc[key + '_DOMAIN'] = value.toString();
           }
+          return acc;
         }, {});
         explodeFieldsTags = { ...explodeFieldsTags, ...explodedFields };
       } catch (error) {

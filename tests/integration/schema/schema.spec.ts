@@ -4,8 +4,8 @@ import { Redis } from 'ioredis';
 import { container } from 'tsyringe';
 import { REDIS_SYMBOL } from '../../../src/common/constants';
 import { IApplication } from '../../../src/common/interfaces';
+import { Tags } from '../../../src/common/types';
 import { Schema } from '../../../src/schema/models/types';
-import { Tags } from '../../../src/schema/providers/fileProvider/fileProvider';
 import { registerTestValues } from '../testContainerConfig';
 import * as requestSender from './helpers/requestSender';
 
