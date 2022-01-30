@@ -62,8 +62,9 @@ schema: |-
       "updatedAt": "2021-07-14T11:19:58Z",
       "addSchemaPrefix": false,
       "enableExternalFetch": "yes",
-      "domainFieldsListKey": "DISCRETE_ATTRIBUTES",
-      "explodeKeys": ["explode1", "explode2"]
+      "explodeKeys": ["explode1", "explode2"],
+      "renameKeys": { "externalKey1": "explode2" }
+
     },
     {
       "name": "system2",
