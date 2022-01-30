@@ -1,7 +1,9 @@
 import { inject, injectable } from 'tsyringe';
 import { IDomainFieldsRepository, IDOMAIN_FIELDS_REPO_SYMBOL } from '../DAL/domainFieldsRepository';
-import { Tags } from '../providers/fileProvider/fileProvider';
-import { SEPARATOR } from '../../common/constants';
+import { Tags } from '../../common/types';
+import { KEYS_SEPARATOR, REDIS_KEYS_SEPARATOR } from '../../common/constants';
+import { KeyNotFoundError } from '../DAL/errors';
+import { keyConstructor } from '../DAL/keys';
 import { Schema, schemaSymbol } from './types';
 
 interface SchemaMetadataBase {
@@ -13,7 +15,8 @@ interface SchemaMetadataBase {
 interface WithExternalFetch extends SchemaMetadataBase {
   enableExternalFetch: true;
   explodeKeysSet: Set<string>;
-  domainFieldsListKey: string;
+  explodePrefix: string;
+  domainPrefix: string;
 }
 
 interface WithoutExternalFetch extends SchemaMetadataBase {
@@ -45,7 +48,8 @@ export class SchemaManager {
           ...schemaMetadata,
           enableExternalFetch: true,
           explodeKeysSet: new Set(curr.explodeKeys),
-          domainFieldsListKey: curr.domainFieldsListKey,
+          explodePrefix: curr.explodePrefix,
+          domainPrefix: curr.domainPrefix,
         };
       }
       return { ...acc, [curr.name]: schemaMetadata };
@@ -65,15 +69,10 @@ export class SchemaManager {
       throw new SchemaNotFoundError(`schema ${name} not found`);
     }
     const schema = this.schemas[name];
-    const domainFieldsKeys: string[] = []; //array to hold all domainFields keys for domain repo request
-    const explodeKeys: string[] = []; ///array to hold all explode keys for domain repo request
-    let domainFields: Set<string>;
+    const domainKeys: string[] = []; // array to hold all domain keys
+    const explodeKeys: string[] = []; // array to hold all explode keys
 
-    if (schema.enableExternalFetch) {
-      domainFields = await this.domainFieldsRepo.getDomainFieldsList(schema.domainFieldsListKey);
-    }
-
-    let finalTagsObj: Tags = Object.entries(tags).reduce((acc, [key, value]) => {
+    let finalTags: Tags = Object.entries(tags).reduce((acc: Tags, [key, value]) => {
       //remove tag if it's an ignored key
       if (schema.keyIgnoreSets.has(key)) {
         return acc;
@@ -87,55 +86,56 @@ export class SchemaManager {
       if (schema.enableExternalFetch) {
         //check each tag if it's an explode field and put it in explodeKeys
         if (schema.explodeKeysSet.has(key) && value !== null) {
-          explodeKeys.push(value.toString());
-        }
-
-        //check each tag if it's a domain field and put it in domainFieldsKeys
-        if (domainFields.has(key.toUpperCase()) && value !== null) {
-          domainFieldsKeys.push(`${key.toUpperCase()}:${value.toString()}`);
+          explodeKeys.push(`${keyConstructor(schema.explodePrefix, key, value.toString())}`);
+        } else if (value !== null) {
+          domainKeys.push(`${keyConstructor(schema.domainPrefix, key.toUpperCase(), value.toString())}`);
         }
       }
 
-      return { ...acc, [key]: value };
+      acc[key] = value;
+      return acc;
     }, {});
 
-    let mappedDomainFields = {};
-    let explodeFieldsKeys = {};
+    let domainFieldsTags = {};
+    let explodeFieldsTags = {};
 
-    if (domainFieldsKeys.length > 0) {
-      mappedDomainFields = await this.getDomainFieldsCodedValues(domainFieldsKeys);
+    if (domainKeys.length > 0) {
+      domainFieldsTags = await this.getDomainFieldsCodedValues(domainKeys);
     }
 
     if (explodeKeys.length > 0) {
-      explodeFieldsKeys = await this.getExplodeFields(explodeKeys);
+      explodeFieldsTags = await this.getExplodeFields(explodeKeys);
     }
 
-    finalTagsObj = { ...finalTagsObj, ...mappedDomainFields, ...explodeFieldsKeys };
+    finalTags = { ...finalTags, ...domainFieldsTags, ...explodeFieldsTags };
 
     if (this.schemas[name].addSchemaPrefix) {
-      //for each key add a system name prefix
-      finalTagsObj = Object.entries(finalTagsObj).reduce((acc, [key, value]) => {
-        return { ...acc, [this.concatenateKeysPrefix(name, key)]: value };
+      // for each key add a system name prefix
+      finalTags = Object.entries(finalTags).reduce((acc: Tags, [key, value]) => {
+        acc[this.concatenateKeysPrefix(name, key)] = value;
+        return acc;
       }, {});
     }
 
-    return finalTagsObj;
+    return finalTags;
   }
 
   private readonly concatenateKeysPrefix = (prefix: string, ...keys: string[]): string => {
-    return `${[prefix, ...keys].join(SEPARATOR)}`;
+    return `${[prefix, ...keys].join(KEYS_SEPARATOR)}`;
   };
 
-  private readonly getDomainFieldsCodedValues = async (domainFieldsKeys: string[]): Promise<Tags> => {
+  private readonly getDomainFieldsCodedValues = async (domainKeys: string[]): Promise<Tags> => {
     let domainFieldsTags: Tags = {};
-    const fieldsCodedValuesRes = await this.domainFieldsRepo.getFields(domainFieldsKeys);
+    const fieldsCodedValues = await this.domainFieldsRepo.getFields(domainKeys);
 
-    //for each domain field create new domain field tag with the correct value
-    fieldsCodedValuesRes.forEach((codedValue, index) => {
-      domainFieldsTags = {
-        ...domainFieldsTags,
-        [domainFieldsKeys[index].split(':')[0] + '_DOMAIN']: codedValue,
-      };
+    // for each domain field create new domain field tag with the correct value
+    fieldsCodedValues.forEach((codedValue, index) => {
+      if (codedValue !== null) {
+        domainFieldsTags = {
+          ...domainFieldsTags,
+          [domainKeys[index].split(REDIS_KEYS_SEPARATOR)[1] + '_DOMAIN']: codedValue,
+        };
+      }
     });
 
     return domainFieldsTags;
@@ -143,22 +143,25 @@ export class SchemaManager {
 
   private readonly getExplodeFields = async (explodeKeys: string[]): Promise<Tags> => {
     let explodeFieldsTags: Tags = {};
-    const explodeRes = await this.domainFieldsRepo.getFields(explodeKeys);
+    const explodeFields = await this.domainFieldsRepo.getFields(explodeKeys);
 
-    //for each domain field parse for new Object.
-    explodeRes.forEach((jsonString, index) => {
+    // for each explode field parse for new Object.
+    explodeFields.forEach((jsonString, index) => {
+      if (jsonString === null) {
+        throw new KeyNotFoundError(`failed to fetch json for key: ${explodeKeys[index]}`);
+      }
+
       try {
         const json = JSON.parse(jsonString) as Record<string, string | number | null>;
-        const explodedFields = Object.entries(json).reduce((acc, [key, value]) => {
+        const explodedFields = Object.entries(json).reduce((acc: Tags, [key, value]) => {
           if (typeof value === 'string' || typeof value === 'number') {
-            return { ...acc, [key + '_DOMAIN']: value.toString() };
-          } else {
-            return acc;
+            acc[key + '_DOMAIN'] = value.toString();
           }
+          return acc;
         }, {});
         explodeFieldsTags = { ...explodeFieldsTags, ...explodedFields };
       } catch (error) {
-        throw new JSONSyntaxError(`failed to parse fetched json for value: ${explodeKeys[index]}`);
+        throw new JSONSyntaxError(`failed to parse fetched json for key: ${explodeKeys[index]}`);
       }
     });
 

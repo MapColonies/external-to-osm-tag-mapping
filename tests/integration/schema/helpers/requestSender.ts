@@ -3,7 +3,7 @@ import { Application } from 'express';
 
 import { container } from 'tsyringe';
 import { ServerBuilder } from '../../../../src/serverBuilder';
-import { Tags } from '../../../../src/schema/providers/fileProvider/fileProvider';
+import { Tags } from '../../../../src/common/types';
 
 let app: Application | null = null;
 
