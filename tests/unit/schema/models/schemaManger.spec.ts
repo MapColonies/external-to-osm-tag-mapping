@@ -153,7 +153,7 @@ describe('SchemaManager', () => {
       expect(res).toMatchObject(expected);
     });
 
-    it('should return mapped tags when renamed key is a domain key', async function () {
+    it('should return mapped tags when the renamed key is also a domain key', async function () {
       const name = 'system1';
       const tags = {
         externalKey1: 'val1',
@@ -169,7 +169,7 @@ describe('SchemaManager', () => {
       expect(res).toMatchObject(expected);
     });
 
-    it('should return mapped tags when renamed key is a explode key', async function () {
+    it('should return mapped tags when the renamed key is also an explode key', async function () {
       const name = 'system1';
       const tags = {
         externalKeyRename: 'val1',

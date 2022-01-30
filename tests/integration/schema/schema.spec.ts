@@ -219,7 +219,7 @@ describe('schemas', function () {
             value: '{ "exploded1": 2, "exploded2": 3 }',
           },
           {
-            testCaseName: 'when renamed key is a domain key',
+            testCaseName: 'when a renamed key is also a domain key',
             name: 'system1',
             tagProperties: { externalKey3: 'val3', externalKey2: 'val2', externalKey1: 'val1' },
             expectedProperties: {
@@ -232,7 +232,7 @@ describe('schemas', function () {
             value: '1',
           },
           {
-            testCaseName: 'when renamed key is an explode key',
+            testCaseName: 'when the renamed key is also an explode key',
             name: 'system1',
             tagProperties: { externalKey3: 'val3', externalKey2: 'val2', externalKeyRename: 'val1' },
             expectedProperties: {
