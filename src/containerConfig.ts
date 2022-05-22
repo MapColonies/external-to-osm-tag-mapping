@@ -63,7 +63,7 @@ async function registerExternalValues(): Promise<void> {
     });
 
     redisConnection.on('error', (err: Error) => {
-      logger.error(`redis client got the following error: ${err.message}`);
+      logger.error({ err: err, msg: 'redis client got an error' });
     });
 
     redisConnection.on('reconnecting', (delay: number) => {
