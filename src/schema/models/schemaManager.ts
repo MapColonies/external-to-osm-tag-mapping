@@ -1,7 +1,8 @@
 import { inject, injectable } from 'tsyringe';
+import { Logger } from '@map-colonies/js-logger';
 import { IDomainFieldsRepository, IDOMAIN_FIELDS_REPO_SYMBOL } from '../DAL/domainFieldsRepository';
 import { Tags } from '../../common/types';
-import { KEYS_SEPARATOR, REDIS_KEYS_SEPARATOR } from '../../common/constants';
+import { KEYS_SEPARATOR, REDIS_KEYS_SEPARATOR, SERVICES } from '../../common/constants';
 import { KeyNotFoundError } from '../DAL/errors';
 import { keyConstructor } from '../DAL/keys';
 import { Schema, schemaSymbol } from './types';
@@ -33,7 +34,8 @@ export class SchemaManager {
   private readonly schemas: Record<string, SchemaMetadata>;
   public constructor(
     @inject(schemaSymbol) private readonly inputSchemas: Schema[],
-    @inject(IDOMAIN_FIELDS_REPO_SYMBOL) private readonly domainFieldsRepo: IDomainFieldsRepository
+    @inject(IDOMAIN_FIELDS_REPO_SYMBOL) private readonly domainFieldsRepo: IDomainFieldsRepository,
+    @inject(SERVICES.LOGGER) private readonly logger: Logger
   ) {
     this.schemas = inputSchemas.reduce((acc, curr) => {
       let schemaMetadata: SchemaMetadata = {
@@ -57,34 +59,42 @@ export class SchemaManager {
   }
 
   public getSchemas(): Schema[] {
+    this.logger.info({ msg: 'getting all schemas', count: this.inputSchemas.length });
+
     return this.inputSchemas;
   }
 
   public getSchema(name: string): Schema | undefined {
+    this.logger.info({ msg: 'getting schema', schemaName: name });
+
     return this.inputSchemas.find((schema) => schema.name === name);
   }
 
   public async map(name: string, tags: Tags): Promise<Tags> {
+    this.logger.info({ msg: 'starting tag mapping', schemaName: name, count: Object.keys(tags).length });
+
     if (this.getSchema(name) === undefined) {
+      this.logger.error({ msg: 'schema not found', schemaName: name });
       throw new SchemaNotFoundError(`schema ${name} not found`);
     }
+
     const schema = this.schemas[name];
     const domainKeys: string[] = []; // array to hold all domain keys
     const explodeKeys: string[] = []; // array to hold all explode keys
 
     let finalTags: Tags = Object.entries(tags).reduce((acc: Tags, [key, value]) => {
-      //remove tag if it's an ignored key
+      // remove tag if it's an ignored key
       if (schema.keyIgnoreSets.has(key)) {
         return acc;
       }
 
-      //check if tag's key should be renamed
+      // check if tag's key should be renamed
       if (schema.renameKeys && Object.prototype.hasOwnProperty.call(schema.renameKeys, key)) {
         key = schema.renameKeys[key];
       }
 
       if (schema.enableExternalFetch) {
-        //check each tag if it's an explode field and put it in explodeKeys
+        // check each tag if it's an explode field and put it in explodeKeys
         if (schema.explodeKeysSet.has(key) && value !== null) {
           explodeKeys.push(`${keyConstructor(schema.explodePrefix, key, value.toString())}`);
         } else if (value !== null) {
@@ -98,6 +108,13 @@ export class SchemaManager {
 
     let domainFieldsTags = {};
     let explodeFieldsTags = {};
+
+    this.logger.debug({
+      msg: 'tag mapping keys counter',
+      schemaName: name,
+      domainKeysCount: domainKeys.length,
+      explodeKeysCount: explodeKeys.length,
+    });
 
     if (domainKeys.length > 0) {
       domainFieldsTags = await this.getDomainFieldsCodedValues(domainKeys);
@@ -116,6 +133,12 @@ export class SchemaManager {
         return acc;
       }, {});
     }
+
+    this.logger.debug({
+      msg: 'final tags mapping counter',
+      schemaName: name,
+      tagsCount: Object.keys(finalTags).length,
+    });
 
     return finalTags;
   }
@@ -148,6 +171,7 @@ export class SchemaManager {
     // for each explode field parse for new Object.
     explodeFields.forEach((jsonString, index) => {
       if (jsonString === null) {
+        this.logger.error({ msg: 'failed to fetch json for explode key', key: explodeKeys[index] });
         throw new KeyNotFoundError(`failed to fetch json for key: ${explodeKeys[index]}`);
       }
 
@@ -161,6 +185,7 @@ export class SchemaManager {
         }, {});
         explodeFieldsTags = { ...explodeFieldsTags, ...explodedFields };
       } catch (error) {
+        this.logger.error({ msg: 'failed to parse json for explode key', key: explodeKeys[index] });
         throw new JSONSyntaxError(`failed to parse fetched json for key: ${explodeKeys[index]}`);
       }
     });

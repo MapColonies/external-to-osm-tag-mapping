@@ -1,4 +1,4 @@
-FROM node:12 as build
+FROM node:16 as build
 
 WORKDIR /tmp/buildApp
 
@@ -8,19 +8,23 @@ RUN npm install
 COPY . .
 RUN npm run build
 
-FROM node:12.22.11-slim as production
+FROM node:16.14.2-alpine3.14 as production
+
+RUN apk add dumb-init
 
 ARG SERVICE_NAME=external-to-osm-tag-mapping
 ENV NODE_ENV=production
 ENV SERVER_PORT=8080
 
-WORKDIR /usr/app
+WORKDIR /usr/src/app
 
-COPY package*.json ./
-RUN npm install --only=production
+COPY --chown=node:node package*.json ./
 
-COPY --from=build /tmp/buildApp/dist .
-COPY --from=build /tmp/buildApp/node_modules ./node_modules
-COPY ./config ./config
+RUN npm ci --only=production
 
-CMD ["node", "--max_old_space_size=512", "./index.js"]
+COPY --chown=node:node --from=build /tmp/buildApp/dist .
+COPY --chown=node:node ./config ./config
+
+USER node
+EXPOSE 8080
+CMD ["dumb-init", "node", "--max_old_space_size=512", "./index.js"]
