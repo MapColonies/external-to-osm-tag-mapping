@@ -119,6 +119,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
         5XX:
           $ref: '#/components/responses/InternalError'
 components:
@@ -139,6 +141,14 @@ components:
             $ref: '#/components/schemas/Error'
           example:
             message: resource not found
+    UnprocessableEntity:
+      description: The specified resource is unprocessable
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: resource is not processable
     InternalError:
       description: Unexpected error
       content:

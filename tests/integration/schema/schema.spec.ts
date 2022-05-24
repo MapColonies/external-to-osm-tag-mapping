@@ -281,8 +281,7 @@ describe('schemas', function () {
 
           it.each(testValues)(
             'should return 200 status code and map the tags $testCaseName',
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            async ({ testCaseName, name, tagProperties, expectedProperties, key, value }) => {
+            async ({ name, tagProperties, expectedProperties, key, value }) => {
               const tags = {
                 properties: tagProperties,
               };
@@ -311,10 +310,9 @@ describe('schemas', function () {
             await redisConnection.flushall();
           });
 
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           it.each(testValues)(
             'should return 200 status code and map the tags $testCaseName',
-            async ({ testCaseName, name, tagProperties, expectedProperties, key, value }) => {
+            async ({ name, tagProperties, expectedProperties, key, value }) => {
               const tags = {
                 properties: tagProperties,
               };
@@ -339,12 +337,13 @@ describe('schemas', function () {
     // All requests with status code of 400
     describe('GET /schemas/:name', function () {
       it('should return 404 status code for non-existent schema', async function () {
-        const response = await requestSender.getSchema('system');
+        const schemaName = 'system';
+        const response = await requestSender.getSchema(schemaName);
 
         expect(response).toHaveProperty('status', httpStatusCodes.NOT_FOUND);
 
         const schemas = response.body as Schema;
-        expect(schemas).toEqual({ message: 'system system not found' });
+        expect(schemas).toEqual({ message: `schema ${schemaName} not found` });
       });
     });
     describe('POST /schemas/:name/map', function () {
@@ -415,11 +414,8 @@ describe('schemas', function () {
           expect(response.body).toEqual({ message: `failed to parse fetched json for key: explode1:val5` });
         });
       });
-    });
-  });
-  describe('Sad Path', function () {
-    describe('POST /schemas/:name/map', function () {
-      it('should return 500 status code for not found explode field in redis', async function () {
+
+      it('should return 422 status code for not found explode field in redis', async function () {
         const tags = {
           properties: {
             externalKey3: 'val3',
@@ -430,9 +426,13 @@ describe('schemas', function () {
         };
 
         const response = await requestSender.map('system1', tags);
-        expect(response).toHaveProperty('status', httpStatusCodes.INTERNAL_SERVER_ERROR);
+        expect(response).toHaveProperty('status', httpStatusCodes.UNPROCESSABLE_ENTITY);
         expect(response).toHaveProperty('body.message', 'failed to fetch json for key: explode1:val1');
       });
+    });
+  });
+  describe('Sad Path', function () {
+    describe('POST /schemas/:name/map', function () {
       describe('redis is not connected', function () {
         it('should return 500 status code for redis error', async function () {
           redisConnection.disconnect();

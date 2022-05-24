@@ -8,6 +8,7 @@ import { SERVICES } from '../../common/constants';
 import { JSONSyntaxError, SchemaManager, SchemaNotFoundError } from '../models/schemaManager';
 import { Tags } from '../../common/types';
 import { Schema } from '../models/types';
+import { KeyNotFoundError } from '../DAL/errors';
 
 interface SchemaParams {
   name: string;
@@ -24,8 +25,7 @@ export class SchemaController {
 
   public getSchemas: GetSchemasHandler = (req, res) => {
     const schemas = this.manager.getSchemas();
-    res.status(httpStatus.OK).json(schemas);
-    return;
+    return res.status(httpStatus.OK).json(schemas);
   };
 
   public getSchema: GetSchemaHandler = (req, res, next) => {
@@ -33,8 +33,11 @@ export class SchemaController {
     const schema = this.manager.getSchema(name);
 
     if (!schema) {
-      const error: HttpError = new Error(`system ${name} not found`);
+      this.logger.error({ msg: 'schema not found', schemaName: name });
+
+      const error: HttpError = new Error(`schema ${name} not found`);
       error.statusCode = httpStatus.NOT_FOUND;
+
       return next(error);
     }
     return res.status(httpStatus.OK).json(schema);
@@ -51,7 +54,7 @@ export class SchemaController {
       if (error instanceof SchemaNotFoundError) {
         (error as HttpError).statusCode = httpStatus.NOT_FOUND;
       }
-      if (error instanceof JSONSyntaxError) {
+      if (error instanceof JSONSyntaxError || error instanceof KeyNotFoundError) {
         (error as HttpError).statusCode = httpStatus.UNPROCESSABLE_ENTITY;
       }
       return next(error);
