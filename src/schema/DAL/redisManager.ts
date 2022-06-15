@@ -12,7 +12,7 @@ export class RedisManager implements IDomainFieldsRepository {
     const { enabled, value } = appConfig.hashKey;
     if (enabled && value !== undefined) {
       this.getData = async (fields: string[]): Promise<(string | null)[]> => {
-        return this.redis.hmget(value, fields);
+        return this.redis.hmget(value, ...fields);
       };
     } else {
       this.getData = async (fields: string[]): Promise<(string | null)[]> => {
