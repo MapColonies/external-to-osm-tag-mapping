@@ -1,6 +1,6 @@
 {
   "name": "external-to-osm-tag-mapping",
-  "version": "1.7.3",
+  "version": "1.7.4",
   "description": "map external tags to osm tags",
   "main": "./src/index.ts",
   "scripts": {
