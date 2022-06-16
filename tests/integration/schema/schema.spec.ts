@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import httpStatusCodes from 'http-status-codes';
-import { Redis } from 'ioredis';
+import Redis from 'ioredis';
 import { container } from 'tsyringe';
 import { REDIS_SYMBOL } from '../../../src/common/constants';
 import { IApplication } from '../../../src/common/interfaces';
