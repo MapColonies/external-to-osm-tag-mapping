@@ -1,4 +1,4 @@
-import { Redis } from 'ioredis';
+import Redis from 'ioredis';
 import { inject, injectable } from 'tsyringe';
 import { REDIS_SYMBOL, SERVICES } from '../../common/constants';
 import { IApplication } from '../../common/interfaces';
