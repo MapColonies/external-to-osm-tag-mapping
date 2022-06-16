@@ -1,4 +1,4 @@
-import { Redis } from 'ioredis';
+import Redis from 'ioredis';
 import { inject, injectable } from 'tsyringe';
 import { REDIS_SYMBOL, SERVICES } from '../../common/constants';
 import { IApplication } from '../../common/interfaces';
@@ -12,7 +12,7 @@ export class RedisManager implements IDomainFieldsRepository {
     const { enabled, value } = appConfig.hashKey;
     if (enabled && value !== undefined) {
       this.getData = async (fields: string[]): Promise<(string | null)[]> => {
-        return this.redis.hmget(value, fields);
+        return this.redis.hmget(value, ...fields);
       };
     } else {
       this.getData = async (fields: string[]): Promise<(string | null)[]> => {
