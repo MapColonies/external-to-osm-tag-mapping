@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.7.5](https://github.com/mapcolonies/external-to-osm-tag-mapping/compare/v1.7.4...v1.7.5) (2022-06-16)
+
+
+### Bug Fixes
+
+* types for ioredis ([#152](https://github.com/mapcolonies/external-to-osm-tag-mapping/issues/152)) ([97e78ef](https://github.com/mapcolonies/external-to-osm-tag-mapping/commit/97e78ef1bff84f503b48c35186117027d6331960))
+
 ### [1.7.4](https://github.com/mapcolonies/external-to-osm-tag-mapping/compare/v1.7.3...v1.7.4) (2022-06-15)
 
 ### [1.7.3](https://github.com/mapcolonies/external-to-osm-tag-mapping/compare/v1.7.2...v1.7.3) (2022-06-15)
