@@ -9,6 +9,9 @@ environment: development
 initialDelaySeconds: 60
 replicaCount: 1
 
+annotations: {}
+podAnnotations: {}
+
 cloudProvider:
   dockerRegistryUrl: my-registry-url.io
   flavor: openshift
@@ -39,6 +42,7 @@ env:
   tracing:
     enabled: false
     url: http://localhost:55681/v1/trace
+    ratio: 1
   metrics:
     enabled: false
     url: http://localhost:55681/v1/metrics
