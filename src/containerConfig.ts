@@ -1,5 +1,5 @@
 import jsLogger, { LoggerOptions } from '@map-colonies/js-logger';
-import { logMethod } from '@map-colonies/telemetry';
+import { getOtelMixin } from '@map-colonies/telemetry';
 import { trace } from '@opentelemetry/api';
 import config from 'config';
 import Redis from 'ioredis';
@@ -18,12 +18,9 @@ async function registerExternalValues(): Promise<void> {
   container.register(SERVICES.CONFIG, { useValue: config });
   container.register(SERVICES.APPLICATION, { useValue: config.get<IApplication>('application') });
   const loggerConfig = config.get<LoggerOptions>('telemetry.logger');
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error the signature is wrong
-  const logger = jsLogger({ ...loggerConfig, hooks: { logMethod } });
+  const logger = jsLogger({ ...loggerConfig, mixin: getOtelMixin() });
   container.register(SERVICES.LOGGER, { useValue: logger });
 
-  tracing.start();
   const tracer = trace.getTracer(SERVICE_NAME);
   container.register(SERVICES.TRACER, { useValue: tracer });
 
