@@ -4,7 +4,7 @@ import { Logger } from '@map-colonies/js-logger';
 import { IDomainFieldsRepository, IDOMAIN_FIELDS_REPO_SYMBOL } from '../DAL/domainFieldsRepository';
 import { KEYS_SEPARATOR, NOT_FOUND_INDEX, SCHEMAS_SYMBOL, SERVICES } from '../../common/constants';
 import { JSONSyntaxError, KeyNotFoundError, SchemaNotFoundError } from '../../common/errors';
-import { Schema, Tags } from './types';
+import { MappingDebug, Schema, TagMappingResult, Tags } from './types';
 
 interface MappingKey {
   key: string;
@@ -31,7 +31,7 @@ export class SchemaManager {
     return this.inputSchemas.find((schema) => schema.name === name);
   }
 
-  public async map(name: string, tags: Tags): Promise<Tags> {
+  public async map(name: string, tags: Tags, shouldDebug?: boolean): Promise<TagMappingResult> {
     this.logger.info({ msg: 'starting tag mapping', schemaName: name, count: Object.keys(tags).length });
 
     const schema = this.getSchema(name);
@@ -83,12 +83,14 @@ export class SchemaManager {
       explodeKeysCount: explodeKeys.length,
     });
 
+    const debug: MappingDebug[] | undefined = shouldDebug === true ? [] : undefined;
+
     if (schema.enableExternalFetch === 'yes' && domainKeys.length > 0) {
-      domainFieldsTags = await this.getDomainFieldsCodedValues(domainKeys, schema.domain.resultFormat);
+      domainFieldsTags = await this.getDomainFieldsCodedValues(domainKeys, schema.domain.resultFormat, debug);
     }
 
     if (schema.enableExternalFetch === 'yes' && explodeKeys.length > 0) {
-      explodeFieldsTags = await this.getExplodeFields(explodeKeys, schema.explode.resultFormat);
+      explodeFieldsTags = await this.getExplodeFields(explodeKeys, schema.explode.resultFormat, debug);
     }
 
     finalTags = { ...finalTags, ...domainFieldsTags, ...explodeFieldsTags };
@@ -108,14 +110,18 @@ export class SchemaManager {
       postMappingCount: Object.keys(finalTags).length,
     });
 
-    return finalTags;
+    return { tags: finalTags, debug };
   }
 
   private readonly concatenateKeysPrefix = (prefix: string, ...keys: string[]): string => {
     return `${[prefix, ...keys].join(KEYS_SEPARATOR)}`;
   };
 
-  private readonly getDomainFieldsCodedValues = async (domainMapKeys: MappingKey[], domainKeyFormat: string): Promise<Tags> => {
+  private readonly getDomainFieldsCodedValues = async (
+    domainMapKeys: MappingKey[],
+    domainKeyFormat: string,
+    debug?: MappingDebug[]
+  ): Promise<Tags> => {
     const domainFieldsTags: Tags = {};
     const domainKeys = domainMapKeys.map((key) => key.key);
     const domainLookupKeys = domainMapKeys.map((key) => key.lookupKey);
@@ -127,6 +133,15 @@ export class SchemaManager {
       if (codedValue !== null) {
         const newKey = Format(domainKeyFormat, { key: domainKeys[index] });
 
+        if (debug) {
+          const existingIndex = debug.findIndex((d) => d.key === domainKeys[index]);
+          if (existingIndex !== NOT_FOUND_INDEX) {
+            debug[existingIndex].result.push(newKey);
+          } else {
+            debug.push({ key: domainKeys[index], result: [newKey], type: 'domain' });
+          }
+        }
+
         domainFieldsTags[newKey] = codedValue;
       }
     });
@@ -134,8 +149,9 @@ export class SchemaManager {
     return domainFieldsTags;
   };
 
-  private readonly getExplodeFields = async (explodeMapKeys: MappingKey[], explodeKeyFormat: string): Promise<Tags> => {
+  private readonly getExplodeFields = async (explodeMapKeys: MappingKey[], explodeKeyFormat: string, debug?: MappingDebug[]): Promise<Tags> => {
     let explodeFieldsTags: Tags = {};
+    const explodeKeys = explodeMapKeys.map((key) => key.key);
     const explodeLookupKeys = explodeMapKeys.map((key) => key.lookupKey);
 
     const explodeFields = await this.domainFieldsRepo.getFields(explodeLookupKeys);
@@ -151,9 +167,16 @@ export class SchemaManager {
         const json = JSON.parse(jsonString) as Record<string, string | number | null>;
         const explodedFields = Object.entries(json).reduce((acc: Tags, [key, value]) => {
           const explodedKey = Format(explodeKeyFormat, { key });
-
           acc[explodedKey] = value !== null ? value.toString() : null;
 
+          if (debug) {
+            const existingIndex = debug.findIndex((d) => d.key === explodeKeys[index]);
+            if (existingIndex !== NOT_FOUND_INDEX) {
+              debug[existingIndex].result.push(explodedKey);
+            } else {
+              debug.push({ key: explodeKeys[index], result: [explodedKey], type: 'explode' });
+            }
+          }
           return acc;
         }, {});
 

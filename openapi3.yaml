@@ -80,6 +80,12 @@ paths:
             type: string
           required: true
           description: the schema name
+        - in: query
+          name: debug
+          schema:
+            type: boolean
+          required: false
+          description: flag indicating the return of mapping debug
       summary: osm tags mapping
       requestBody:
         content:
@@ -105,6 +111,8 @@ paths:
                 type: object
                 properties:
                   properties:
+                    type: object
+                  debug:
                     type: object
                 required:
                   - properties
