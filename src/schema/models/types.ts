@@ -31,3 +31,14 @@ interface DomainSchema {
 export type Schema = DisableExternalFetching | EnableExternalFetching;
 
 export type Tags = Record<string, string | number | boolean | null>;
+
+export interface MappingDebug {
+  type: 'domain' | 'explode';
+  key: string;
+  result: string[];
+}
+
+export interface TagMappingResult {
+  tags: Tags;
+  debug?: MappingDebug[];
+}

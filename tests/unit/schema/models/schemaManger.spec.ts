@@ -131,7 +131,7 @@ describe('SchemaManager', () => {
 
       const res = await schemaManager.map(name, tags);
 
-      expect(res).toMatchObject(expected);
+      expect(res.tags).toMatchObject(expected);
     });
 
     it('should return mapped tags without system name prefix', async () => {
@@ -151,7 +151,7 @@ describe('SchemaManager', () => {
 
       const res = await schemaManager.map(name, tags);
 
-      expect(res).toMatchObject(expected);
+      expect(res.tags).toMatchObject(expected);
     });
 
     it('should return mapped tags with system name prefix without domain key & renamed key', async () => {
@@ -173,7 +173,7 @@ describe('SchemaManager', () => {
 
       const res = await schemaManager.map(name, tags);
 
-      expect(res).toMatchObject(expected);
+      expect(res.tags).toMatchObject(expected);
     });
 
     it('should return mapped tags when the renamed key is also a domain key', async function () {
@@ -189,7 +189,7 @@ describe('SchemaManager', () => {
 
       const res = await schemaManager.map(name, tags);
 
-      expect(res).toMatchObject(expected);
+      expect(res.tags).toMatchObject(expected);
     });
 
     it('should return mapped tags when the renamed key is also an explode key', async function () {
@@ -207,7 +207,7 @@ describe('SchemaManager', () => {
 
       const res = await schemaManager.map(name, tags);
 
-      expect(res).toMatchObject(expected);
+      expect(res.tags).toMatchObject(expected);
     });
 
     it('should return mapped tags with system name prefix & domain key & explode key & renamed key & repo hash key', async () => {
@@ -235,7 +235,7 @@ describe('SchemaManager', () => {
 
       const res = await schemaManager.map(name, tags);
 
-      expect(res).toMatchObject(expected);
+      expect(res.tags).toMatchObject(expected);
     });
 
     it('should return mapped tags with system name prefix & domain key & explode key & renamed key & without repo hash key', async () => {
@@ -263,7 +263,7 @@ describe('SchemaManager', () => {
 
       const res = await schemaManager.map(name, tags);
 
-      expect(res).toMatchObject(expected);
+      expect(res.tags).toMatchObject(expected);
     });
 
     it('should return mapped tags without the ignored key', async () => {
@@ -286,7 +286,7 @@ describe('SchemaManager', () => {
 
       const res = await schemaManager.map(name, tags);
 
-      expect(res).toMatchObject(expected);
+      expect(res.tags).toMatchObject(expected);
     });
 
     it('should return mapped tags with system name prefix & domain key & without the ignored key', async () => {
@@ -310,9 +310,9 @@ describe('SchemaManager', () => {
       const expectedKeysLength = Object.keys(expected).length;
 
       const res = await schemaManager.map(name, tags);
-      const keysLength = Object.keys(res).length;
+      const keysLength = Object.keys(res.tags).length;
 
-      expect(res).toMatchObject(expected);
+      expect(res.tags).toMatchObject(expected);
       expect(keysLength).toBe(expectedKeysLength);
     });
 
@@ -343,7 +343,7 @@ describe('SchemaManager', () => {
       getFields.mockReturnValueOnce(['{ "exploded1": "2", "exploded2": "3" }']);
       const res = await schemaManager.map(name, tags);
 
-      expect(res).toMatchObject(expected);
+      expect(res.tags).toMatchObject(expected);
     });
 
     it('when system name not in schemas, should throw an error', async () => {
@@ -385,7 +385,7 @@ describe('SchemaManager', () => {
 
       const res = await schemaManager.map(name, tags);
 
-      expect(res).toMatchObject(expected);
+      expect(res.tags).toMatchObject(expected);
     });
 
     it('should throw key not found error if a given explode key field is null', async () => {
