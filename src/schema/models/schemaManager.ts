@@ -1,62 +1,23 @@
 import { inject, injectable } from 'tsyringe';
+import Format from 'string-format';
 import { Logger } from '@map-colonies/js-logger';
 import { IDomainFieldsRepository, IDOMAIN_FIELDS_REPO_SYMBOL } from '../DAL/domainFieldsRepository';
-import { Tags } from '../../common/types';
-import { KEYS_SEPARATOR, REDIS_KEYS_SEPARATOR, SERVICES } from '../../common/constants';
-import { KeyNotFoundError } from '../DAL/errors';
-import { keyConstructor } from '../DAL/keys';
-import { Schema, schemaSymbol } from './types';
+import { KEYS_SEPARATOR, NOT_FOUND_INDEX, SCHEMAS_SYMBOL, SERVICES } from '../../common/constants';
+import { JSONSyntaxError, KeyNotFoundError, SchemaNotFoundError } from '../../common/errors';
+import { Schema, Tags } from './types';
 
-interface SchemaMetadataBase {
-  keyIgnoreSets: Set<string>;
-  addSchemaPrefix: boolean;
-  renameKeys?: Record<string, string>;
+interface MappingKey {
+  key: string;
+  lookupKey: string;
 }
-
-interface WithExternalFetch extends SchemaMetadataBase {
-  enableExternalFetch: true;
-  explodeKeysSet: Set<string>;
-  explodePrefix: string;
-  domainPrefix: string;
-}
-
-interface WithoutExternalFetch extends SchemaMetadataBase {
-  enableExternalFetch: false;
-}
-
-type SchemaMetadata = WithExternalFetch | WithoutExternalFetch;
-
-export class SchemaNotFoundError extends Error {}
-export class JSONSyntaxError extends SyntaxError {}
 
 @injectable()
 export class SchemaManager {
-  private readonly schemas: Record<string, SchemaMetadata>;
   public constructor(
-    @inject(schemaSymbol) private readonly inputSchemas: Schema[],
+    @inject(SCHEMAS_SYMBOL) private readonly inputSchemas: Schema[],
     @inject(IDOMAIN_FIELDS_REPO_SYMBOL) private readonly domainFieldsRepo: IDomainFieldsRepository,
     @inject(SERVICES.LOGGER) private readonly logger: Logger
-  ) {
-    this.schemas = inputSchemas.reduce((acc, curr) => {
-      let schemaMetadata: SchemaMetadata = {
-        keyIgnoreSets: new Set(curr.ignoreKeys),
-        enableExternalFetch: false,
-        addSchemaPrefix: curr.addSchemaPrefix,
-        ...(curr.renameKeys && { renameKeys: curr.renameKeys }),
-      };
-
-      if (curr.enableExternalFetch === 'yes') {
-        schemaMetadata = {
-          ...schemaMetadata,
-          enableExternalFetch: true,
-          explodeKeysSet: new Set(curr.explodeKeys),
-          explodePrefix: curr.explodePrefix,
-          domainPrefix: curr.domainPrefix,
-        };
-      }
-      return { ...acc, [curr.name]: schemaMetadata };
-    }, {});
-  }
+  ) {}
 
   public getSchemas(): Schema[] {
     this.logger.info({ msg: 'getting all schemas', count: this.inputSchemas.length });
@@ -73,18 +34,19 @@ export class SchemaManager {
   public async map(name: string, tags: Tags): Promise<Tags> {
     this.logger.info({ msg: 'starting tag mapping', schemaName: name, count: Object.keys(tags).length });
 
-    if (this.getSchema(name) === undefined) {
+    const schema = this.getSchema(name);
+
+    if (!schema) {
       this.logger.error({ msg: 'schema not found', schemaName: name });
       throw new SchemaNotFoundError(`schema ${name} not found`);
     }
 
-    const schema = this.schemas[name];
-    const domainKeys: string[] = []; // array to hold all domain keys
-    const explodeKeys: string[] = []; // array to hold all explode keys
+    const domainKeys: MappingKey[] = []; // array to hold all domain keys
+    const explodeKeys: MappingKey[] = []; // array to hold all explode keys
 
     let finalTags: Tags = Object.entries(tags).reduce((acc: Tags, [key, value]) => {
       // remove tag if it's an ignored key
-      if (schema.keyIgnoreSets.has(key)) {
+      if (schema.ignoreKeys && schema.ignoreKeys.indexOf(key) !== NOT_FOUND_INDEX) {
         return acc;
       }
 
@@ -93,12 +55,17 @@ export class SchemaManager {
         key = schema.renameKeys[key];
       }
 
-      if (schema.enableExternalFetch) {
+      if (schema.enableExternalFetch === 'yes') {
         // check each tag if it's an explode field and put it in explodeKeys
-        if (schema.explodeKeysSet.has(key) && value !== null) {
-          explodeKeys.push(`${keyConstructor(schema.explodePrefix, key, value.toString())}`);
+        if (schema.explode.keys.indexOf(key) !== NOT_FOUND_INDEX && value !== null) {
+          const lookupKey = Format(schema.explode.lookupKeyFormat, { key, value });
+          explodeKeys.push({ key, lookupKey });
         } else if (value !== null) {
-          domainKeys.push(`${keyConstructor(schema.domainPrefix, key.toUpperCase(), value.toString())}`);
+          const lookupKey = Format(schema.domain.lookupKeyFormat, { key, value });
+          domainKeys.push({
+            key,
+            lookupKey,
+          });
         }
       }
 
@@ -116,17 +83,17 @@ export class SchemaManager {
       explodeKeysCount: explodeKeys.length,
     });
 
-    if (domainKeys.length > 0) {
-      domainFieldsTags = await this.getDomainFieldsCodedValues(domainKeys);
+    if (schema.enableExternalFetch === 'yes' && domainKeys.length > 0) {
+      domainFieldsTags = await this.getDomainFieldsCodedValues(domainKeys, schema.domain.resultFormat);
     }
 
-    if (explodeKeys.length > 0) {
-      explodeFieldsTags = await this.getExplodeFields(explodeKeys);
+    if (schema.enableExternalFetch === 'yes' && explodeKeys.length > 0) {
+      explodeFieldsTags = await this.getExplodeFields(explodeKeys, schema.explode.resultFormat);
     }
 
     finalTags = { ...finalTags, ...domainFieldsTags, ...explodeFieldsTags };
 
-    if (this.schemas[name].addSchemaPrefix) {
+    if (schema.addSchemaPrefix) {
       // for each key add a system name prefix
       finalTags = Object.entries(finalTags).reduce((acc: Tags, [key, value]) => {
         acc[this.concatenateKeysPrefix(name, key)] = value;
@@ -135,9 +102,10 @@ export class SchemaManager {
     }
 
     this.logger.debug({
-      msg: 'final tags mapping counter',
+      msg: 'tags mapping counter',
       schemaName: name,
-      tagsCount: Object.keys(finalTags).length,
+      preMappingCount: Object.keys(tags).length,
+      postMappingCount: Object.keys(finalTags).length,
     });
 
     return finalTags;
@@ -147,46 +115,52 @@ export class SchemaManager {
     return `${[prefix, ...keys].join(KEYS_SEPARATOR)}`;
   };
 
-  private readonly getDomainFieldsCodedValues = async (domainKeys: string[]): Promise<Tags> => {
-    let domainFieldsTags: Tags = {};
-    const fieldsCodedValues = await this.domainFieldsRepo.getFields(domainKeys);
+  private readonly getDomainFieldsCodedValues = async (domainMapKeys: MappingKey[], domainKeyFormat: string): Promise<Tags> => {
+    const domainFieldsTags: Tags = {};
+    const domainKeys = domainMapKeys.map((key) => key.key);
+    const domainLookupKeys = domainMapKeys.map((key) => key.lookupKey);
 
-    // for each domain field create new domain field tag with the correct value
+    const fieldsCodedValues = await this.domainFieldsRepo.getFields(domainLookupKeys);
+
+    // for each domain field create new domain field tag with the fetched value
     fieldsCodedValues.forEach((codedValue, index) => {
       if (codedValue !== null) {
-        domainFieldsTags = {
-          ...domainFieldsTags,
-          [domainKeys[index].split(REDIS_KEYS_SEPARATOR)[1] + '_DOMAIN']: codedValue,
-        };
+        const newKey = Format(domainKeyFormat, { key: domainKeys[index] });
+
+        domainFieldsTags[newKey] = codedValue;
       }
     });
 
     return domainFieldsTags;
   };
 
-  private readonly getExplodeFields = async (explodeKeys: string[]): Promise<Tags> => {
+  private readonly getExplodeFields = async (explodeMapKeys: MappingKey[], explodeKeyFormat: string): Promise<Tags> => {
     let explodeFieldsTags: Tags = {};
-    const explodeFields = await this.domainFieldsRepo.getFields(explodeKeys);
+    const explodeLookupKeys = explodeMapKeys.map((key) => key.lookupKey);
+
+    const explodeFields = await this.domainFieldsRepo.getFields(explodeLookupKeys);
 
     // for each explode field parse for new Object.
     explodeFields.forEach((jsonString, index) => {
       if (jsonString === null) {
-        this.logger.error({ msg: 'failed to fetch json for explode key', key: explodeKeys[index] });
-        throw new KeyNotFoundError(`failed to fetch json for key: ${explodeKeys[index]}`);
+        this.logger.error({ msg: 'failed to fetch json for explode key', key: explodeLookupKeys[index] });
+        throw new KeyNotFoundError(`failed to fetch json for key: ${explodeLookupKeys[index]}`);
       }
 
       try {
         const json = JSON.parse(jsonString) as Record<string, string | number | null>;
         const explodedFields = Object.entries(json).reduce((acc: Tags, [key, value]) => {
-          if (typeof value === 'string' || typeof value === 'number') {
-            acc[key + '_DOMAIN'] = value.toString();
-          }
+          const explodedKey = Format(explodeKeyFormat, { key });
+
+          acc[explodedKey] = value !== null ? value.toString() : null;
+
           return acc;
         }, {});
+
         explodeFieldsTags = { ...explodeFieldsTags, ...explodedFields };
       } catch (error) {
-        this.logger.error({ msg: 'failed to parse json for explode key', key: explodeKeys[index] });
-        throw new JSONSyntaxError(`failed to parse fetched json for key: ${explodeKeys[index]}`);
+        this.logger.error({ msg: 'failed to parse json for explode key', err: error, key: explodeLookupKeys[index] });
+        throw new JSONSyntaxError(`failed to parse fetched json for key: ${explodeLookupKeys[index]}`);
       }
     });
 

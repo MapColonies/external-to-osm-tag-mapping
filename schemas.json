@@ -5,10 +5,16 @@
     "updatedAt": "2021-07-14T11:19:58Z",
     "enableExternalFetch": "yes",
     "addSchemaPrefix": true,
-    "explodeKeys": ["explode1", "explode2"],
     "renameKeys": { "externalKey1": "renamedExternalKey1", "externalKeyRename": "explode2" },
-    "explodePrefix": "",
-    "domainPrefix": "att"
+    "explode": {
+      "keys": ["explode1", "explode2"],
+      "lookupKeyFormat": "{key}:{value}",
+      "resultFormat": "{key}_DOMAIN"
+    },
+    "domain": {
+      "lookupKeyFormat": "att:{key}:{value}",
+      "resultFormat": "{key}_DOMAIN"
+    }
   },
   {
     "name": "system2",
@@ -17,10 +23,16 @@
     "ignoreKeys": ["key1"],
     "enableExternalFetch": "yes",
     "addSchemaPrefix": true,
-    "explodeKeys": ["explode1", "explode2"],
     "renameKeys": { "rename1": "renamedKey1" },
-    "explodePrefix": "",
-    "domainPrefix": "att"
+    "explode": {
+      "keys": ["explode1", "explode2"],
+      "lookupKeyFormat": "{key}:{value}",
+      "resultFormat": "{key}_DOMAIN"
+    },
+    "domain": {
+      "lookupKeyFormat": "att:{key}:{value}",
+      "resultFormat": "{key}_DOMAIN"
+    }
   },
   {
     "name": "system3",
@@ -42,9 +54,15 @@
     "updatedAt": "2021-07-14T11:19:58Z",
     "enableExternalFetch": "yes",
     "addSchemaPrefix": true,
-    "explodeKeys": ["explode1", "explode2"],
     "renameKeys": { "externalKey1": "renamedExternalKey1" },
-    "explodePrefix": "",
-    "domainPrefix": "att"
+    "explode": {
+      "keys": ["explode1", "explode2"],
+      "lookupKeyFormat": "{key}:{value}",
+      "resultFormat": "{key}_DOMAIN"
+    },
+    "domain": {
+      "lookupKeyFormat": "att:{key}:{value}",
+      "resultFormat": "{key}_DOMAIN"
+    }
   }
 ]

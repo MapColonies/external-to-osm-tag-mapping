@@ -4,7 +4,7 @@ import { SERVICES } from '../../../common/constants';
 import { IConfig } from '../../../common/interfaces';
 import { ISchemaProvider } from '../provider';
 import { Schema } from '../../models/types';
-import { parseSchema } from '../../utils/schemaParser';
+import { parseSchema } from '../../validation';
 
 @injectable()
 export class FileSchemaProvider implements ISchemaProvider {

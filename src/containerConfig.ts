@@ -5,13 +5,12 @@ import config from 'config';
 import Redis from 'ioredis';
 import { RedisOptions } from 'ioredis';
 import { container } from 'tsyringe';
-import { ON_SIGNAL, REDIS_SYMBOL, SERVICES, SERVICE_NAME } from './common/constants';
+import { ON_SIGNAL, REDIS_SYMBOL, SCHEMAS_SYMBOL, SERVICES, SERVICE_NAME } from './common/constants';
 import { createConnection } from './common/db';
 import { IApplication } from './common/interfaces';
 import { tracing } from './common/tracing';
 import { IDOMAIN_FIELDS_REPO_SYMBOL } from './schema/DAL/domainFieldsRepository';
 import { RedisManager } from './schema/DAL/redisManager';
-import { schemaSymbol } from './schema/models/types';
 import { getSchemas } from './schema/providers/schemaLoader';
 
 async function registerExternalValues(): Promise<void> {
@@ -25,7 +24,7 @@ async function registerExternalValues(): Promise<void> {
   container.register(SERVICES.TRACER, { useValue: tracer });
 
   const schemas = await getSchemas(container);
-  container.register(schemaSymbol, { useValue: schemas });
+  container.register(SCHEMAS_SYMBOL, { useValue: schemas });
 
   const connectToExternal = schemas.some((schema) => {
     return schema.enableExternalFetch === 'yes';
@@ -65,7 +64,7 @@ async function registerExternalValues(): Promise<void> {
     });
 
     redisConnection.on('reconnecting', (delay: number) => {
-      logger.info(`redis client reconnecting, next reconnection attemp in ${delay}ms`);
+      logger.info({ msg: `redis client is reconnecting`, nextAttemptMs: delay });
     });
 
     container.register(REDIS_SYMBOL, { useValue: redisConnection });

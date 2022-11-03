@@ -79,7 +79,7 @@ paths:
           schema:
             type: string
           required: true
-          description: the service name
+          description: the schema name
       summary: osm tags mapping
       requestBody:
         content:
@@ -164,19 +164,64 @@ components:
         name:
           description: schema name
           type: string
-        created_at:
+        createdAt:
           type: string
           format: date-time
           description: UTC date/time of the schema's creation
-        updated_at:
+        updatedAt:
           type: string
           format: date-time
           description: UTC date/time of the schema's update
+        enableExternalFetch:
+          type: string
+          description: external fetch flag
+          enum:
+            - yes
+            - no
         ignoreKeys:
           description: keys to remove from the tags object
           type: array
           items:
             type: string
+        addSchemaPrefix:
+          description: should add schema prefix
+          type: boolean
+        renameKeys:
+          description: key rename mapping
+          type: object
+          additionalProperties: true
+        domain:
+          description: domain fields schema
+          type: object
+          properties:
+            lookupKeyFormat:
+              type: string
+            resultFormat:
+              type: string
+          required:
+            - lookupKeyFormat
+            - resultFormat
+        explode:
+          description: explode fields schema
+          type: object
+          properties:
+            keys:
+              type: array
+              items:
+                type: string
+            lookupKeyFormat:
+              type: string
+            resultFormat:
+              type: string
+          required:
+            - keys
+            - lookupKeyFormat
+            - resultFormat
+      required:
+        - name
+        - createdAt
+        - enableExternalFetch
+        - addSchemaPrefix
     Error:
       type: object
       properties:

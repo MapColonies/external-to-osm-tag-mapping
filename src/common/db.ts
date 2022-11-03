@@ -3,7 +3,6 @@ import { HOSTNAME } from './constants';
 
 const RETRY_DELAY_INCREASE = 50;
 const RETRY_DELAY_TOP = 2000;
-let redis: Redis;
 
 const retryFunction = (times: number): number => {
   const delay = Math.min(times * RETRY_DELAY_INCREASE, RETRY_DELAY_TOP);
@@ -11,6 +10,8 @@ const retryFunction = (times: number): number => {
 };
 
 export const createConnection = async (redisOptions: RedisOptions): Promise<Redis> => {
+  let redis: Redis | undefined;
+
   try {
     redisOptions = {
       ...redisOptions,
@@ -23,11 +24,7 @@ export const createConnection = async (redisOptions: RedisOptions): Promise<Redi
     await redis.connect();
     return redis;
   } catch (err) {
-    redis.disconnect();
-    let errorMessage = 'Redis connection failed';
-    if (err instanceof Error) {
-      errorMessage += ` with the following error: ${err.message}`;
-    }
-    throw new Error(errorMessage);
+    redis?.disconnect();
+    throw err;
   }
 };
