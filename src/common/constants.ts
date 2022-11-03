@@ -26,6 +26,7 @@ export const SERVICES: Record<string, symbol> = {
 
 export const REDIS_SYMBOL = Symbol('REDIS');
 export const ON_SIGNAL = Symbol('onSignal');
+export const SCHEMAS_SYMBOL = Symbol('schemas');
 
 export const KEYS_SEPARATOR = '_';
-export const REDIS_KEYS_SEPARATOR = ':';
+export const NOT_FOUND_INDEX = -1;

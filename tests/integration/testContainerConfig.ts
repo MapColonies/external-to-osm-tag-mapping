@@ -4,8 +4,7 @@ import jsLogger from '@map-colonies/js-logger';
 import Redis from 'ioredis';
 import { RedisOptions } from 'ioredis';
 import { getSchemas } from '../../src/schema/providers/schemaLoader';
-import { REDIS_SYMBOL, SERVICES } from '../../src/common/constants';
-import { schemaSymbol } from '../../src/schema/models/types';
+import { REDIS_SYMBOL, SCHEMAS_SYMBOL, SERVICES } from '../../src/common/constants';
 import { createConnection } from '../../src/common/db';
 import { IDOMAIN_FIELDS_REPO_SYMBOL } from '../../src/schema/DAL/domainFieldsRepository';
 import { RedisManager } from '../../src/schema/DAL/redisManager';
@@ -25,10 +24,9 @@ async function registerTestValues(appConfig?: IApplication): Promise<void> {
   }
 
   const schemas = await getSchemas(container);
+  container.register(SCHEMAS_SYMBOL, { useValue: schemas });
 
   const redisConnection: Redis = await createConnection(config.get<RedisOptions>('db'));
-
-  container.register(schemaSymbol, { useValue: schemas });
   container.register(REDIS_SYMBOL, { useValue: redisConnection });
   container.register(IDOMAIN_FIELDS_REPO_SYMBOL, { useClass: RedisManager });
 }

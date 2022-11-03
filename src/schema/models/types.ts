@@ -1,5 +1,3 @@
-import { JTDSchemaType } from 'ajv/dist/core';
-
 interface BaseSchema {
   createdAt: Date;
   updatedAt?: Date;
@@ -15,46 +13,21 @@ interface DisableExternalFetching extends BaseSchema {
 
 interface EnableExternalFetching extends BaseSchema {
   enableExternalFetch: 'yes';
-  explodeKeys: string[];
-  explodePrefix: string;
-  domainPrefix: string;
+  explode: ExplodeSchema;
+  domain: DomainSchema;
+}
+
+interface ExplodeSchema {
+  keys: string[];
+  lookupKeyFormat: string;
+  resultFormat: string;
+}
+
+interface DomainSchema {
+  lookupKeyFormat: string;
+  resultFormat: string;
 }
 
 export type Schema = DisableExternalFetching | EnableExternalFetching;
 
-export const schemaSymbol = Symbol('schemas');
-
-export const schemasTypeDefinition: JTDSchemaType<Schema[]> = {
-  elements: {
-    discriminator: 'enableExternalFetch',
-    mapping: {
-      yes: {
-        properties: {
-          name: { type: 'string', metadata: { minLength: 2, maxLength: 15 } },
-          createdAt: { type: 'timestamp' },
-          explodeKeys: { elements: { type: 'string' } },
-          explodePrefix: { type: 'string' },
-          domainPrefix: { type: 'string' },
-          addSchemaPrefix: { type: 'boolean' },
-        },
-        optionalProperties: {
-          updatedAt: { type: 'timestamp' },
-          ignoreKeys: { elements: { type: 'string' } },
-          renameKeys: { values: { type: 'string' } },
-        },
-      },
-      no: {
-        properties: {
-          name: { type: 'string', metadata: { minLength: 2, maxLength: 15 } },
-          createdAt: { type: 'timestamp' },
-          addSchemaPrefix: { type: 'boolean' },
-        },
-        optionalProperties: {
-          updatedAt: { type: 'timestamp' },
-          ignoreKeys: { elements: { type: 'string' } },
-          renameKeys: { values: { type: 'string' } },
-        },
-      },
-    },
-  },
-};
+export type Tags = Record<string, string | number | boolean | null>;

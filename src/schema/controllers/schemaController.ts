@@ -5,10 +5,9 @@ import { HttpError } from '@map-colonies/error-express-handler';
 import { Feature, Geometry } from 'geojson';
 import { Logger } from '@map-colonies/js-logger';
 import { SERVICES } from '../../common/constants';
-import { JSONSyntaxError, SchemaManager, SchemaNotFoundError } from '../models/schemaManager';
-import { Tags } from '../../common/types';
-import { Schema } from '../models/types';
-import { KeyNotFoundError } from '../DAL/errors';
+import { SchemaManager } from '../models/schemaManager';
+import { Schema, Tags } from '../models/types';
+import { JSONSyntaxError, KeyNotFoundError, SchemaNotFoundError } from '../../common/errors';
 
 interface SchemaParams {
   name: string;
@@ -46,10 +45,10 @@ export class SchemaController {
   public postMap: PostMapHandler = async (req, res, next) => {
     const tags = req.body.properties;
     const { name } = req.params;
-    const response: ExternalFeature = { ...req.body };
 
     try {
-      response.properties = await this.manager.map(name, tags);
+      const properties = await this.manager.map(name, tags);
+      return res.status(httpStatus.OK).json({ ...req.body, properties });
     } catch (error) {
       if (error instanceof SchemaNotFoundError) {
         (error as HttpError).statusCode = httpStatus.NOT_FOUND;
@@ -59,6 +58,5 @@ export class SchemaController {
       }
       return next(error);
     }
-    return res.status(httpStatus.OK).json(response);
   };
 }

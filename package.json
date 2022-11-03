@@ -19,7 +19,8 @@
     "build": "tsc --project tsconfig.build.json  && npm run assets:copy",
     "start": "npm run build && cd dist && node ./index.js",
     "assets:copy": "copyfiles -f ./config/* ./dist/config && copyfiles -f ./openapi3.yaml ./dist/ && copyfiles ./package.json dist && copyfiles -f ./schemas.json ./dist/",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist",
+    "install": "npx husky install"
   },
   "directories": {
     "test": "tests"
@@ -36,6 +37,7 @@
   "license": "ISC",
   "husky": {
     "hooks": {
+      "pre-commit": "pretty-quick --staged",
       "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
     }
   },
@@ -53,6 +55,7 @@
     "@map-colonies/telemetry": "^4.1.0",
     "@opentelemetry/api": "^1.1.0",
     "@opentelemetry/api-metrics": "^0.29.0",
+    "@types/string-format": "^2.0.0",
     "ajv": "^8.11.0",
     "body-parser": "^1.20.0",
     "compression": "^1.7.4",
@@ -63,6 +66,7 @@
     "http-status-codes": "^2.2.0",
     "ioredis": "5.0.0",
     "reflect-metadata": "^0.1.13",
+    "string-format": "^2.0.0",
     "tsyringe": "^4.7.0",
     "yamljs": "^0.3.0"
   },

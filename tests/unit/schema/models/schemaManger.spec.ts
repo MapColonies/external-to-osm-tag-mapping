@@ -2,9 +2,10 @@
 import { container } from 'tsyringe';
 import jsLogger from '@map-colonies/js-logger';
 import { IDOMAIN_FIELDS_REPO_SYMBOL } from '../../../../src/schema/DAL/domainFieldsRepository';
-import { JSONSyntaxError, SchemaManager, SchemaNotFoundError } from '../../../../src/schema/models/schemaManager';
-import { Schema, schemaSymbol } from '../../../../src/schema/models/types';
-import { SERVICES } from '../../../../src/common/constants';
+import { SchemaManager } from '../../../../src/schema/models/schemaManager';
+import { Schema } from '../../../../src/schema/models/types';
+import { SCHEMAS_SYMBOL, SERVICES } from '../../../../src/common/constants';
+import { JSONSyntaxError, KeyNotFoundError, SchemaNotFoundError } from '../../../../src/common/errors';
 
 const schemas: Schema[] = [
   {
@@ -12,10 +13,16 @@ const schemas: Schema[] = [
     createdAt: new Date(),
     enableExternalFetch: 'yes',
     addSchemaPrefix: true,
-    explodeKeys: ['explode1', 'explode2'],
     renameKeys: { externalKey1: 'renamedExternalKey1', externalKeyRename: 'explode2' },
-    explodePrefix: '',
-    domainPrefix: 'att',
+    explode: {
+      keys: ['explode1', 'explode2'],
+      lookupKeyFormat: '{key}:{val}',
+      resultFormat: '{key}_DOMAIN',
+    },
+    domain: {
+      lookupKeyFormat: 'att:{key}:{val}',
+      resultFormat: '{key}_DOMAIN',
+    },
   },
   {
     name: 'system2',
@@ -23,10 +30,16 @@ const schemas: Schema[] = [
     ignoreKeys: ['key1'],
     enableExternalFetch: 'yes',
     addSchemaPrefix: true,
-    explodeKeys: ['explode1', 'explode2'],
     renameKeys: { rename1: 'renamedKey1' },
-    explodePrefix: '',
-    domainPrefix: 'att',
+    explode: {
+      keys: ['explode1', 'explode2'],
+      lookupKeyFormat: '{key}:{val}',
+      resultFormat: '{key}_DOMAIN',
+    },
+    domain: {
+      lookupKeyFormat: 'att:{key}:{val}',
+      resultFormat: '{key}_DOMAIN',
+    },
   },
   {
     name: 'system3',
@@ -45,10 +58,16 @@ const schemas: Schema[] = [
     createdAt: new Date(),
     enableExternalFetch: 'yes',
     addSchemaPrefix: true,
-    explodeKeys: ['explode1', 'explode2'],
     renameKeys: { externalKey1: 'renamedExternalKey1' },
-    explodePrefix: '',
-    domainPrefix: 'att',
+    explode: {
+      keys: ['explode1', 'explode2'],
+      lookupKeyFormat: '{key}:{value}',
+      resultFormat: '{key}_DOMAIN',
+    },
+    domain: {
+      lookupKeyFormat: 'att:{key}:{value}',
+      resultFormat: '{key}_DOMAIN',
+    },
   },
 ];
 
@@ -58,7 +77,7 @@ describe('SchemaManager', () => {
 
   beforeAll(() => {
     getFields = jest.fn();
-    container.register(schemaSymbol, { useValue: schemas });
+    container.register(SCHEMAS_SYMBOL, { useValue: schemas });
     container.register(IDOMAIN_FIELDS_REPO_SYMBOL, { useValue: { getFields } });
     container.register(SERVICES.LOGGER, { useValue: jsLogger({ enabled: false }) });
 
@@ -74,6 +93,7 @@ describe('SchemaManager', () => {
       const res = schemaManager.getSchemas();
 
       expect(res).toBeInstanceOf(Array);
+      expect(res).toHaveLength(schemas.length);
     });
   });
 
@@ -162,7 +182,7 @@ describe('SchemaManager', () => {
         externalKey1: 'val1',
       };
       const expected = {
-        system1_RENAMEDEXTERNALKEY1_DOMAIN: '1',
+        system1_renamedExternalKey1_DOMAIN: '1',
       };
 
       getFields.mockReturnValueOnce(['1']);
@@ -194,14 +214,14 @@ describe('SchemaManager', () => {
       const name = 'system1';
       const tags = {
         externalKey3: 'val3',
-        externalKey2: 'val2',
+        EXTERNALKEY2: 'val2',
         externalKey1: 'val1',
         externalKey4: 'val4',
         explode1: 'val5',
       };
       const expected = {
         system1_renamedExternalKey1: 'val1',
-        system1_externalKey2: 'val2',
+        system1_EXTERNALKEY2: 'val2',
         system1_externalKey3: 'val3',
         system1_externalKey4: 'val4',
         system1_explode1: 'val5',
@@ -222,14 +242,14 @@ describe('SchemaManager', () => {
       const name = 'system5';
       const tags = {
         externalKey3: 'val3',
-        externalKey2: 'val2',
+        EXTERNALKEY2: 'val2',
         externalKey1: 'val1',
         externalKey4: 'val4',
         explode1: 'val5',
       };
       const expected = {
         system5_renamedExternalKey1: 'val1',
-        system5_externalKey2: 'val2',
+        system5_EXTERNALKEY2: 'val2',
         system5_externalKey3: 'val3',
         system5_externalKey4: 'val4',
         system5_explode1: 'val5',
@@ -262,6 +282,8 @@ describe('SchemaManager', () => {
         system2_externalKey4: 'val4',
       };
 
+      getFields.mockReturnValueOnce([null, null, null, null]);
+
       const res = await schemaManager.map(name, tags);
 
       expect(res).toMatchObject(expected);
@@ -271,14 +293,14 @@ describe('SchemaManager', () => {
       const name = 'system2';
       const tags = {
         externalKey3: 'val3',
-        externalKey2: 'val2',
+        EXTERNALKEY2: 'val2',
         externalKey1: 'val1',
         externalKey4: 'val4',
         key1: 'val1',
       };
       const expected = {
         system2_externalKey1: 'val1',
-        system2_externalKey2: 'val2',
+        system2_EXTERNALKEY2: 'val2',
         system2_externalKey3: 'val3',
         system2_externalKey4: 'val4',
         system2_EXTERNALKEY2_DOMAIN: '2',
@@ -301,7 +323,7 @@ describe('SchemaManager', () => {
         externalKey2: 'val2',
         externalKey1: 'בדיקה',
         externalKey4: 'val4',
-        externalKey5: 'שלום שלום/מנכ"ל',
+        externalKEY5: 'שלום שלום/מנכ"ל',
         explode1: 'שלום\\עולם',
       };
       const expected = {
@@ -309,10 +331,10 @@ describe('SchemaManager', () => {
         system5_externalKey2: 'val2',
         system5_externalKey3: 'val3',
         system5_externalKey4: 'val4',
-        system5_externalKey5: 'שלום שלום/מנכ"ל',
+        system5_externalKEY5: 'שלום שלום/מנכ"ל',
         system5_explode1: 'שלום\\עולם',
-        system5_EXTERNALKEY2_DOMAIN: '2',
-        system5_EXTERNALKEY5_DOMAIN: 'בדיקה',
+        system5_externalKey2_DOMAIN: '2',
+        system5_externalKEY5_DOMAIN: 'בדיקה',
         system5_exploded1_DOMAIN: '2',
         system5_exploded2_DOMAIN: '3',
       };
@@ -344,6 +366,39 @@ describe('SchemaManager', () => {
       const res = schemaManager.map(name, tags);
 
       await expect(res).rejects.toThrow(JSONSyntaxError);
+    });
+
+    it('should return a null valued key from exploded field who has a null property', async () => {
+      const name = 'system1';
+      const tags = {
+        explode1: 'val1',
+        explode2: 'val2',
+      };
+      const expected = {
+        system1_explode1: 'val1',
+        system1_explode2: 'val2',
+        system1_exploded1_DOMAIN: null,
+        system1_exploded2_DOMAIN: '3',
+      };
+
+      getFields.mockResolvedValue(['{"exploded1": null, "exploded2": "3"}']);
+
+      const res = await schemaManager.map(name, tags);
+
+      expect(res).toMatchObject(expected);
+    });
+
+    it('should throw key not found error if a given explode key field is null', async () => {
+      const name = 'system1';
+      const tags = {
+        explode1: 'val1',
+      };
+
+      getFields.mockResolvedValue([null]);
+
+      const res = schemaManager.map(name, tags);
+
+      await expect(res).rejects.toThrow(KeyNotFoundError);
     });
   });
 });

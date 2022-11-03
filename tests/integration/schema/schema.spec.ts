@@ -4,8 +4,7 @@ import Redis from 'ioredis';
 import { container } from 'tsyringe';
 import { REDIS_SYMBOL } from '../../../src/common/constants';
 import { IApplication } from '../../../src/common/interfaces';
-import { Tags } from '../../../src/common/types';
-import { Schema } from '../../../src/schema/models/types';
+import { Schema, Tags } from '../../../src/schema/models/types';
 import { registerTestValues } from '../testContainerConfig';
 import * as requestSender from './helpers/requestSender';
 
@@ -13,7 +12,7 @@ interface TagMappingTestValues {
   testCaseName: string;
   name: string;
   tagProperties: Tags;
-  expectedProperties: Record<string, string>;
+  expectedProperties: Record<string, string | null>;
   key: string;
   value: string;
 }
@@ -27,11 +26,13 @@ describe('schemas', function () {
   const hashKey = applicationConfigs[1]?.application?.hashKey?.value ?? 'hashKey1';
 
   let redisConnection: Redis;
+
   beforeAll(async function () {
     await registerTestValues();
     requestSender.init();
     redisConnection = container.resolve<Redis>(REDIS_SYMBOL);
   });
+
   afterAll(async function () {
     if (!['end'].includes(redisConnection.status)) {
       await redisConnection.quit();
@@ -62,11 +63,10 @@ describe('schemas', function () {
     describe('GET /schema', function () {
       it('should return 200 status code with a single schema', async function () {
         const response = await requestSender.getSchema('system1');
+
         expect(response).toHaveProperty('status', httpStatusCodes.OK);
 
-        const schema = response.body as Schema;
-        expect(schema).toBeDefined();
-        expect(schema).toHaveProperty('name', 'system1');
+        expect(response.body).toHaveProperty('name', 'system1');
       });
     });
 
@@ -86,12 +86,11 @@ describe('schemas', function () {
             system3_externalKey3: 'val3',
           },
         };
-        const response = await requestSender.map('system3', tags);
-        expect(response).toHaveProperty('status', httpStatusCodes.OK);
 
-        const mappedTags = response.body as Tags;
-        expect(mappedTags).toBeDefined();
-        expect(mappedTags).toMatchObject(expected);
+        const response = await requestSender.map('system3', tags);
+
+        expect(response).toHaveProperty('status', httpStatusCodes.OK);
+        expect(response.body).toMatchObject(expected);
       });
 
       it('should return 200 status code and map the tags when the requested keys are not in the domain with renamed key', async function () {
@@ -109,11 +108,9 @@ describe('schemas', function () {
         };
 
         const response = await requestSender.map('system1', tags);
-        expect(response).toHaveProperty('status', httpStatusCodes.OK);
 
-        const mappedTags = response.body as Tags;
-        expect(mappedTags).toBeDefined();
-        expect(mappedTags).toMatchObject(expected);
+        expect(response).toHaveProperty('status', httpStatusCodes.OK);
+        expect(response.body).toMatchObject(expected);
       });
 
       it('should return 200 status code and map the tags with renamed keys', async function () {
@@ -133,11 +130,9 @@ describe('schemas', function () {
         };
 
         const response = await requestSender.map('system1', tags);
-        expect(response).toHaveProperty('status', httpStatusCodes.OK);
 
-        const mappedTags = response.body as Tags;
-        expect(mappedTags).toBeDefined();
-        expect(mappedTags).toMatchObject(expected);
+        expect(response).toHaveProperty('status', httpStatusCodes.OK);
+        expect(response.body).toMatchObject(expected);
       });
 
       it('should return 200 status code and map the tags without prefixing system name', async function () {
@@ -155,12 +150,11 @@ describe('schemas', function () {
             externalKey3: 'val3',
           },
         };
-        const response = await requestSender.map('system4', tags);
-        expect(response).toHaveProperty('status', httpStatusCodes.OK);
 
-        const mappedTags = response.body as Tags;
-        expect(mappedTags).toBeDefined();
-        expect(mappedTags).toMatchObject(expected);
+        const response = await requestSender.map('system4', tags);
+
+        expect(response).toHaveProperty('status', httpStatusCodes.OK);
+        expect(response.body).toMatchObject(expected);
       });
 
       it('should return 200 status code and map the tags without the ignored key', async function () {
@@ -181,11 +175,9 @@ describe('schemas', function () {
         };
 
         const response = await requestSender.map('system2', tags);
-        expect(response).toHaveProperty('status', httpStatusCodes.OK);
 
-        const mappedTags = response.body as Tags;
-        expect(mappedTags).toBeDefined();
-        expect(mappedTags).toMatchObject(expected);
+        expect(response).toHaveProperty('status', httpStatusCodes.OK);
+        expect(response.body).toMatchObject(expected);
       });
 
       describe('domain & explode fields', () => {
@@ -198,9 +190,9 @@ describe('schemas', function () {
               system2_externalKey1: 'val1',
               system2_externalKey2: 'val2',
               system2_externalKey3: 'val3',
-              system2_EXTERNALKEY2_DOMAIN: '2',
+              system2_externalKey2_DOMAIN: '2',
             },
-            key: 'att:EXTERNALKEY2:val2',
+            key: 'att:externalKey2:val2',
             value: '2',
           },
           {
@@ -224,11 +216,11 @@ describe('schemas', function () {
             tagProperties: { externalKey3: 'val3', externalKey2: 'val2', externalKey1: 'val1' },
             expectedProperties: {
               system1_renamedExternalKey1: 'val1',
-              system1_RENAMEDEXTERNALKEY1_DOMAIN: '1',
+              system1_renamedExternalKey1_DOMAIN: '1',
               system1_externalKey2: 'val2',
               system1_externalKey3: 'val3',
             },
-            key: 'att:RENAMEDEXTERNALKEY1:val1',
+            key: 'att:renamedExternalKey1:val1',
             value: '1',
           },
           {
@@ -251,9 +243,9 @@ describe('schemas', function () {
             tagProperties: { externalKey3: 'שלום שלום/מנכ"ל' },
             expectedProperties: {
               system2_externalKey3: 'שלום שלום/מנכ"ל',
-              system2_EXTERNALKEY3_DOMAIN: '2',
+              system2_externalKey3_DOMAIN: '2',
             },
-            key: 'att:EXTERNALKEY3:שלום שלום/מנכ"ל',
+            key: 'att:externalKey3:שלום שלום/מנכ"ל',
             value: '2',
           },
           {
@@ -267,6 +259,18 @@ describe('schemas', function () {
             },
             key: 'explode2:שלום שלום/מנכ"ל',
             value: '{ "exploded1_heb": 2, "exploded2_heb": 3 }',
+          },
+          {
+            testCaseName: 'exploded field has a property with null value',
+            name: 'system1',
+            tagProperties: { explode1: 'שלום שלום/מנכ"ל' },
+            expectedProperties: {
+              system1_explode1: 'שלום שלום/מנכ"ל',
+              system1_exploded1_heb_DOMAIN: null,
+              system1_exploded1_eng_DOMAIN: 'eng_value',
+            },
+            key: 'explode1:שלום שלום/מנכ"ל',
+            value: '{ "exploded1_heb": null, "exploded1_eng": "eng_value" }',
           },
         ];
         describe('hash key is used by Redis', () => {
@@ -291,11 +295,9 @@ describe('schemas', function () {
               await redisConnection.hset(hashKey, key, value);
 
               const response = await requestSender.map(name, tags);
-              expect(response).toHaveProperty('status', httpStatusCodes.OK);
 
-              const mappedTags = response.body as Tags;
-              expect(mappedTags).toBeDefined();
-              expect(mappedTags).toMatchObject(expected);
+              expect(response).toHaveProperty('status', httpStatusCodes.OK);
+              expect(response.body).toMatchObject(expected);
             }
           );
         });
@@ -322,30 +324,28 @@ describe('schemas', function () {
               await redisConnection.set(key, value);
 
               const response = await requestSender.map(name, tags);
-              expect(response).toHaveProperty('status', httpStatusCodes.OK);
 
-              const mappedTags = response.body as Tags;
-              expect(mappedTags).toBeDefined();
-              expect(mappedTags).toMatchObject(expected);
+              expect(response).toHaveProperty('status', httpStatusCodes.OK);
+              expect(response.body).toMatchObject(expected);
             }
           );
         });
       });
     });
   });
+
   describe('Bad Path', function () {
-    // All requests with status code of 400
     describe('GET /schemas/:name', function () {
       it('should return 404 status code for non-existent schema', async function () {
         const schemaName = 'system';
+
         const response = await requestSender.getSchema(schemaName);
 
         expect(response).toHaveProperty('status', httpStatusCodes.NOT_FOUND);
-
-        const schemas = response.body as Schema;
-        expect(schemas).toEqual({ message: `schema ${schemaName} not found` });
+        expect(response.body).toHaveProperty('message', `schema ${schemaName} not found`);
       });
     });
+
     describe('POST /schemas/:name/map', function () {
       it('should return 404 status code for non-existent schema', async function () {
         const geojson = {
@@ -363,9 +363,7 @@ describe('schemas', function () {
         const response = await requestSender.map('system', geojson);
 
         expect(response).toHaveProperty('status', httpStatusCodes.NOT_FOUND);
-
-        const schemas = response.body as Schema;
-        expect(schemas).toEqual({ message: 'schema system not found' });
+        expect(response.body).toHaveProperty('message', 'schema system not found');
       });
 
       describe('hash key is used by Redis', () => {
@@ -377,6 +375,7 @@ describe('schemas', function () {
           redisConnection = container.resolve<Redis>(REDIS_SYMBOL);
           await redisConnection.flushall();
         });
+
         it('should return 422 status code for malformed JSON response of exploded field in redis', async function () {
           const tags = {
             properties: {
@@ -387,10 +386,12 @@ describe('schemas', function () {
           await redisConnection.hset(hashKey, 'explode1:val5', '{ "exploded1": 2 "exploded2": 3 }');
 
           const response = await requestSender.map('system1', tags);
+
           expect(response).toHaveProperty('status', httpStatusCodes.UNPROCESSABLE_ENTITY);
           expect(response.body).toEqual({ message: `failed to parse fetched json for key: explode1:val5` });
         });
       });
+
       describe('key is used by Redis', () => {
         beforeAll(async function () {
           await redisConnection.quit();
@@ -400,6 +401,7 @@ describe('schemas', function () {
           redisConnection = container.resolve<Redis>(REDIS_SYMBOL);
           await redisConnection.flushall();
         });
+
         it('should return 422 status code for malformed JSON response of exploded field in redis', async function () {
           const tags = {
             properties: {
@@ -410,6 +412,7 @@ describe('schemas', function () {
           await redisConnection.set('explode1:val5', '{ "exploded1": 2 "exploded2": 3 }');
 
           const response = await requestSender.map('system1', tags);
+
           expect(response).toHaveProperty('status', httpStatusCodes.UNPROCESSABLE_ENTITY);
           expect(response.body).toEqual({ message: `failed to parse fetched json for key: explode1:val5` });
         });
@@ -426,28 +429,29 @@ describe('schemas', function () {
         };
 
         const response = await requestSender.map('system1', tags);
+
         expect(response).toHaveProperty('status', httpStatusCodes.UNPROCESSABLE_ENTITY);
-        expect(response).toHaveProperty('body.message', 'failed to fetch json for key: explode1:val1');
+        expect(response.body).toHaveProperty('message', 'failed to fetch json for key: explode1:val1');
       });
     });
   });
+
   describe('Sad Path', function () {
     describe('POST /schemas/:name/map', function () {
-      describe('redis is not connected', function () {
-        it('should return 500 status code for redis error', async function () {
-          redisConnection.disconnect();
-          const tags = {
-            properties: {
-              externalKey3: 'val3',
-              externalKey2: 'val2',
-              externalKey1: 'val1',
-              key1: 'val4',
-            },
-          };
+      it('should return 500 status code for redis error', async function () {
+        redisConnection.disconnect();
 
-          const response = await requestSender.map('system2', tags);
-          expect(response).toHaveProperty('status', httpStatusCodes.INTERNAL_SERVER_ERROR);
-        });
+        const tags = {
+          properties: {
+            externalKey3: 'val3',
+            externalKey2: 'val2',
+            externalKey1: 'val1',
+            key1: 'val4',
+          },
+        };
+
+        const response = await requestSender.map('system2', tags);
+        expect(response).toHaveProperty('status', httpStatusCodes.INTERNAL_SERVER_ERROR);
       });
     });
   });
