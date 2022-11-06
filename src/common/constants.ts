@@ -28,5 +28,5 @@ export const REDIS_SYMBOL = Symbol('REDIS');
 export const ON_SIGNAL = Symbol('onSignal');
 export const SCHEMAS_SYMBOL = Symbol('schemas');
 
-export const KEYS_SEPARATOR = '_';
+export const SCHEMA_NAME_PREFIX_SEPARATOR = '_';
 export const NOT_FOUND_INDEX = -1;
