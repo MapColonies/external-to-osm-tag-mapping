@@ -55,7 +55,6 @@ describe('schemas', function () {
         schemas.forEach((elm) => {
           expect(elm).toHaveProperty('name');
           expect(elm).toHaveProperty('createdAt');
-          expect(elm).toHaveProperty('updatedAt');
         });
       });
     });
@@ -196,6 +195,19 @@ describe('schemas', function () {
             value: '2',
           },
           {
+            testCaseName: 'domain fields with formatted name',
+            name: 'system6',
+            tagProperties: { externalKey3: 'val3', externalKey2: 'val2', externalKey1: 'val1', key1: 'val4' },
+            expectedProperties: {
+              renamedExternalKey1: 'val1',
+              externalKey2: 'val2',
+              externalKey3: 'val3',
+              DOMAIN_PREFIX_externalKey2_DOMAIN_SUFFIX: '2',
+            },
+            key: 'att:externalKey2:val2',
+            value: '2',
+          },
+          {
             testCaseName: 'with explode fields',
             name: 'system2',
             tagProperties: { externalKey3: 'val3', externalKey2: 'val2', externalKey1: 'val1', explode1: 'val4' },
@@ -208,6 +220,19 @@ describe('schemas', function () {
               system2_exploded2_DOMAIN: '3',
             },
             key: 'explode1:val4',
+            value: '{ "exploded1": 2, "exploded2": 3 }',
+          },
+          {
+            testCaseName: 'explode fields with formatted name',
+            name: 'system6',
+            tagProperties: { explode1: 'val', externalKey1: 'val1', externalKey2: 'val2' },
+            expectedProperties: {
+              EXPLODE_PREFIX_exploded1_EXPLODE_SUFFIX: '2',
+              EXPLODE_PREFIX_exploded2_EXPLODE_SUFFIX: '3',
+              renamedExternalKey1: 'val1',
+              externalKey2: 'val2',
+            },
+            key: 'explode1:val',
             value: '{ "exploded1": 2, "exploded2": 3 }',
           },
           {

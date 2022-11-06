@@ -2,7 +2,7 @@ import { inject, injectable } from 'tsyringe';
 import Format from 'string-format';
 import { Logger } from '@map-colonies/js-logger';
 import { IDomainFieldsRepository, IDOMAIN_FIELDS_REPO_SYMBOL } from '../DAL/domainFieldsRepository';
-import { KEYS_SEPARATOR, NOT_FOUND_INDEX, SCHEMAS_SYMBOL, SERVICES } from '../../common/constants';
+import { SCHEMA_NAME_PREFIX_SEPARATOR, NOT_FOUND_INDEX, SCHEMAS_SYMBOL, SERVICES } from '../../common/constants';
 import { JSONSyntaxError, KeyNotFoundError, SchemaNotFoundError } from '../../common/errors';
 import { Schema, Tags } from './types';
 
@@ -10,6 +10,8 @@ interface MappingKey {
   key: string;
   lookupKey: string;
 }
+
+type RenameFn = (key: string) => string;
 
 @injectable()
 export class SchemaManager {
@@ -69,12 +71,10 @@ export class SchemaManager {
         }
       }
 
-      acc[key] = value;
+      const keyWithPossiblyPrefix = schema.addSchemaPrefix ? `${schema.name}${SCHEMA_NAME_PREFIX_SEPARATOR}${key}` : key;
+      acc[keyWithPossiblyPrefix] = value;
       return acc;
     }, {});
-
-    let domainFieldsTags = {};
-    let explodeFieldsTags = {};
 
     this.logger.debug({
       msg: 'tag mapping keys counter',
@@ -83,23 +83,31 @@ export class SchemaManager {
       explodeKeysCount: explodeKeys.length,
     });
 
+    // get the renaming function based on addSchemaPrefix flag
+    const getRenameFn = (format: string): RenameFn => {
+      return (key: string): string => {
+        if (schema.addSchemaPrefix) {
+          return Format(`{schemaName}${SCHEMA_NAME_PREFIX_SEPARATOR}${format}`, { key, schemaName: schema.name });
+        }
+
+        return Format(format, { key });
+      };
+    };
+
+    let domainFieldsTags = {};
+    let explodeFieldsTags = {};
+
     if (schema.enableExternalFetch === 'yes' && domainKeys.length > 0) {
-      domainFieldsTags = await this.getDomainFieldsCodedValues(domainKeys, schema.domain.resultFormat);
+      const tagRenameFn = getRenameFn(schema.domain.resultFormat);
+      domainFieldsTags = await this.getDomainFieldsCodedValues(domainKeys, tagRenameFn);
     }
 
     if (schema.enableExternalFetch === 'yes' && explodeKeys.length > 0) {
-      explodeFieldsTags = await this.getExplodeFields(explodeKeys, schema.explode.resultFormat);
+      const tagRenameFn = getRenameFn(schema.explode.resultFormat);
+      explodeFieldsTags = await this.getExplodeFields(explodeKeys, tagRenameFn);
     }
 
     finalTags = { ...finalTags, ...domainFieldsTags, ...explodeFieldsTags };
-
-    if (schema.addSchemaPrefix) {
-      // for each key add a system name prefix
-      finalTags = Object.entries(finalTags).reduce((acc: Tags, [key, value]) => {
-        acc[this.concatenateKeysPrefix(name, key)] = value;
-        return acc;
-      }, {});
-    }
 
     this.logger.debug({
       msg: 'tags mapping counter',
@@ -111,11 +119,7 @@ export class SchemaManager {
     return finalTags;
   }
 
-  private readonly concatenateKeysPrefix = (prefix: string, ...keys: string[]): string => {
-    return `${[prefix, ...keys].join(KEYS_SEPARATOR)}`;
-  };
-
-  private readonly getDomainFieldsCodedValues = async (domainMapKeys: MappingKey[], domainKeyFormat: string): Promise<Tags> => {
+  private readonly getDomainFieldsCodedValues = async (domainMapKeys: MappingKey[], renameFn: RenameFn): Promise<Tags> => {
     const domainFieldsTags: Tags = {};
     const domainKeys = domainMapKeys.map((key) => key.key);
     const domainLookupKeys = domainMapKeys.map((key) => key.lookupKey);
@@ -125,7 +129,7 @@ export class SchemaManager {
     // for each domain field create new domain field tag with the fetched value
     fieldsCodedValues.forEach((codedValue, index) => {
       if (codedValue !== null) {
-        const newKey = Format(domainKeyFormat, { key: domainKeys[index] });
+        const newKey = renameFn(domainKeys[index]);
 
         domainFieldsTags[newKey] = codedValue;
       }
@@ -134,7 +138,7 @@ export class SchemaManager {
     return domainFieldsTags;
   };
 
-  private readonly getExplodeFields = async (explodeMapKeys: MappingKey[], explodeKeyFormat: string): Promise<Tags> => {
+  private readonly getExplodeFields = async (explodeMapKeys: MappingKey[], renameFn: RenameFn): Promise<Tags> => {
     let explodeFieldsTags: Tags = {};
     const explodeLookupKeys = explodeMapKeys.map((key) => key.lookupKey);
 
@@ -150,8 +154,7 @@ export class SchemaManager {
       try {
         const json = JSON.parse(jsonString) as Record<string, string | number | null>;
         const explodedFields = Object.entries(json).reduce((acc: Tags, [key, value]) => {
-          const explodedKey = Format(explodeKeyFormat, { key });
-
+          const explodedKey = renameFn(key);
           acc[explodedKey] = value !== null ? value.toString() : null;
 
           return acc;
