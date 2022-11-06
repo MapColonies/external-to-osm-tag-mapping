@@ -64,5 +64,21 @@
       "lookupKeyFormat": "att:{key}:{value}",
       "resultFormat": "{key}_DOMAIN"
     }
+  },
+  {
+    "name": "system6",
+    "createdAt": "2021-07-14T11:19:58Z",
+    "enableExternalFetch": "yes",
+    "addSchemaPrefix": false,
+    "renameKeys": { "externalKey1": "renamedExternalKey1" },
+    "explode": {
+      "keys": ["explode1", "explode2"],
+      "lookupKeyFormat": "{key}:{value}",
+      "resultFormat": "EXPLODE_PREFIX_{key}_EXPLODE_SUFFIX"
+    },
+    "domain": {
+      "lookupKeyFormat": "att:{key}:{value}",
+      "resultFormat": "DOMAIN_PREFIX_{key}_DOMAIN_SUFFIX"
+    }
   }
 ]
