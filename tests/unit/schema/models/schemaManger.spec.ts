@@ -69,6 +69,22 @@ const schemas: Schema[] = [
       resultFormat: '{key}_DOMAIN',
     },
   },
+  {
+    name: 'system6',
+    createdAt: new Date(),
+    enableExternalFetch: 'yes',
+    addSchemaPrefix: false,
+    renameKeys: { externalKey1: 'renamedExternalKey1' },
+    explode: {
+      keys: ['explode1', 'explode2'],
+      lookupKeyFormat: '{key}:{value}',
+      resultFormat: 'EXPLODE_PREFIX_{key}_EXPLODE_SUFFIX',
+    },
+    domain: {
+      lookupKeyFormat: 'att:{key}:{value}',
+      resultFormat: 'DOMAIN_PREFIX_{key}_DOMAIN_SUFFIX',
+    },
+  },
 ];
 
 describe('SchemaManager', () => {
@@ -337,6 +353,36 @@ describe('SchemaManager', () => {
         system5_externalKEY5_DOMAIN: 'בדיקה',
         system5_exploded1_DOMAIN: '2',
         system5_exploded2_DOMAIN: '3',
+      };
+
+      getFields.mockReturnValueOnce([null, '2', null, null, 'בדיקה']);
+      getFields.mockReturnValueOnce(['{ "exploded1": "2", "exploded2": "3" }']);
+      const res = await schemaManager.map(name, tags);
+
+      expect(res.tags).toMatchObject(expected);
+    });
+
+    it('should return mapped tags without system name prefix formatted domain and explode keys values with non-ascii characters', async () => {
+      const name = 'system6';
+      const tags = {
+        externalKey3: 'val3',
+        externalKey2: 'val2',
+        externalKey1: 'בדיקה',
+        externalKey4: 'val4',
+        externalKEY5: 'שלום שלום/מנכ"ל',
+        explode1: 'שלום\\עולם',
+      };
+      const expected = {
+        renamedExternalKey1: 'בדיקה',
+        externalKey2: 'val2',
+        externalKey3: 'val3',
+        externalKey4: 'val4',
+        externalKEY5: 'שלום שלום/מנכ"ל',
+        explode1: 'שלום\\עולם',
+        DOMAIN_PREFIX_externalKey2_DOMAIN_SUFFIX: '2',
+        DOMAIN_PREFIX_externalKEY5_DOMAIN_SUFFIX: 'בדיקה',
+        EXPLODE_PREFIX_exploded1_EXPLODE_SUFFIX: '2',
+        EXPLODE_PREFIX_exploded2_EXPLODE_SUFFIX: '3',
       };
 
       getFields.mockReturnValueOnce([null, '2', null, null, 'בדיקה']);
