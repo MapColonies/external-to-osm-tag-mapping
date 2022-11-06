@@ -113,7 +113,9 @@ paths:
                   properties:
                     type: object
                   debug:
-                    type: object
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/mappingDebugItem'
                 required:
                   - properties
                 additionalProperties: true
@@ -166,6 +168,23 @@ components:
           example:
             message: internal server error
   schemas:
+    mappingDebugItem:
+      type: object
+      properties:
+        type:
+          type: string
+          description: the type of mapping domain or explode
+          enum:
+            - domain
+            - explode
+        key:
+          description: the original property key
+          type: string
+        result:
+          type: array
+          description: the mapped property keys resulted from the key
+          items:
+            type: string
     schema:
       type: object
       properties:
