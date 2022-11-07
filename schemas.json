@@ -80,5 +80,21 @@
       "lookupKeyFormat": "att:{key}:{value}",
       "resultFormat": "DOMAIN_PREFIX_{key}_DOMAIN_SUFFIX"
     }
+  },
+  {
+    "name": "system7",
+    "createdAt": "2021-07-14T11:19:58Z",
+    "enableExternalFetch": "yes",
+    "addSchemaPrefix": false,
+    "renameKeys": { "externalKey": "renamedExternalKey", "avi": "STATUS" },
+    "explode": {
+      "keys": ["renamedExternalKey"],
+      "lookupKeyFormat": "{key}:{value}",
+      "resultFormat": "EXPLODE_PREFIX_{key}_EXPLODE_SUFFIX"
+    },
+    "domain": {
+      "lookupKeyFormat": "att:{key}:{value}",
+      "resultFormat": "DOMAIN_PREFIX_{key}_DOMAIN_SUFFIX"
+    }
   }
 ]

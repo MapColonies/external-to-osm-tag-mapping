@@ -8,6 +8,7 @@ import { MappingDebug, Schema, TagMappingResult, Tags } from './types';
 
 interface MappingKey {
   key: string;
+  renamedKey?: string;
   lookupKey: string;
 }
 
@@ -53,19 +54,22 @@ export class SchemaManager {
       }
 
       // check if tag's key should be renamed
+      const keyBeforeRename = key;
       if (schema.renameKeys && Object.prototype.hasOwnProperty.call(schema.renameKeys, key)) {
         key = schema.renameKeys[key];
       }
 
       if (schema.enableExternalFetch === 'yes') {
+        const renamedKey = keyBeforeRename === key ? undefined : key;
         // check each tag if it's an explode field and put it in explodeKeys
         if (schema.explode.keys.indexOf(key) !== NOT_FOUND_INDEX && value !== null) {
           const lookupKey = Format(schema.explode.lookupKeyFormat, { key, value });
-          explodeKeys.push({ key, lookupKey });
+          explodeKeys.push({ key: keyBeforeRename, renamedKey, lookupKey });
         } else if (value !== null) {
           const lookupKey = Format(schema.domain.lookupKeyFormat, { key, value });
           domainKeys.push({
-            key,
+            key: keyBeforeRename,
+            renamedKey,
             lookupKey,
           });
         }
@@ -123,7 +127,7 @@ export class SchemaManager {
 
   private readonly getDomainFieldsCodedValues = async (domainMapKeys: MappingKey[], renameFn: RenameFn, debug?: MappingDebug[]): Promise<Tags> => {
     const domainFieldsTags: Tags = {};
-    const domainKeys = domainMapKeys.map((key) => key.key);
+    const domainKeys = domainMapKeys.map((key) => key.renamedKey ?? key.key);
     const domainLookupKeys = domainMapKeys.map((key) => key.lookupKey);
 
     const fieldsCodedValues = await this.domainFieldsRepo.getFields(domainLookupKeys);
@@ -132,17 +136,18 @@ export class SchemaManager {
     fieldsCodedValues.forEach((codedValue, index) => {
       if (codedValue !== null) {
         const newKey = renameFn(domainKeys[index]);
+        domainFieldsTags[newKey] = codedValue;
 
         if (debug) {
-          const existingIndex = debug.findIndex((d) => d.key === domainKeys[index]);
+          const { key, renamedKey } = domainMapKeys[index];
+
+          const existingIndex = debug.findIndex((d) => d.key === key);
           if (existingIndex !== NOT_FOUND_INDEX) {
             debug[existingIndex].result.push(newKey);
           } else {
-            debug.push({ key: domainKeys[index], result: [newKey], type: 'domain' });
+            debug.push({ key, renamedKey, result: [newKey], type: 'domain' });
           }
         }
-
-        domainFieldsTags[newKey] = codedValue;
       }
     });
 
@@ -151,7 +156,6 @@ export class SchemaManager {
 
   private readonly getExplodeFields = async (explodeMapKeys: MappingKey[], renameFn: RenameFn, debug?: MappingDebug[]): Promise<Tags> => {
     let explodeFieldsTags: Tags = {};
-    const explodeKeys = explodeMapKeys.map((key) => key.key);
     const explodeLookupKeys = explodeMapKeys.map((key) => key.lookupKey);
 
     const explodeFields = await this.domainFieldsRepo.getFields(explodeLookupKeys);
@@ -170,11 +174,13 @@ export class SchemaManager {
           acc[explodedKey] = value !== null ? value.toString() : null;
 
           if (debug) {
-            const existingIndex = debug.findIndex((d) => d.key === explodeKeys[index]);
+            const { key, renamedKey } = explodeMapKeys[index];
+
+            const existingIndex = debug.findIndex((d) => d.key === key);
             if (existingIndex !== NOT_FOUND_INDEX) {
               debug[existingIndex].result.push(explodedKey);
             } else {
-              debug.push({ key: explodeKeys[index], result: [explodedKey], type: 'explode' });
+              debug.push({ key, renamedKey, result: [explodedKey], type: 'explode' });
             }
           }
           return acc;
