@@ -186,11 +186,18 @@ components:
         key:
           description: the original property key
           type: string
+        renamedKey:
+          description: the renamed key value
+          type: string
         result:
           type: array
           description: the mapped property keys resulted from the key
           items:
             type: string
+      required:
+        - type
+        - key
+        - result
     schema:
       type: object
       properties:

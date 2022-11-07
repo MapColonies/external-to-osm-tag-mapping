@@ -35,6 +35,7 @@ export type Tags = Record<string, string | number | boolean | null>;
 export interface MappingDebug {
   type: 'domain' | 'explode';
   key: string;
+  renamedKey?: string;
   result: string[];
 }
 
