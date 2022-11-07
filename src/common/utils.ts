@@ -1,5 +1,5 @@
 import camelCase from 'camelcase';
-import { snakeCase } from 'lodash';
+import { snakeCase } from 'snake-case';
 import { CamelCasedProperties, SnakeCasedProperties } from 'type-fest';
 
 export const convertObjectToCamelCase = <T extends Record<string, unknown>>(obj: T): CamelCasedProperties<T> => {
