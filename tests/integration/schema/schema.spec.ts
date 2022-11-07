@@ -4,7 +4,7 @@ import Redis from 'ioredis';
 import { container } from 'tsyringe';
 import { REDIS_SYMBOL } from '../../../src/common/constants';
 import { IApplication } from '../../../src/common/interfaces';
-import { Schema, Tags } from '../../../src/schema/models/types';
+import { MappingDebug, Schema, Tags } from '../../../src/schema/models/types';
 import { registerTestValues } from '../testContainerConfig';
 import * as requestSender from './helpers/requestSender';
 
@@ -13,6 +13,7 @@ interface TagMappingTestValues {
   name: string;
   tagProperties: Tags;
   expectedProperties: Record<string, string | null>;
+  expectedDebug?: MappingDebug[];
   key: string;
   value: string;
 }
@@ -297,6 +298,85 @@ describe('schemas', function () {
             key: 'explode1:שלום שלום/מנכ"ל',
             value: '{ "exploded1_heb": null, "exploded1_eng": "eng_value" }',
           },
+          {
+            testCaseName: 'domain fields with formatted name on debug mode',
+            name: 'system6',
+            tagProperties: { externalKey3: 'val3', externalKey2: 'val2', externalKey1: 'val1', key1: 'val4' },
+            expectedProperties: {
+              renamedExternalKey1: 'val1',
+              externalKey2: 'val2',
+              externalKey3: 'val3',
+              DOMAIN_PREFIX_externalKey2_DOMAIN_SUFFIX: '2',
+            },
+            expectedDebug: [
+              {
+                type: 'domain',
+                key: 'externalKey2',
+                result: ['DOMAIN_PREFIX_externalKey2_DOMAIN_SUFFIX'],
+              },
+            ],
+            key: 'att:externalKey2:val2',
+            value: '2',
+          },
+          {
+            testCaseName: 'domain fields with renaming and formiting on debug mode',
+            name: 'system6',
+            tagProperties: { externalKey1: 'val' },
+            expectedProperties: {
+              DOMAIN_PREFIX_renamedExternalKey1_DOMAIN_SUFFIX: 'someValue',
+              renamedExternalKey1: 'val',
+            },
+            expectedDebug: [
+              {
+                type: 'domain',
+                key: 'externalKey1',
+                renamedKey: 'renamedExternalKey1',
+                result: ['DOMAIN_PREFIX_renamedExternalKey1_DOMAIN_SUFFIX'],
+              },
+            ],
+            key: 'att:renamedExternalKey1:val',
+            value: 'someValue',
+          },
+          {
+            testCaseName: 'explode fields with formatted name on debug mode',
+            name: 'system6',
+            tagProperties: { explode1: 'val', externalKey1: 'val1', externalKey2: 'val2' },
+            expectedProperties: {
+              EXPLODE_PREFIX_exploded1_EXPLODE_SUFFIX: '2',
+              EXPLODE_PREFIX_exploded2_EXPLODE_SUFFIX: '3',
+              renamedExternalKey1: 'val1',
+              externalKey2: 'val2',
+            },
+            expectedDebug: [
+              {
+                type: 'explode',
+                key: 'explode1',
+                result: ['EXPLODE_PREFIX_exploded1_EXPLODE_SUFFIX', 'EXPLODE_PREFIX_exploded2_EXPLODE_SUFFIX'],
+              },
+            ],
+            key: 'explode1:val',
+            value: '{ "exploded1": 2, "exploded2": 3 }',
+          },
+          {
+            testCaseName: 'explode fields with renaming and formiting on debug mode',
+            name: 'system7',
+            tagProperties: { externalKey: 'val' },
+            expectedProperties: {
+              renamedExternalKey: 'val',
+              EXPLODE_PREFIX_exploded1_EXPLODE_SUFFIX: '2',
+              EXPLODE_PREFIX_exploded2_EXPLODE_SUFFIX: '3',
+            },
+            expectedDebug: [
+              {
+                type: 'explode',
+                key: 'externalKey',
+                renamedKey: 'renamedExternalKey',
+                result: ['EXPLODE_PREFIX_exploded1_EXPLODE_SUFFIX', 'EXPLODE_PREFIX_exploded2_EXPLODE_SUFFIX'],
+              },
+            ],
+            key: 'renamedExternalKey:val',
+            value: '{ "exploded1": 2, "exploded2": 3 }',
+          },
         ];
         describe('hash key is used by Redis', () => {
           beforeAll(async function () {
@@ -310,16 +390,22 @@ describe('schemas', function () {
 
           it.each(testValues)(
             'should return 200 status code and map the tags $testCaseName',
-            async ({ name, tagProperties, expectedProperties, key, value }) => {
+            async ({ name, tagProperties, expectedProperties, key, value, expectedDebug }) => {
               const tags = {
                 properties: tagProperties,
               };
-              const expected = {
+
+              let expected: { properties: Record<string, string | null>; debug?: MappingDebug[] } = {
                 properties: expectedProperties,
               };
+
+              if (expectedDebug) {
+                expected = { ...expected, debug: expectedDebug };
+              }
+
               await redisConnection.hset(hashKey, key, value);
 
-              const response = await requestSender.map(name, tags);
+              const response = await requestSender.map(name, tags, expectedDebug ? { shouldDebug: true } : undefined);
 
               expect(response).toHaveProperty('status', httpStatusCodes.OK);
               expect(response.body).toMatchObject(expected);
