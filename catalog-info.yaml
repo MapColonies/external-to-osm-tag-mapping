@@ -1,0 +1,230 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: external-to-osm-tag-mapping
+  description: Mapping between the external source feature metadata to our own MapColonies tags schema.
+  links:
+  - url: https://mapcolonies.atlassian.net/wiki/spaces/MAPConflicResolution/pages/1353613504/Ingestion#Details-about-our-services
+    title: Confluence 
+    icon: article
+  annotations:
+    github.com/project-slug: MapColonies/external-to-osm-tag-mapping
+spec:
+  type: service
+  lifecycle: production
+  owner: vector-team
+  system: vector-ingestion
+  dependsOn:
+    - resource:default/id-2-osm-db
+  providesApis:
+    - ext-2-osm-tag-mapping-api
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: ext-2-osm-tag-mapping-api
+  description: Mapping external tags to osm tags API 
+spec:
+  type: openapi
+  lifecycle: production
+  owner: vector-team
+  system: vector-ingestion
+  definition: |
+    openapi: 3.0.1
+    info:
+      title: external-to-osm-tag-mapping
+      description: mapping external tags to osm tags - json format
+      version: 1.7.6
+      license:
+        name: MIT
+        url: https://opensource.org/licenses/MIT
+    paths:
+      /schemas:
+        get:
+          tags:
+            - schemas
+          summary: get all existing schemas
+          operationId: get-schemas
+          responses:
+            '200':
+              description: Ok
+              content:
+                application/json:
+                  schema:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/schema'
+                  example:
+                    - name: system1
+                      created_at: '2020-12-20T13:32:25Z'
+                      updated_at: '2020-12-20T13:32:25Z'
+                    - name: system2
+                      created_at: '2020-12-20T13:32:25Z'
+                      updated_at: '2020-12-20T13:32:25Z'
+                      ignoreKeys:
+                        - key1
+            '400':
+              $ref: '#/components/responses/BadRequest'
+            5XX:
+              $ref: '#/components/responses/InternalError'
+      /schemas/{name}:
+        get:
+          tags:
+            - schemas
+          summary: get schema by service name
+          operationId: get-schema-by-name
+          parameters:
+            - in: path
+              name: name
+              schema:
+                type: string
+              required: true
+              description: the service name
+          responses:
+            '200':
+              description: OK
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/schema'
+                  example:
+                    name: system1
+                    created_at: '2020-12-20T13:32:25Z'
+                    updated_at: '2020-12-20T13:32:25Z'
+                    ignoreKeys:
+                      - key1
+                      - key2
+            '400':
+              $ref: '#/components/responses/BadRequest'
+            '404':
+              $ref: '#/components/responses/NotFound'
+            5XX:
+              $ref: '#/components/responses/InternalError'
+      /schemas/{name}/map:
+        post:
+          tags:
+            - schemas
+          operationId: map-schema-attributes-to-osm-tags
+          parameters:
+            - in: path
+              name: name
+              schema:
+                type: string
+              required: true
+              description: the service name
+          summary: osm tags mapping
+          requestBody:
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    properties:
+                      type: object
+                  required:
+                    - properties
+                  additionalProperties: true
+                example:
+                  properties:
+                    externalKey1: externalValue1
+                    externalKey2: externalValue2
+          responses:
+            '200':
+              description: OK
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      properties:
+                        type: object
+                    required:
+                      - properties
+                    additionalProperties: true
+                  example:
+                    properties:
+                      defaultOsmKey: defaultOsmValue
+                      defaultOsmKey1: defaultOsmValue1
+                      osmKey: externalValue
+                      osmKey1: externalValue1
+            '400':
+              $ref: '#/components/responses/BadRequest'
+            '404':
+              $ref: '#/components/responses/NotFound'
+            '422':
+              $ref: '#/components/responses/UnprocessableEntity'
+            5XX:
+              $ref: '#/components/responses/InternalError'
+    components:
+      responses:
+        BadRequest:
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                message: bad request
+        NotFound:
+          description: The specified resource was not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                message: resource not found
+        UnprocessableEntity:
+          description: The specified resource is unprocessable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                message: resource is not processable
+        InternalError:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                message: internal server error
+      schemas:
+        schema:
+          type: object
+          properties:
+            name:
+              description: schema name
+              type: string
+            created_at:
+              type: string
+              format: date-time
+              description: UTC date/time of the schema's creation
+            updated_at:
+              type: string
+              format: date-time
+              description: UTC date/time of the schema's update
+            ignoreKeys:
+              description: keys to remove from the tags object
+              type: array
+              items:
+                type: string
+        Error:
+          type: object
+          properties:
+            message:
+              type: string
+          required:
+            - message
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: ext-2-osm-db
+  description: Stores tag mappings
+  labels:
+    db-type: redis
+spec:
+  type: database
+  owner: vector-team
+  system: vector-ingestion
