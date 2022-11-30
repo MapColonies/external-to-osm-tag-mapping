@@ -10,9 +10,9 @@ metadata:
   annotations:
     github.com/project-slug: MapColonies/external-to-osm-tag-mapping
   tags: 
-   - Nodejs
-   - TypeScript
-   - Expressjs
+   - nodejs
+   - typescript
+   - expressjs
 spec:
   type: service
   lifecycle: production
@@ -227,7 +227,7 @@ metadata:
   name: tag-mapping-db
   description: Stores tag mappings between textual and domain notation
   tags:
-    - Redis
+    - redis
 spec:
   type: database
   owner: vector-team
