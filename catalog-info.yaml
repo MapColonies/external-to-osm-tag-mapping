@@ -2,20 +2,24 @@ apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: external-to-osm-tag-mapping
-  description: Mapping between the external source feature metadata to our own MapColonies tags schema.
+  description: Mapping of GeoJSON between the external source feature metadata to our own MapColonies tags schema.
   links:
   - url: https://mapcolonies.atlassian.net/wiki/spaces/MAPConflicResolution/pages/1353613504/Ingestion#Details-about-our-services
     title: Confluence 
     icon: article
   annotations:
     github.com/project-slug: MapColonies/external-to-osm-tag-mapping
+  tags: 
+   - Node.js
+   - TypeScript
+   - Express.js
 spec:
   type: service
   lifecycle: production
   owner: vector-team
   system: vector-ingestion
   dependsOn:
-    - resource:default/id-2-osm-db
+    - resource:default/tag-mapping-db
   providesApis:
     - ext-2-osm-tag-mapping-api
 ---
@@ -23,7 +27,7 @@ apiVersion: backstage.io/v1alpha1
 kind: API
 metadata:
   name: ext-2-osm-tag-mapping-api
-  description: Mapping external tags to osm tags API 
+  description: Mapping external tags to MapColonies tags API 
 spec:
   type: openapi
   lifecycle: production
@@ -220,10 +224,10 @@ spec:
 apiVersion: backstage.io/v1alpha1
 kind: Resource
 metadata:
-  name: ext-2-osm-db
-  description: Stores tag mappings
-  labels:
-    db-type: redis
+  name: tag-mapping-db
+  description: Stores tag mappings between textual and domain notation
+  tags:
+    - Redis
 spec:
   type: database
   owner: vector-team
