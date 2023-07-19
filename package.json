@@ -21,7 +21,6 @@
     "assets:copy": "copyfiles -f ./config/* ./dist/config && copyfiles -f ./openapi3.yaml ./dist/ && copyfiles ./package.json dist && copyfiles -f ./schemas.json ./dist/",
     "clean": "rimraf dist",
     "install": "npx husky install"
-
   },
   "directories": {
     "test": "tests"
