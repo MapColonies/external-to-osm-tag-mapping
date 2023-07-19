@@ -82,9 +82,10 @@ Returns the cloud provider docker registry url from global if exists or from the
 */}}
 {{- define "external-to-osm-tag-mapping.cloudProviderDockerRegistryUrl" -}}
 {{- if .Values.global.cloudProvider.dockerRegistryUrl }}
-    {{- .Values.global.cloudProvider.dockerRegistryUrl -}}
-{{- else if .Values.cloudProvider -}}
-    {{- .Values.cloudProvider.dockerRegistryUrl -}}
+    {{- printf "%s/" .Values.global.cloudProvider.dockerRegistryUrl -}}
+{{- else if .Values.cloudProvider.dockerRegistryUrl -}}
+    {{- printf "%s/" .Values.cloudProvider.dockerRegistryUrl -}}
+{{- else -}}
 {{- end -}}
 {{- end -}}
 

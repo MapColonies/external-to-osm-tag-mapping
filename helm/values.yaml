@@ -22,7 +22,7 @@ image:
   # tag: "v1.0.0"
 
 resources:
-  enabled: false
+  enabled: true
   value:
     limits:
       cpu: 100m
