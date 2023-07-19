@@ -1,9 +1,5 @@
 # external-to-osm-tag-mapping
 
-![badge-alerts-lgtm](https://img.shields.io/lgtm/alerts/github/MapColonies/external-to-osm-tag-mapping?style=for-the-badge)
-![grade-badge-lgtm](https://img.shields.io/lgtm/grade/javascript/github/MapColonies/external-to-osm-tag-mapping?style=for-the-badge)
-![snyk](https://img.shields.io/snyk/vulnerabilities/github/MapColonies/external-to-osm-tag-mapping?style=for-the-badge)
-
 ---
 
 external-to-osm-tag-mapping is a RESTful service responsible for mapping between the external source feature metadata to our own MapColonies tags schema.
