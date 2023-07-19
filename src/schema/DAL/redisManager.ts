@@ -8,7 +8,10 @@ import { IDomainFieldsRepository } from './domainFieldsRepository';
 export class RedisManager implements IDomainFieldsRepository {
   public getData: (fields: string[]) => Promise<(string | null)[]>;
 
-  public constructor(@inject(REDIS_SYMBOL) private readonly redis: Redis, @inject(SERVICES.APPLICATION) appConfig: IApplication) {
+  public constructor(
+    @inject(REDIS_SYMBOL) private readonly redis: Redis,
+    @inject(SERVICES.APPLICATION) appConfig: IApplication
+  ) {
     const { enabled, value } = appConfig.hashKey;
     if (enabled && value !== undefined) {
       this.getData = async (fields: string[]): Promise<(string | null)[]> => {

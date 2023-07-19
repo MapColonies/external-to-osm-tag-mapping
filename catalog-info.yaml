@@ -4,15 +4,15 @@ metadata:
   name: external-to-osm-tag-mapping
   description: Mapping of GeoJSON between the external source feature metadata to our own MapColonies tags schema.
   links:
-  - url: https://mapcolonies.atlassian.net/wiki/spaces/MAPConflicResolution/pages/1353613504/Ingestion#Details-about-our-services
-    title: Confluence 
-    icon: article
+    - url: https://mapcolonies.atlassian.net/wiki/spaces/MAPConflicResolution/pages/1353613504/Ingestion#Details-about-our-services
+      title: Confluence
+      icon: article
   annotations:
     github.com/project-slug: MapColonies/external-to-osm-tag-mapping
-  tags: 
-   - nodejs
-   - typescript
-   - expressjs
+  tags:
+    - nodejs
+    - typescript
+    - expressjs
 spec:
   type: service
   lifecycle: production
@@ -27,7 +27,7 @@ apiVersion: backstage.io/v1alpha1
 kind: API
 metadata:
   name: ext-2-osm-tag-mapping-api
-  description: Mapping external tags to MapColonies tags API 
+  description: Mapping external tags to MapColonies tags API
 spec:
   type: openapi
   lifecycle: production
