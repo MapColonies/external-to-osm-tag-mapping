@@ -1,6 +1,6 @@
 {
   "openapiConfig": {
-    "filePath": "SWAGGER_FILE_PATH"
+    "filePath": "OPENAPI_FILE_PATH"
   },
   "telemetry": {
     "serviceName": "TELEMETRY_SERVICE_NAME",
