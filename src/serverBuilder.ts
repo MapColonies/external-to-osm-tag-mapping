@@ -1,16 +1,16 @@
-import express from 'express';
+import express, { Router } from 'express';
 import bodyParser from 'body-parser';
 import compression from 'compression';
 import { middleware as OpenApiMiddleware } from 'express-openapi-validator';
 import { Logger } from '@map-colonies/js-logger';
 import httpLogger from '@map-colonies/express-access-log-middleware';
 import { OpenapiViewerRouter, OpenapiRouterConfig } from '@map-colonies/openapi-express-viewer';
-import { container, inject, injectable } from 'tsyringe';
+import { inject, injectable } from 'tsyringe';
 import { getErrorHandlerMiddleware } from '@map-colonies/error-express-handler';
 import { defaultMetricsMiddleware, getTraceContexHeaderMiddleware } from '@map-colonies/telemetry';
-import { schemaRouterFactory } from './schema/routers/schemaRouter';
 import { SERVICES } from './common/constants';
 import { IConfig } from './common/interfaces';
+import { SCHEMA_ROUTER_SYMBOL } from './schema/routers/schemaRouter';
 
 @injectable()
 export class ServerBuilder {
@@ -18,7 +18,8 @@ export class ServerBuilder {
 
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
-    @inject(SERVICES.LOGGER) private readonly logger: Logger
+    @inject(SERVICES.LOGGER) private readonly logger: Logger,
+    @inject(SCHEMA_ROUTER_SYMBOL) private readonly schemaNameRouter: Router
   ) {
     this.serverInstance = express();
   }
@@ -47,8 +48,8 @@ export class ServerBuilder {
   }
 
   private buildRoutes(): void {
+    this.serverInstance.use('/schemas', this.schemaNameRouter);
     this.buildDocsRoutes();
-    this.serverInstance.use('/schemas', schemaRouterFactory(container));
   }
 
   private buildDocsRoutes(): void {
