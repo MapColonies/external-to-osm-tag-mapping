@@ -13,4 +13,6 @@ const schemaRouterFactory: FactoryFunction<Router> = (dependencyContainer) => {
   return router;
 };
 
+export const SCHEMA_ROUTER_SYMBOL = Symbol('schemaRouterFactory');
+
 export { schemaRouterFactory };
