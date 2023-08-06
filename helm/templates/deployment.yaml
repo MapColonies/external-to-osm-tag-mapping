@@ -34,6 +34,10 @@ spec:
         release: {{ $releaseName }}
         run: {{ $releaseName }}-{{ $chartName }}
         {{- include "external-to-osm-tag-mapping.selectorLabels" . | nindent 8 }}
+      {{- if .Values.resetOnConfigChange }}
+      annotations:
+        checksum/configmap: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      {{- end }}
 {{- with .Values.podAnnotations }}
       annotations:
 {{ toYaml . | indent 8 }}
