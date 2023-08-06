@@ -1,13 +1,18 @@
 /* eslint-disable @typescript-eslint/naming-convention */
+import jsLogger from '@map-colonies/js-logger';
+import { trace } from '@opentelemetry/api';
 import httpStatusCodes from 'http-status-codes';
 import Redis from 'ioredis';
 import { container } from 'tsyringe';
+import { getApp } from '../../../src/app';
+import { SERVICES } from '../../../src/common/constants';
 import { REDIS_SYMBOL } from '../../../src/common/constants';
 import { IApplication } from '../../../src/common/interfaces';
 import { Tags } from '../../../src/common/types';
 import { Schema } from '../../../src/schema/models/types';
+import { SchemaRequestSender } from './helpers/requestSender';
 import { registerTestValues } from '../testContainerConfig';
-import * as requestSender from './helpers/requestSender';
+// import * as requestSender from './helpers/requestSender';
 
 interface TagMappingTestValues {
   testCaseName: string;
@@ -19,6 +24,7 @@ interface TagMappingTestValues {
 }
 
 describe('schemas', function () {
+  let requestSender: SchemaRequestSender;
   const applicationConfigs: Record<string, IApplication>[] = [
     { application: { hashKey: { enabled: false } } },
     { application: { hashKey: { enabled: true, value: 'hashKey1' } } },
@@ -28,8 +34,8 @@ describe('schemas', function () {
 
   let redisConnection: Redis;
   beforeAll(async function () {
-    await registerTestValues();
-    requestSender.init();
+    // await registerTestValues();
+    // requestSender.init();
     redisConnection = container.resolve<Redis>(REDIS_SYMBOL);
   });
   afterAll(async function () {
@@ -39,6 +45,14 @@ describe('schemas', function () {
   });
 
   beforeEach(async function () {
+    const app = getApp({
+      override: [
+        { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
+        { token: SERVICES.TRACER, provider: { useValue: trace.getTracer('testTracer') } },
+      ],
+      useChild: true,
+    });
+    requestSender = new SchemaRequestSender(app);
     await redisConnection.flushall();
   });
 
@@ -274,7 +288,15 @@ describe('schemas', function () {
             await redisConnection.quit();
             container.clearInstances();
             await registerTestValues(applicationConfigs[1]?.application);
-            requestSender.init();
+            // requestSender.init();
+            const app = getApp({
+              override: [
+                { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
+                { token: SERVICES.TRACER, provider: { useValue: trace.getTracer('testTracer') } },
+              ],
+              useChild: true,
+            });
+            requestSender = new SchemaRequestSender(app);
             redisConnection = container.resolve<Redis>(REDIS_SYMBOL);
             await redisConnection.flushall();
           });
@@ -305,7 +327,15 @@ describe('schemas', function () {
             await redisConnection.quit();
             container.clearInstances();
             await registerTestValues(applicationConfigs[0]?.application);
-            requestSender.init();
+            // requestSender.init();
+            const app = getApp({
+              override: [
+                { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
+                { token: SERVICES.TRACER, provider: { useValue: trace.getTracer('testTracer') } },
+              ],
+              useChild: true,
+            });
+            requestSender = new SchemaRequestSender(app);
             redisConnection = container.resolve<Redis>(REDIS_SYMBOL);
             await redisConnection.flushall();
           });
@@ -373,7 +403,15 @@ describe('schemas', function () {
           await redisConnection.quit();
           container.clearInstances();
           await registerTestValues(applicationConfigs[1]?.application);
-          requestSender.init();
+          // requestSender.init();
+          const app = getApp({
+            override: [
+              { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
+              { token: SERVICES.TRACER, provider: { useValue: trace.getTracer('testTracer') } },
+            ],
+            useChild: true,
+          });
+          requestSender = new SchemaRequestSender(app);
           redisConnection = container.resolve<Redis>(REDIS_SYMBOL);
           await redisConnection.flushall();
         });
@@ -396,7 +434,15 @@ describe('schemas', function () {
           await redisConnection.quit();
           container.clearInstances();
           await registerTestValues(applicationConfigs[0]?.application);
-          requestSender.init();
+          // requestSender.init();
+          const app = getApp({
+            override: [
+              { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
+              { token: SERVICES.TRACER, provider: { useValue: trace.getTracer('testTracer') } },
+            ],
+            useChild: true,
+          });
+          requestSender = new SchemaRequestSender(app);
           redisConnection = container.resolve<Redis>(REDIS_SYMBOL);
           await redisConnection.flushall();
         });

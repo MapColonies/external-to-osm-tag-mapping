@@ -8,6 +8,7 @@ enabled: true
 environment: development
 initialDelaySeconds: 60
 replicaCount: 1
+resetOnConfigChange: true
 
 annotations: {}
 podAnnotations: {}
