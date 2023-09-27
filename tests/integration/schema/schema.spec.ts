@@ -1,17 +1,22 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import jsLogger from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
+import config from 'config';
 import httpStatusCodes from 'http-status-codes';
-import Redis from 'ioredis';
-import { container } from 'tsyringe';
+import Redis, { RedisOptions } from 'ioredis';
+import { FactoryFunction, container, instancePerContainerCachingFactory } from 'tsyringe';
 import { getApp } from '../../../src/app';
-import { SERVICES } from '../../../src/common/constants';
-import { REDIS_SYMBOL } from '../../../src/common/constants';
+import { SERVICES, REDIS_SYMBOL } from '../../../src/common/constants';
 import { IApplication } from '../../../src/common/interfaces';
 import { Tags } from '../../../src/common/types';
 import { Schema } from '../../../src/schema/models/types';
-import { SchemaRequestSender } from './helpers/requestSender';
+import { getSchemas } from '../../../src/schema/providers/schemaLoader';
+import { createConnection } from '../../../src/common/db';
+import { schemaSymbol } from '../../../src/schema/models/types';
 import { registerTestValues } from '../testContainerConfig';
+import { IDOMAIN_FIELDS_REPO_SYMBOL } from '../../../src/schema/DAL/domainFieldsRepository';
+import { RedisManager } from '../../../src/schema/DAL/redisManager';
+import { SchemaRequestSender } from './helpers/requestSender';
 // import * as requestSender from './helpers/requestSender';
 
 interface TagMappingTestValues {
@@ -33,27 +38,44 @@ describe('schemas', function () {
   const hashKey = applicationConfigs[1]?.application?.hashKey?.value ?? 'hashKey1';
 
   let redisConnection: Redis;
-  beforeAll(async function () {
-    // await registerTestValues();
-    // requestSender.init();
-    redisConnection = container.resolve<Redis>(REDIS_SYMBOL);
-  });
-  afterAll(async function () {
-    if (!['end'].includes(redisConnection.status)) {
-      await redisConnection.quit();
-    }
-  });
+  // beforeAll(async function () {
+  //   await registerTestValues();
+  //   // requestSender.init();
+  //   redisConnection = container.resolve<Redis>(REDIS_SYMBOL);
+  // });
+  // afterAll(async function () {
+  //   if (!['end'].includes(redisConnection.status)) {
+  //     await redisConnection.quit();
+  //   }
+  // });
 
   beforeEach(async function () {
-    const app = getApp({
+    await registerTestValues();
+    // container.register(SERVICES.CONFIG, { useValue: config });
+    // container.register(SERVICES.LOGGER, { useValue: jsLogger({ enabled: false }) });
+    const schemas = await getSchemas(container);
+    redisConnection = container.resolve<Redis>(REDIS_SYMBOL);
+    // redisConnection = await createConnection(config.get<RedisOptions>('db'));
+
+    const app = await getApp({
       override: [
+        // { token: SERVICES.CONFIG, provider: { useValue: config } },
         { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
         { token: SERVICES.TRACER, provider: { useValue: trace.getTracer('testTracer') } },
+
+        { token: schemaSymbol, provider: { useValue: schemas } },
+        { token: REDIS_SYMBOL, provider: { useValue: redisConnection } },
+        { token: IDOMAIN_FIELDS_REPO_SYMBOL, provider: { useClass: RedisManager } },
       ],
       useChild: true,
     });
     requestSender = new SchemaRequestSender(app);
     await redisConnection.flushall();
+  });
+  afterAll(async function () {
+    if (!['end'].includes(redisConnection.status)) {
+      await redisConnection.quit();
+    }
   });
 
   describe('Happy Path', function () {
@@ -291,8 +313,16 @@ describe('schemas', function () {
             // requestSender.init();
             const app = getApp({
               override: [
-                { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
+                // { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
                 { token: SERVICES.TRACER, provider: { useValue: trace.getTracer('testTracer') } },
+                // { token: IDOMAIN_FIELDS_REPO_SYMBOL, provider: { useClass: RedisManager } },
+                // { token: SERVICES.APPLICATION, provider: {useValue: container.resolve(SERVICES.APPLICATION)}}
+                { token: SERVICES.LOGGER, provider: { useValue: container.resolve(SERVICES.LOGGER)}},
+                // { token: SERVICES.TRACER, provider: { useValue: container.resolve(SERVICES.TRACER)} },
+                { token: IDOMAIN_FIELDS_REPO_SYMBOL, provider: {useValue: container.resolve(IDOMAIN_FIELDS_REPO_SYMBOL) } },
+                { token: SERVICES.APPLICATION, provider: {useValue: container.resolve(SERVICES.APPLICATION)}},
+                { token: schemaSymbol, provider: { useValue: container.resolve(schemaSymbol) } },
+                { token: REDIS_SYMBOL, provider: { useValue: container.resolve(REDIS_SYMBOL) } },
               ],
               useChild: true,
             });
@@ -313,9 +343,17 @@ describe('schemas', function () {
               await redisConnection.hset(hashKey, key, value);
 
               const response = await requestSender.map(name, tags);
-              expect(response).toHaveProperty('status', httpStatusCodes.OK);
+
+              expect(response.status).toBe(httpStatusCodes.OK);
+              // expect(response).toHaveProperty('status', httpStatusCodes.OK);
 
               const mappedTags = response.body as Tags;
+              // console.log('-------------------------------------------------------------------')
+              // console.log(mappedTags);
+              // console.log('-------------------------------------------------------------------')
+              // console.log(expected);
+              // console.log('-------------------------------------------------------------------')
+
               expect(mappedTags).toBeDefined();
               expect(mappedTags).toMatchObject(expected);
             }
@@ -426,7 +464,7 @@ describe('schemas', function () {
 
           const response = await requestSender.map('system1', tags);
           expect(response).toHaveProperty('status', httpStatusCodes.UNPROCESSABLE_ENTITY);
-          expect(response.body).toEqual({ message: `failed to parse fetched json for key: explode1:val5` });
+          expect(response.body).toEqual({ message: `failed to fetch json for key: explode1:val5` });
         });
       });
       describe('key is used by Redis', () => {

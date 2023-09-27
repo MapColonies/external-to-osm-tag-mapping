@@ -6,7 +6,7 @@ import config from 'config';
 import Redis from 'ioredis';
 import { RedisOptions } from 'ioredis';
 import { Metrics } from '@map-colonies/telemetry';
-import { container } from 'tsyringe';
+import { container, instancePerContainerCachingFactory } from 'tsyringe';
 import { ON_SIGNAL, REDIS_SYMBOL, SERVICES, SERVICE_NAME } from './common/constants';
 import { createConnection } from './common/db';
 import { IApplication } from './common/interfaces';
@@ -54,6 +54,64 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
     { token: SERVICES.METER, provider: { useValue: OtelMetrics.getMeterProvider().getMeter(SERVICE_NAME) } },
     { token: schemaSymbol, provider: { useValue: schemas } },
     { token: SCHEMA_ROUTER_SYMBOL, provider: { useFactory: schemaRouterFactory } },
+
+    // { token: REDIS_SYMBOL, provider: { useFactory: instancePerContainerCachingFactory(async (redisConnection)=>{
+    //   if (connectToExternal) {
+    //     redisConnection = await createConnection(config.get<RedisOptions>('db'));
+    // )} } },
+    {
+      token: REDIS_SYMBOL,
+      provider: {
+        useValue: {
+          useValue: async () => {
+            if (connectToExternal) {
+              redisConnection = await createConnection(config.get<RedisOptions>('db'));
+
+              redisConnection.on('connect', () => {
+                logger.info(`redis client is connected.`);
+              });
+
+              redisConnection.on('error', (err: Error) => {
+                logger.error({ err: err, msg: 'redis client got an error' });
+              });
+
+              redisConnection.on('reconnecting', (delay: number) => {
+                logger.info(`redis client reconnecting, next reconnection attemp in ${delay}ms`);
+              });
+              return redisConnection;
+            }
+          },
+        },
+      },
+    },
+
+    {
+      token: IDOMAIN_FIELDS_REPO_SYMBOL,
+      provider: {
+        useValue: {
+          useClass: async () => {
+            if (connectToExternal) {
+              redisConnection = await createConnection(config.get<RedisOptions>('db'));
+
+              redisConnection.on('connect', () => {
+                logger.info(`redis client is connected.`);
+              });
+
+              redisConnection.on('error', (err: Error) => {
+                logger.error({ err: err, msg: 'redis client got an error' });
+              });
+
+              redisConnection.on('reconnecting', (delay: number) => {
+                logger.info(`redis client reconnecting, next reconnection attemp in ${delay}ms`);
+              });
+              return RedisManager;
+            } else {
+              return {};
+            }
+          },
+        },
+      },
+    },
     {
       token: ON_SIGNAL,
       provider: {
@@ -70,7 +128,6 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
                 });
                 void redisConnection.quit();
               });
-
               promises.push(promisifyQuit);
             }
             await Promise.all(promises);
