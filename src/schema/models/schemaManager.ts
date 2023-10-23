@@ -98,14 +98,7 @@ export class SchemaManager {
         if (schema.explodeKeysSet.has(key) && value !== null) {
           explodeKeys.push(`${keyConstructor(schema.explodePrefix, key, value.toString())}`);
         } else if (value !== null) {
-          // console.log(`idk: ${schema.domainPrefix}`)
-          // console.log(`key: ${key.toUpperCase()}`)
-          // console.log(`value: ${value.toString()}`)
-          // console.log(`value: ${value}`)
-
           domainKeys.push(`${keyConstructor(schema.domainPrefix, key.toUpperCase(), value.toString())}`);
-          // console.log('the domain keys ---------------------------------------------')
-          // console.log(domainKeys)
         }
       }
 
@@ -124,7 +117,6 @@ export class SchemaManager {
     });
 
     if (domainKeys.length > 0) {
-      // console.log(`going into the get domain..............${domainKeys}.................`)
       domainFieldsTags = await this.getDomainFieldsCodedValues(domainKeys);
     }
 
@@ -158,10 +150,7 @@ export class SchemaManager {
   private readonly getDomainFieldsCodedValues = async (domainKeys: string[]): Promise<Tags> => {
     let domainFieldsTags: Tags = {};
     const fieldsCodedValues = await this.domainFieldsRepo.getFields(domainKeys);
-    // const fieldsCodedValues = domainKeys;
 
-    // console.log(fieldsCodedValues)
-    // for each domain field create new domain field tag with the correct value
     fieldsCodedValues.forEach((codedValue, index) => {
       if (codedValue !== null) {
         domainFieldsTags = {
