@@ -1,8 +1,9 @@
 import * as supertest from 'supertest';
+import { Application } from 'express';
 import { Tags } from '../../../../src/common/types';
 
 export class SchemaRequestSender {
-  public constructor(private readonly app: Express.Application) {}
+  public constructor(private readonly app: Application) {}
 
   public async getSchemas(): Promise<supertest.Response> {
     return supertest.agent(this.app).get('/schemas');

@@ -5,7 +5,6 @@ import { DependencyContainer } from 'tsyringe/dist/typings/types';
 import config from 'config';
 import Redis from 'ioredis';
 import { RedisOptions } from 'ioredis';
-import { Metrics } from '@map-colonies/telemetry';
 import { container, instancePerContainerCachingFactory } from 'tsyringe';
 import { ON_SIGNAL, REDIS_SYMBOL, SERVICES, SERVICE_NAME } from './common/constants';
 import { createConnection } from './common/db';
@@ -30,9 +29,6 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
   const loggerConfig = config.get<LoggerOptions>('telemetry.logger');
   const logger = jsLogger({ ...loggerConfig, mixin: getOtelMixin() });
 
-  const metrics = new Metrics();
-  metrics.start();
-
   container.register(SERVICES.LOGGER, { useValue: logger });
 
   const tracer = trace.getTracer(SERVICE_NAME);
@@ -54,120 +50,89 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
     { token: SERVICES.METER, provider: { useValue: OtelMetrics.getMeterProvider().getMeter(SERVICE_NAME) } },
     { token: schemaSymbol, provider: { useValue: schemas } },
     { token: SCHEMA_ROUTER_SYMBOL, provider: { useFactory: schemaRouterFactory } },
-
-    // { token: REDIS_SYMBOL, provider: { useFactory: instancePerContainerCachingFactory(async (redisConnection)=>{
-    //   if (connectToExternal) {
-    //     redisConnection = await createConnection(config.get<RedisOptions>('db'));
-    // )} } },
-    {
-      token: REDIS_SYMBOL,
-      provider: {
-        useValue: {
-          useValue: async () => {
-            if (connectToExternal) {
-              redisConnection = await createConnection(config.get<RedisOptions>('db'));
-
-              redisConnection.on('connect', () => {
-                logger.info(`redis client is connected.`);
-              });
-
-              redisConnection.on('error', (err: Error) => {
-                logger.error({ err: err, msg: 'redis client got an error' });
-              });
-
-              redisConnection.on('reconnecting', (delay: number) => {
-                logger.info(`redis client reconnecting, next reconnection attemp in ${delay}ms`);
-              });
-              return redisConnection;
-            }
-          },
-        },
-      },
-    },
-
-    {
-      token: IDOMAIN_FIELDS_REPO_SYMBOL,
-      provider: {
-        useValue: {
-          useClass: async () => {
-            if (connectToExternal) {
-              redisConnection = await createConnection(config.get<RedisOptions>('db'));
-
-              redisConnection.on('connect', () => {
-                logger.info(`redis client is connected.`);
-              });
-
-              redisConnection.on('error', (err: Error) => {
-                logger.error({ err: err, msg: 'redis client got an error' });
-              });
-
-              redisConnection.on('reconnecting', (delay: number) => {
-                logger.info(`redis client reconnecting, next reconnection attemp in ${delay}ms`);
-              });
-              return RedisManager;
-            } else {
-              return {};
-            }
-          },
-        },
-      },
-    },
     {
       token: ON_SIGNAL,
       provider: {
-        useValue: {
-          useValue: async (): Promise<void> => {
-            const promises: Promise<void>[] = [tracing.stop()];
-            if (connectToExternal && redisConnection !== undefined) {
-              redisConnection.disconnect();
+        useFactory: instancePerContainerCachingFactory(async (): Promise<void> => {
+          const promises: Promise<void>[] = [tracing.stop()];
+          if (connectToExternal && redisConnection !== undefined) {
+            redisConnection.disconnect();
 
-              const promisifyQuit = new Promise<void>((resolve) => {
-                redisConnection = redisConnection as Redis;
-                redisConnection.once('end', () => {
-                  resolve();
-                });
-                void redisConnection.quit();
+            const promisifyQuit = new Promise<void>((resolve) => {
+              redisConnection = redisConnection as Redis;
+              redisConnection.once('end', () => {
+                resolve();
               });
-              promises.push(promisifyQuit);
-            }
-            await Promise.all(promises);
-          },
-        },
+              void redisConnection.quit();
+            });
+            promises.push(promisifyQuit);
+          }
+          await Promise.all(promises);
+        }),
       },
     },
-  ];
+    {
+      token: REDIS_SYMBOL,
+      provider: {
+        useFactory: instancePerContainerCachingFactory(async () => {
+          if (connectToExternal) {
+            redisConnection = await createConnection(config.get<RedisOptions>('db'));
 
-  if (connectToExternal) {
-    redisConnection = await createConnection(config.get<RedisOptions>('db'));
+            redisConnection.on('connect', () => {
+              logger.info(`redis client is connected.`);
+            });
 
-    redisConnection.on('connect', () => {
-      logger.info(`redis client is connected.`);
-    });
+            redisConnection.on('error', (err: Error) => {
+              logger.error({ err: err, msg: 'redis client got an error' });
+            });
 
-    redisConnection.on('error', (err: Error) => {
-      logger.error({ err: err, msg: 'redis client got an error' });
-    });
+            redisConnection.on('reconnecting', (delay: number) => {
+              logger.info(`redis client reconnecting, next reconnection attemp in ${delay}ms`);
+            });
+            container.register(SERVICES.LOGGER, { useValue: logger });
+            return redisConnection;
+          }
+        }),
+      },
+    },
+    {
+      token: IDOMAIN_FIELDS_REPO_SYMBOL,
+      provider: {
+        useFactory: instancePerContainerCachingFactory(async () => {
+          if (connectToExternal) {
+            redisConnection = await createConnection(config.get<RedisOptions>('db'));
 
-    redisConnection.on('reconnecting', (delay: number) => {
-      logger.info(`redis client reconnecting, next reconnection attemp in ${delay}ms`);
-    });
-    dependencies.push({ token: REDIS_SYMBOL, provider: { useValue: redisConnection } });
-    dependencies.push({ token: IDOMAIN_FIELDS_REPO_SYMBOL, provider: { useClass: RedisManager } });
-  } else {
-    dependencies.push({ token: IDOMAIN_FIELDS_REPO_SYMBOL, provider: { useValue: {} } });
-  }
-  dependencies.push({
-    token: SERVICES.HEALTHCHECK,
-    provider: {
-      useValue: {
-        useValue: async (): Promise<void> => {
+            redisConnection.on('connect', () => {
+              logger.info(`redis client is connected.`);
+            });
+
+            redisConnection.on('error', (err: Error) => {
+              logger.error({ err: err, msg: 'redis client got an error' });
+            });
+
+            redisConnection.on('reconnecting', (delay: number) => {
+              logger.info(`redis client reconnecting, next reconnection attemp in ${delay}ms`);
+            });
+            container.register(REDIS_SYMBOL, { useValue: redisConnection });
+            container.register(IDOMAIN_FIELDS_REPO_SYMBOL, { useClass: RedisManager });
+            return RedisManager;
+          } else {
+            return {};
+          }
+        }),
+      },
+    },
+    {
+      token: SERVICES.HEALTHCHECK,
+      provider: {
+        useFactory: instancePerContainerCachingFactory(async (): Promise<void> => {
           if (redisConnection === undefined) {
             return Promise.resolve();
           }
           await redisConnection.ping();
-        },
+        }),
       },
     },
-  });
+  ];
   return registerDependencies(dependencies, options?.override, options?.useChild);
 };
