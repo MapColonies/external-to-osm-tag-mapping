@@ -1,13 +1,23 @@
 /* eslint-disable @typescript-eslint/naming-convention */
+import jsLogger from '@map-colonies/js-logger';
+import { trace } from '@opentelemetry/api';
+import config from 'config';
+import client from 'prom-client';
 import httpStatusCodes from 'http-status-codes';
-import Redis from 'ioredis';
+import Redis, { RedisOptions } from 'ioredis';
 import { container } from 'tsyringe';
-import { REDIS_SYMBOL } from '../../../src/common/constants';
+import { getApp } from '../../../src/app';
+import { METRICS_REGISTRY, SERVICES, REDIS_SYMBOL } from '../../../src/common/constants';
 import { IApplication } from '../../../src/common/interfaces';
 import { Tags } from '../../../src/common/types';
 import { Schema } from '../../../src/schema/models/types';
+import { getSchemas } from '../../../src/schema/providers/schemaLoader';
+import { createConnection } from '../../../src/common/db';
+import { schemaSymbol } from '../../../src/schema/models/types';
 import { registerTestValues } from '../testContainerConfig';
-import * as requestSender from './helpers/requestSender';
+import { IDOMAIN_FIELDS_REPO_SYMBOL } from '../../../src/schema/DAL/domainFieldsRepository';
+import { RedisManager } from '../../../src/schema/DAL/redisManager';
+import { SchemaRequestSender } from './helpers/requestSender';
 
 interface TagMappingTestValues {
   testCaseName: string;
@@ -19,6 +29,7 @@ interface TagMappingTestValues {
 }
 
 describe('schemas', function () {
+  let requestSender: SchemaRequestSender;
   const applicationConfigs: Record<string, IApplication>[] = [
     { application: { hashKey: { enabled: false } } },
     { application: { hashKey: { enabled: true, value: 'hashKey1' } } },
@@ -27,19 +38,31 @@ describe('schemas', function () {
   const hashKey = applicationConfigs[1]?.application?.hashKey?.value ?? 'hashKey1';
 
   let redisConnection: Redis;
-  beforeAll(async function () {
+
+  beforeEach(async function () {
     await registerTestValues();
-    requestSender.init();
+    const schemas = await getSchemas(container);
     redisConnection = container.resolve<Redis>(REDIS_SYMBOL);
+
+    const app = await getApp({
+      override: [
+        { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
+        { token: SERVICES.TRACER, provider: { useValue: trace.getTracer('testTracer') } },
+
+        { token: schemaSymbol, provider: { useValue: schemas } },
+        { token: REDIS_SYMBOL, provider: { useValue: redisConnection } },
+        { token: IDOMAIN_FIELDS_REPO_SYMBOL, provider: { useClass: RedisManager } },
+        { token: METRICS_REGISTRY, provider: { useValue: new client.Registry() } },
+      ],
+      useChild: true,
+    });
+    requestSender = new SchemaRequestSender(app);
+    await redisConnection.flushall();
   });
   afterAll(async function () {
     if (!['end'].includes(redisConnection.status)) {
       await redisConnection.quit();
     }
-  });
-
-  beforeEach(async function () {
-    await redisConnection.flushall();
   });
 
   describe('Happy Path', function () {
@@ -270,12 +293,23 @@ describe('schemas', function () {
           },
         ];
         describe('hash key is used by Redis', () => {
-          beforeAll(async function () {
+          beforeEach(async function () {
             await redisConnection.quit();
             container.clearInstances();
             await registerTestValues(applicationConfigs[1]?.application);
-            requestSender.init();
-            redisConnection = container.resolve<Redis>(REDIS_SYMBOL);
+            redisConnection = await createConnection(config.get<RedisOptions>('db'));
+            const schemas = await getSchemas(container);
+            const app = await getApp({
+              override: [
+                { token: SERVICES.APPLICATION, provider: { useValue: applicationConfigs[1]?.application } },
+                { token: schemaSymbol, provider: { useValue: schemas } },
+                { token: REDIS_SYMBOL, provider: { useValue: redisConnection } },
+                { token: IDOMAIN_FIELDS_REPO_SYMBOL, provider: { useClass: RedisManager } },
+                { token: METRICS_REGISTRY, provider: { useValue: new client.Registry() } },
+              ],
+              useChild: true,
+            });
+            requestSender = new SchemaRequestSender(app);
             await redisConnection.flushall();
           });
 
@@ -299,14 +333,27 @@ describe('schemas', function () {
             }
           );
         });
-
         describe('key is used by Redis', () => {
           beforeAll(async function () {
             await redisConnection.quit();
             container.clearInstances();
             await registerTestValues(applicationConfigs[0]?.application);
-            requestSender.init();
-            redisConnection = container.resolve<Redis>(REDIS_SYMBOL);
+            redisConnection = await createConnection(config.get<RedisOptions>('db'));
+            const schemas = await getSchemas(container);
+            const app = await getApp({
+              override: [
+                { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
+                { token: SERVICES.TRACER, provider: { useValue: trace.getTracer('testTracer') } },
+                { token: SERVICES.APPLICATION, provider: { useValue: applicationConfigs[0]?.application } },
+
+                { token: schemaSymbol, provider: { useValue: schemas } },
+                { token: REDIS_SYMBOL, provider: { useValue: redisConnection } },
+                { token: IDOMAIN_FIELDS_REPO_SYMBOL, provider: { useClass: RedisManager } },
+                { token: METRICS_REGISTRY, provider: { useValue: new client.Registry() } },
+              ],
+              useChild: true,
+            });
+            requestSender = new SchemaRequestSender(app);
             await redisConnection.flushall();
           });
 
@@ -373,7 +420,14 @@ describe('schemas', function () {
           await redisConnection.quit();
           container.clearInstances();
           await registerTestValues(applicationConfigs[1]?.application);
-          requestSender.init();
+          const app = await getApp({
+            override: [
+              { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
+              { token: SERVICES.TRACER, provider: { useValue: trace.getTracer('testTracer') } },
+            ],
+            useChild: true,
+          });
+          requestSender = new SchemaRequestSender(app);
           redisConnection = container.resolve<Redis>(REDIS_SYMBOL);
           await redisConnection.flushall();
         });
@@ -388,7 +442,7 @@ describe('schemas', function () {
 
           const response = await requestSender.map('system1', tags);
           expect(response).toHaveProperty('status', httpStatusCodes.UNPROCESSABLE_ENTITY);
-          expect(response.body).toEqual({ message: `failed to parse fetched json for key: explode1:val5` });
+          expect(response.body).toEqual({ message: `failed to fetch json for key: explode1:val5` });
         });
       });
       describe('key is used by Redis', () => {
@@ -396,7 +450,15 @@ describe('schemas', function () {
           await redisConnection.quit();
           container.clearInstances();
           await registerTestValues(applicationConfigs[0]?.application);
-          requestSender.init();
+          const app = await getApp({
+            override: [
+              { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
+              { token: SERVICES.TRACER, provider: { useValue: trace.getTracer('testTracer') } },
+              { token: METRICS_REGISTRY, provider: { useValue: new client.Registry() } },
+            ],
+            useChild: true,
+          });
+          requestSender = new SchemaRequestSender(app);
           redisConnection = container.resolve<Redis>(REDIS_SYMBOL);
           await redisConnection.flushall();
         });

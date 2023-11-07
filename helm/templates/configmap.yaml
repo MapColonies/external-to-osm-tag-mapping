@@ -31,4 +31,5 @@ data:
   APP_HASH_KEY_ENABLED: 'true'
   APP_HASH_KEY: {{ .Values.env.hashKey.value | quote }}
   {{- end }}
+  npm_config_cache: /tmp/
 {{- end }}

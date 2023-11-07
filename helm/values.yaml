@@ -8,13 +8,19 @@ enabled: true
 environment: development
 initialDelaySeconds: 60
 replicaCount: 1
+resetOnConfigChange: true
 
 annotations: {}
 podAnnotations: {}
 
 cloudProvider:
   dockerRegistryUrl: my-registry-url.io
+  imagePullSecretName: 'my-registry-secret'
   flavor: openshift
+
+caSecretName: ''
+caPath: '/usr/local/share/ca-certificates'
+caKey: 'ca.crt'
 
 image:
   repository: external-to-osm-tag-mapping
@@ -22,7 +28,7 @@ image:
   # tag: "v1.0.0"
 
 resources:
-  enabled: false
+  enabled: true
   value:
     limits:
       cpu: 100m
@@ -36,6 +42,7 @@ env:
   targetPort: 8080
   protocol: TCP
   logLevel: info
+  projectName: default
   logPrettyPrintEnabled: false
   responseCompressionEnabled: true
   requestPayloadLimit: 1mb

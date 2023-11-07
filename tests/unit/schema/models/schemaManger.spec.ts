@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { container } from 'tsyringe';
+import client from 'prom-client';
 import jsLogger from '@map-colonies/js-logger';
 import { IDOMAIN_FIELDS_REPO_SYMBOL } from '../../../../src/schema/DAL/domainFieldsRepository';
 import { JSONSyntaxError, SchemaManager, SchemaNotFoundError } from '../../../../src/schema/models/schemaManager';
@@ -62,7 +63,8 @@ describe('SchemaManager', () => {
     container.register(IDOMAIN_FIELDS_REPO_SYMBOL, { useValue: { getFields } });
     container.register(SERVICES.LOGGER, { useValue: jsLogger({ enabled: false }) });
 
-    schemaManager = container.resolve(SchemaManager);
+    // schemaManager = container.resolve(SchemaManager);
+    schemaManager = new SchemaManager(schemas, container.resolve(IDOMAIN_FIELDS_REPO_SYMBOL), jsLogger({ enabled: false }), new client.Registry());
   });
 
   afterEach(() => {

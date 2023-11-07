@@ -16,7 +16,7 @@ export interface Constructor<T> {
   new (...args: any[]): T;
 }
 
-export interface SwaggerConfig {
+export interface OpenApiConfig {
   filePath: string;
   basePath: string;
   jsonPath: string;

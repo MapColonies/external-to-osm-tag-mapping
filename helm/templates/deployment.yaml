@@ -2,6 +2,7 @@
 {{- $chartName := include "external-to-osm-tag-mapping.name" . -}}
 {{- $cloudProviderFlavor := include "external-to-osm-tag-mapping.cloudProviderFlavor" . -}}
 {{- $cloudProviderDockerRegistryUrl := include "external-to-osm-tag-mapping.cloudProviderDockerRegistryUrl" . -}}
+{{- $cloudProviderImagePullSecretName := include "external-to-osm-tag-mapping.cloudProviderImagePullSecretName" . -}}
 {{- $tag := include "external-to-osm-tag-mapping.tag" . -}}
 {{- if .Values.enabled -}}
 apiVersion: apps/v1
@@ -33,23 +34,39 @@ spec:
         release: {{ $releaseName }}
         run: {{ $releaseName }}-{{ $chartName }}
         {{- include "external-to-osm-tag-mapping.selectorLabels" . | nindent 8 }}
+      {{- if .Values.resetOnConfigChange }}
+      annotations:
+        checksum/configmap: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      {{- end }}
 {{- with .Values.podAnnotations }}
       annotations:
 {{ toYaml . | indent 8 }}
 {{- end }}
     spec:
+    {{- if $cloudProviderImagePullSecretName }}
+      imagePullSecrets:
+        - name: {{ $cloudProviderImagePullSecretName | quote }}
+    {{- end }}
       containers:
         - name: {{ $releaseName }}-{{ $chartName }}-deployment
           {{- with .Values.image }}
-          {{- if ne $cloudProviderFlavor "minikube" }}
-          image: {{ $cloudProviderDockerRegistryUrl }}/{{ .repository }}:{{ $tag }}
-          {{- else }}
-          image: {{ .repository }}:{{ $tag }}
+          image: {{ $cloudProviderDockerRegistryUrl }}{{ .repository }}:{{ $tag }}
           {{- end }}
-          {{- end }}
+          volumeMounts:
+            {{- if .Values.caSecretName }}
+            - mountPath: {{ printf "%s/%s" .Values.caPath .Values.caKey | quote }}
+              name: root-ca
+              subPath: {{ quote .Values.caKey }}
+            {{- end }}
           env:
             - name: SERVER_PORT
               value: {{ .Values.env.targetPort | quote }}
+            {{- if .Values.caSecretName }}
+            - name: REQUESTS_CA_BUNDLE
+              value: {{ printf "%s/%s" .Values.caPath .Values.caKey | quote }}
+            - name: NODE_EXTRA_CA_CERTS
+              value: {{ printf "[%s/%s]" .Values.caPath .Values.caKey | quote }}
+            {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ $releaseName }}-{{ $chartName }}-configmap
@@ -66,7 +83,7 @@ spec:
             initialDelaySeconds: {{ .Values.initialDelaySeconds }}
             httpGet:
               path: /liveness
-              port: http
+              port: {{ .Values.env.targetPort }}
           {{- if .Values.resources.enabled }}
           resources:
             {{- toYaml .Values.resources.value | nindent 12 }}
@@ -75,4 +92,9 @@ spec:
         - name: schema
           configMap:
             name: {{ .Release.Name }}-{{ $chartName }}-schema-configmap
+        {{- if .Values.caSecretName }}
+        - name: root-ca
+          secret:
+            secretName: {{ .Values.caSecretName }}
+        {{- end }}
 {{- end -}}
