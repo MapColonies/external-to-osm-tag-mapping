@@ -1,8 +1,9 @@
 import httpStatusCodes from 'http-status-codes';
+import client from 'prom-client';
 import jsLogger from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
 import { getApp } from '../../../src/app';
-import { SERVICES } from '../../../src/common/constants';
+import { SERVICES, METRICS_REGISTRY } from '../../../src/common/constants';
 import { DocsRequestSender } from './helpers/docsRequestSender';
 
 describe('docs', function () {
@@ -12,6 +13,7 @@ describe('docs', function () {
       override: [
         { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
         { token: SERVICES.TRACER, provider: { useValue: trace.getTracer('testTracer') } },
+        { token: METRICS_REGISTRY, provider: { useValue: new client.Registry() } },
       ],
       useChild: true,
     });

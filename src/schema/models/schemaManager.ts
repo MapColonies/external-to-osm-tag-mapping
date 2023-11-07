@@ -1,8 +1,9 @@
 import { inject, injectable } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
+import client from 'prom-client';
 import { IDomainFieldsRepository, IDOMAIN_FIELDS_REPO_SYMBOL } from '../DAL/domainFieldsRepository';
 import { Tags } from '../../common/types';
-import { KEYS_SEPARATOR, REDIS_KEYS_SEPARATOR, SERVICES } from '../../common/constants';
+import { KEYS_SEPARATOR, REDIS_KEYS_SEPARATOR, SERVICES, METRICS_REGISTRY } from '../../common/constants';
 import { KeyNotFoundError } from '../DAL/errors';
 import { keyConstructor } from '../DAL/keys';
 import { Schema, schemaSymbol } from './types';
@@ -32,11 +33,20 @@ export class JSONSyntaxError extends SyntaxError {}
 @injectable()
 export class SchemaManager {
   private readonly schemas: Record<string, SchemaMetadata>;
+  private readonly schemaCounter: client.Counter<'status' | 'schemaName'>;
+
   public constructor(
     @inject(schemaSymbol) private readonly inputSchemas: Schema[],
     @inject(IDOMAIN_FIELDS_REPO_SYMBOL) private readonly domainFieldsRepo: IDomainFieldsRepository,
-    @inject(SERVICES.LOGGER) private readonly logger: Logger
+    @inject(SERVICES.LOGGER) private readonly logger: Logger,
+    @inject(METRICS_REGISTRY) registry: client.Registry
   ) {
+    this.schemaCounter = new client.Counter({
+      name: 'change_count',
+      help: 'The overall change stats',
+      labelNames: ['status', 'schemaName'] as const,
+      registers: [registry],
+    });
     this.schemas = inputSchemas.reduce((acc, curr) => {
       let schemaMetadata: SchemaMetadata = {
         keyIgnoreSets: new Set(curr.ignoreKeys),
@@ -75,6 +85,7 @@ export class SchemaManager {
 
     if (this.getSchema(name) === undefined) {
       this.logger.error({ msg: 'schema not found', schemaName: name });
+      this.schemaCounter.inc({ status: 'error' });
       throw new SchemaNotFoundError(`schema ${name} not found`);
     }
 
@@ -91,6 +102,7 @@ export class SchemaManager {
       // check if tag's key should be renamed
       if (schema.renameKeys && Object.prototype.hasOwnProperty.call(schema.renameKeys, key)) {
         key = schema.renameKeys[key];
+        this.schemaCounter.inc({ status: 'renamed', schemaName: name });
       }
 
       if (schema.enableExternalFetch) {
@@ -115,6 +127,8 @@ export class SchemaManager {
       domainKeysCount: domainKeys.length,
       explodeKeysCount: explodeKeys.length,
     });
+    this.schemaCounter.inc({ status: 'domainKeysCount', schemaName: name }, domainKeys.length);
+    this.schemaCounter.inc({ status: 'explodeKeysCount', schemaName: name }, explodeKeys.length);
 
     if (domainKeys.length > 0) {
       domainFieldsTags = await this.getDomainFieldsCodedValues(domainKeys);
@@ -139,6 +153,7 @@ export class SchemaManager {
       schemaName: name,
       tagsCount: Object.keys(finalTags).length,
     });
+    this.schemaCounter.inc({ status: 'tagsCount', schemaName: name }, Object.keys(finalTags).length);
 
     return finalTags;
   }
@@ -171,6 +186,7 @@ export class SchemaManager {
     explodeFields.forEach((jsonString, index) => {
       if (jsonString === null) {
         this.logger.error({ msg: 'failed to fetch json for explode key', key: explodeKeys[index] });
+        this.schemaCounter.inc({ status: 'error' });
         throw new KeyNotFoundError(`failed to fetch json for key: ${explodeKeys[index]}`);
       }
 
@@ -185,6 +201,7 @@ export class SchemaManager {
         explodeFieldsTags = { ...explodeFieldsTags, ...explodedFields };
       } catch (error) {
         this.logger.error({ msg: 'failed to parse json for explode key', key: explodeKeys[index] });
+        this.schemaCounter.inc({ status: 'error' });
         throw new JSONSyntaxError(`failed to parse fetched json for key: ${explodeKeys[index]}`);
       }
     });
