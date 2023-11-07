@@ -2,11 +2,11 @@ import jsLogger, { LoggerOptions } from '@map-colonies/js-logger';
 import { getOtelMixin } from '@map-colonies/telemetry';
 import { trace, metrics as OtelMetrics } from '@opentelemetry/api';
 import { DependencyContainer } from 'tsyringe/dist/typings/types';
-import config from 'config';
-import Redis from 'ioredis';
-import { RedisOptions } from 'ioredis';
+import config, { IConfig } from 'config';
+import client from 'prom-client';
+import Redis, { RedisOptions } from 'ioredis';
 import { container, instancePerContainerCachingFactory } from 'tsyringe';
-import { ON_SIGNAL, REDIS_SYMBOL, SERVICES, SERVICE_NAME } from './common/constants';
+import { ON_SIGNAL, REDIS_SYMBOL, SERVICES, SERVICE_NAME, METRICS_REGISTRY } from './common/constants';
 import { createConnection } from './common/db';
 import { IApplication } from './common/interfaces';
 import { tracing } from './common/tracing';
@@ -47,6 +47,17 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
     { token: SERVICES.APPLICATION, provider: { useValue: config.get<IApplication>('application') } },
     { token: SERVICES.LOGGER, provider: { useValue: logger } },
     { token: SERVICES.TRACER, provider: { useValue: tracer } },
+    {
+      token: METRICS_REGISTRY,
+      provider: {
+        useFactory: instancePerContainerCachingFactory((container) => {
+          const config = container.resolve<IConfig>(SERVICES.CONFIG);
+
+          client.register.setDefaultLabels({ project: config.get<string>('app.projectName') });
+          return client.register;
+        }),
+      },
+    },
     { token: SERVICES.METER, provider: { useValue: OtelMetrics.getMeterProvider().getMeter(SERVICE_NAME) } },
     { token: schemaSymbol, provider: { useValue: schemas } },
     { token: SCHEMA_ROUTER_SYMBOL, provider: { useFactory: schemaRouterFactory } },

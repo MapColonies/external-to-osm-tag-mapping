@@ -2,11 +2,12 @@
 import jsLogger from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
 import config from 'config';
+import client from 'prom-client';
 import httpStatusCodes from 'http-status-codes';
 import Redis, { RedisOptions } from 'ioredis';
 import { container } from 'tsyringe';
 import { getApp } from '../../../src/app';
-import { SERVICES, REDIS_SYMBOL } from '../../../src/common/constants';
+import { METRICS_REGISTRY, SERVICES, REDIS_SYMBOL } from '../../../src/common/constants';
 import { IApplication } from '../../../src/common/interfaces';
 import { Tags } from '../../../src/common/types';
 import { Schema } from '../../../src/schema/models/types';
@@ -51,6 +52,7 @@ describe('schemas', function () {
         { token: schemaSymbol, provider: { useValue: schemas } },
         { token: REDIS_SYMBOL, provider: { useValue: redisConnection } },
         { token: IDOMAIN_FIELDS_REPO_SYMBOL, provider: { useClass: RedisManager } },
+        { token: METRICS_REGISTRY, provider: { useValue: new client.Registry() } },
       ],
       useChild: true,
     });
@@ -303,6 +305,7 @@ describe('schemas', function () {
                 { token: schemaSymbol, provider: { useValue: schemas } },
                 { token: REDIS_SYMBOL, provider: { useValue: redisConnection } },
                 { token: IDOMAIN_FIELDS_REPO_SYMBOL, provider: { useClass: RedisManager } },
+                { token: METRICS_REGISTRY, provider: { useValue: new client.Registry() } },
               ],
               useChild: true,
             });
@@ -346,6 +349,7 @@ describe('schemas', function () {
                 { token: schemaSymbol, provider: { useValue: schemas } },
                 { token: REDIS_SYMBOL, provider: { useValue: redisConnection } },
                 { token: IDOMAIN_FIELDS_REPO_SYMBOL, provider: { useClass: RedisManager } },
+                { token: METRICS_REGISTRY, provider: { useValue: new client.Registry() } },
               ],
               useChild: true,
             });
@@ -450,6 +454,7 @@ describe('schemas', function () {
             override: [
               { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
               { token: SERVICES.TRACER, provider: { useValue: trace.getTracer('testTracer') } },
+              { token: METRICS_REGISTRY, provider: { useValue: new client.Registry() } },
             ],
             useChild: true,
           });
