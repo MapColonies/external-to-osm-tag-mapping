@@ -1,12 +1,12 @@
 import express, { Router } from 'express';
 import bodyParser from 'body-parser';
 import compression from 'compression';
+import { inject, injectable } from 'tsyringe';
+import { Registry } from 'prom-client';
 import { middleware as OpenApiMiddleware } from 'express-openapi-validator';
 import { Logger } from '@map-colonies/js-logger';
 import httpLogger from '@map-colonies/express-access-log-middleware';
 import { OpenapiViewerRouter, OpenapiRouterConfig } from '@map-colonies/openapi-express-viewer';
-import { inject, injectable } from 'tsyringe';
-import { Registry } from 'prom-client';
 import { getErrorHandlerMiddleware } from '@map-colonies/error-express-handler';
 import { getTraceContexHeaderMiddleware, metricsMiddleware } from '@map-colonies/telemetry';
 import { SERVICES, METRICS_REGISTRY } from './common/constants';
