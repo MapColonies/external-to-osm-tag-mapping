@@ -31,4 +31,7 @@ data:
   APP_HASH_KEY_ENABLED: 'true'
   APP_HASH_KEY: {{ .Values.env.hashKey.value | quote }}
   {{- end }}
+  {{- if .Values.env.dbPrefixkey | default "" }}
+  DB_KEY_PREFIX: {{ .Values.env.dbPrefixkey | quote }}
+  {{- end }}
 {{- end }}
