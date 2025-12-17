@@ -58,7 +58,8 @@
     "maxRetriesPerRequest": {
       "__name": "DB_MAX_RETRIES_PER_REQUEST",
       "__format": "number"
-    }
+    },
+    "keyPrefix": "DB_KEY_PREFIX"
   },
   "application": {
     "hashKey": {
