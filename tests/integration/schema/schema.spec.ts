@@ -269,11 +269,52 @@ describe('schemas', function () {
             value: '{ "exploded1_heb": 2, "exploded2_heb": 3 }',
           },
         ];
+
+        describe('Redis uses prefix key', () => {
+          const keyPrefix = 'someKey:';
+          beforeAll(async function () {
+            await redisConnection.quit();
+            container.clearInstances();
+            await registerTestValues({
+              appConfig: applicationConfigs[1]?.application,
+              redisOptions: {
+                keyPrefix,
+              },
+            });
+            requestSender.init();
+            redisConnection = container.resolve<Redis>(REDIS_SYMBOL);
+            await redisConnection.flushall();
+          });
+
+          it.each(testValues)(
+            'should return 200 status code and map the tags $testCaseName',
+            async ({ name, tagProperties, expectedProperties, key, value }) => {
+              const tags = {
+                properties: tagProperties,
+              };
+              const expected = {
+                properties: expectedProperties,
+              };
+              await redisConnection.hset(hashKey, key, value);
+
+              const keys = await redisConnection.keys(keyPrefix + '*');
+              expect(keys.length).toBeGreaterThanOrEqual(1);
+
+              const response = await requestSender.map(name, tags);
+              expect(response).toHaveProperty('status', httpStatusCodes.OK);
+
+              const mappedTags = response.body as Tags;
+              expect(mappedTags).toBeDefined();
+              expect(mappedTags).toMatchObject(expected);
+            }
+          );
+        });
+
         describe('hash key is used by Redis', () => {
           beforeAll(async function () {
             await redisConnection.quit();
             container.clearInstances();
-            await registerTestValues(applicationConfigs[1]?.application);
+            await registerTestValues({ appConfig: applicationConfigs[1]?.application });
             requestSender.init();
             redisConnection = container.resolve<Redis>(REDIS_SYMBOL);
             await redisConnection.flushall();
@@ -304,7 +345,7 @@ describe('schemas', function () {
           beforeAll(async function () {
             await redisConnection.quit();
             container.clearInstances();
-            await registerTestValues(applicationConfigs[0]?.application);
+            await registerTestValues({ appConfig: applicationConfigs[0]?.application });
             requestSender.init();
             redisConnection = container.resolve<Redis>(REDIS_SYMBOL);
             await redisConnection.flushall();
@@ -372,7 +413,7 @@ describe('schemas', function () {
         beforeAll(async function () {
           await redisConnection.quit();
           container.clearInstances();
-          await registerTestValues(applicationConfigs[1]?.application);
+          await registerTestValues({ appConfig: applicationConfigs[1]?.application });
           requestSender.init();
           redisConnection = container.resolve<Redis>(REDIS_SYMBOL);
           await redisConnection.flushall();
@@ -395,7 +436,7 @@ describe('schemas', function () {
         beforeAll(async function () {
           await redisConnection.quit();
           container.clearInstances();
-          await registerTestValues(applicationConfigs[0]?.application);
+          await registerTestValues({ appConfig: applicationConfigs[0]?.application });
           requestSender.init();
           redisConnection = container.resolve<Redis>(REDIS_SYMBOL);
           await redisConnection.flushall();
