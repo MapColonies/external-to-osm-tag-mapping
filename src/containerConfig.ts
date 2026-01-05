@@ -54,7 +54,8 @@ async function registerExternalValues(): Promise<void> {
   });
 
   if (connectToExternal) {
-    redisConnection = await createConnection(config.get<RedisOptions>('db'));
+    const { keyPrefix, ...redisConfig } = config.get<RedisOptions>('db');
+    redisConnection = await createConnection({ ...redisConfig, keyPrefix: keyPrefix ? `${keyPrefix}:` : undefined });
 
     redisConnection.on('connect', () => {
       logger.info(`redis client is connected.`);

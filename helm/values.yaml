@@ -49,6 +49,7 @@ env:
   hashKey:
     enabled: false
     value: hashKeyValue
+  # dbPrefixkey: 'vector' # add prefix to to db record's key
 
 dbConfig:
   host: redis

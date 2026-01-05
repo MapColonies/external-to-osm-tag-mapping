@@ -11,7 +11,8 @@ import { IDOMAIN_FIELDS_REPO_SYMBOL } from '../../src/schema/DAL/domainFieldsRep
 import { RedisManager } from '../../src/schema/DAL/redisManager';
 import { IApplication } from '../../src/common/interfaces';
 
-async function registerTestValues(appConfig?: IApplication): Promise<void> {
+async function registerTestValues(params?: { appConfig?: IApplication; redisOptions?: RedisOptions }): Promise<void> {
+  const { appConfig, redisOptions = {} } = params ?? {};
   container.register(SERVICES.CONFIG, { useValue: config });
   container.register(SERVICES.LOGGER, { useValue: jsLogger({ enabled: false }) });
 
@@ -26,7 +27,7 @@ async function registerTestValues(appConfig?: IApplication): Promise<void> {
 
   const schemas = await getSchemas(container);
 
-  const redisConnection: Redis = await createConnection(config.get<RedisOptions>('db'));
+  const redisConnection: Redis = await createConnection({ ...config.get<RedisOptions>('db'), ...redisOptions });
 
   container.register(schemaSymbol, { useValue: schemas });
   container.register(REDIS_SYMBOL, { useValue: redisConnection });
