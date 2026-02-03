@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { json } from 'express';
 import bodyParser from 'body-parser';
 import compression from 'compression';
 import { middleware as OpenApiMiddleware } from 'express-openapi-validator';
@@ -36,7 +36,7 @@ export class ServerBuilder {
     if (this.config.get<boolean>('server.response.compression.enabled')) {
       this.serverInstance.use(compression(this.config.get<compression.CompressionFilter>('server.response.compression.options')));
     }
-    this.serverInstance.use(express.json(this.config.get<bodyParser.Options>('server.request.payload')));
+    this.serverInstance.use(json(this.config.get<bodyParser.Options>('server.request.payload')));
     this.serverInstance.use(getTraceContexHeaderMiddleware());
 
     const ignorePathRegex = new RegExp(`^${this.config.get<string>('openapiConfig.basePath')}/.*`, 'i');

@@ -3,7 +3,7 @@ import { commonBoilerplateV1, type commonBoilerplateV1Type } from '@map-colonies
 import { IApplication } from './interfaces';
 
 // Choose here the type of the config instance and import this type from the entire application
-type ConfigType = ConfigInstance<commonBoilerplateV1Type& {app?:IApplication}>;
+type ConfigType = ConfigInstance<commonBoilerplateV1Type & { app?: IApplication }>;
 
 let configInstance: ConfigType | undefined;
 
