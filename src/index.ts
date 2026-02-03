@@ -1,4 +1,3 @@
-/* eslint-disable import/first */
 // this import must be called before the first import of tsyring
 import 'reflect-metadata';
 import './common/tracing';
@@ -18,7 +17,6 @@ void getApp()
   .then(([app, depContainer]) => {
     const logger = depContainer.resolve<Logger>(SERVICES.LOGGER);
     const server = createTerminus(createServer(app), {
-      // eslint-disable-next-line @typescript-eslint/naming-convention
       healthChecks: { '/liveness': depContainer.resolve(SERVICES.HEALTHCHECK) },
       onSignal: depContainer.resolve(ON_SIGNAL),
     });

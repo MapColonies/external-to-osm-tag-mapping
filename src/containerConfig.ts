@@ -1,8 +1,7 @@
 import jsLogger, { Logger } from '@map-colonies/js-logger';
 import { getOtelMixin } from '@map-colonies/telemetry';
 import { trace } from '@opentelemetry/api';
-import Redis from 'ioredis';
-import { RedisOptions } from 'ioredis';
+import redis, { RedisOptions } from 'ioredis';
 import { DependencyContainer, instancePerContainerCachingFactory } from 'tsyringe';
 import { CleanupRegistry } from '@map-colonies/cleanup-registry';
 import { ON_SIGNAL, REDIS_SYMBOL, SERVICES, SERVICE_NAME } from './common/constants';
@@ -110,7 +109,7 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
         token: IDOMAIN_FIELDS_REPO_SYMBOL,
         provider: {
           useFactory: instancePerContainerCachingFactory((container) => {
-            const redis = container.resolve<Redis | undefined>(REDIS_SYMBOL);
+            const redis = container.resolve<redis | undefined>(REDIS_SYMBOL);
             return redis ? container.resolve(RedisManager) : {};
           }),
         },
@@ -120,7 +119,7 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
         provider: {
           useFactory: (container) => {
             return async (): Promise<void> => {
-              const redis = container.resolve<Redis | undefined>(REDIS_SYMBOL);
+              const redis = container.resolve<redis | undefined>(REDIS_SYMBOL);
               if (redis) {
                 await redis.ping();
               }
