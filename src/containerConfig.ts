@@ -15,6 +15,7 @@ import { getSchemas } from './schema/providers/schemaLoader';
 import { InjectionObject, registerDependencies } from './common/dependencyRegistration';
 import { ConfigType, getConfig, initConfig } from './common/config';
 import { getTracing } from './common/tracing';
+import Redis from 'ioredis';
 
 export interface RegisterOptions {
   override?: InjectionObject<unknown>[];
@@ -26,15 +27,24 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
   const config = getConfig();
 
   try {
-    // FIX 1: Add 'await' here so bootstrapContainer is a DependencyContainer, not a Promise
     const bootstrapContainer = await registerDependencies(
       [{ token: SERVICES.CONFIG, provider: { useValue: config } }],
       options?.override,
       options?.useChild
     );
 
-    // Now getSchemas can properly use the container to resolve the provider
     const schemas = await getSchemas(bootstrapContainer);
+
+    const connectToExternal = schemas.some((s) => s.enableExternalFetch === 'yes');
+    let redisConnection: Redis | undefined;
+    if (connectToExternal) {
+      const { keyPrefix, ...redisConfig } = config.get('db') as RedisOptions;
+      const prefix = typeof keyPrefix === 'string' && keyPrefix.length > 0 ? `${keyPrefix}:` : undefined;
+      redisConnection = await createConnection({
+        ...(redisConfig as RedisOptions),
+        keyPrefix: prefix,
+      });
+    }
 
     const dependencies: InjectionObject<unknown>[] = [
       { token: SERVICES.CONFIG, provider: { useValue: config } },
@@ -74,36 +84,7 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
       },
       {
         token: REDIS_SYMBOL,
-        provider: {
-          useFactory: instancePerContainerCachingFactory(async (container) => {
-            const schemas = container.resolve<Schema[]>(schemaSymbol);
-            const connectToExternal = schemas.some((s) => s.enableExternalFetch === 'yes');
-
-            if (!connectToExternal) {
-              return undefined;
-            }
-
-            const config = container.resolve<ConfigType>(SERVICES.CONFIG);
-
-            // 1. Get as 'unknown' or 'any' first to satisfy config.get's strict string constraints
-            // and bypass the "always truthy" linting error.
-            const { keyPrefix, ...redisConfig } = config.get('db') as RedisOptions;
-
-            // We use a type guard or simple check for keyPrefix
-            const prefix = typeof keyPrefix === 'string' && keyPrefix.length > 0 ? `${keyPrefix}:` : undefined;
-
-            const connection = await createConnection({
-              ...(redisConfig as RedisOptions), // Force cast the rest object
-              keyPrefix: prefix,
-            });
-
-            const logger = container.resolve<Logger>(SERVICES.LOGGER);
-            connection.on('connect', () => logger.info('redis client is connected.'));
-            connection.on('error', (err: Error) => logger.error({ err, msg: 'redis client error' }));
-
-            return connection;
-          }),
-        },
+        provider: { useValue: redisConnection },
       },
       {
         token: IDOMAIN_FIELDS_REPO_SYMBOL,
@@ -119,9 +100,9 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
         provider: {
           useFactory: (container) => {
             return async (): Promise<void> => {
-              const redis = container.resolve<redis | undefined>(REDIS_SYMBOL);
+              const redis = container.resolve<Redis | undefined>(REDIS_SYMBOL);
               if (redis) {
-                await redis.ping();
+                await Promise.race([redis.ping(), new Promise((_, reject) => setTimeout(() => reject(new Error('ping timeout')), 3000))]);
               }
             };
           },
