@@ -4,13 +4,22 @@ global:
   metrics: {}
   environment: {}
 
-enabled: true
-environment: development
-initialDelaySeconds: 60
-replicaCount: 1
+mclabels:
+  component: backend
+  partOf: boilerplates
+  owner: common
+  prometheus:
+    enabled: true
 
-annotations: {}
+environment: development    
+enabled: true
+replicaCount: 1
+revisionHistoryLimit: 5  # Amount of revisions we keep
+nodePort: 30030  # for minikube deployment only
+resetOnConfigChange: false
+
 podAnnotations: {}
+
 
 cloudProvider:
   imagePullSecretName: acr-secret
@@ -21,6 +30,8 @@ image:
   repository: external-to-osm-tag-mapping
   # Overrides the image tag whose default is the chart appVersion.
   # tag: "v1.0.0"
+  pullPolicy: IfNotPresent
+
 
 resources:
   enabled: false
@@ -40,16 +51,14 @@ env:
   logPrettyPrintEnabled: false
   responseCompressionEnabled: true
   requestPayloadLimit: 1mb
+  hashKey:
+    enabled: false
   tracing:
     enabled: false
     url: http://localhost:55681/v1/trace
-    ratio: 1
   metrics:
     enabled: false
     url: http://localhost:55681/v1/metrics
-  hashKey:
-    enabled: false
-    value: hashKeyValue
   # dbPrefixkey: 'vector' # add prefix to to db record's key
 
 dbConfig:
@@ -59,6 +68,15 @@ dbConfig:
   # username: '' #pass '' (empty string) when username is not needed
   # password: '' #pass '' (empty string) when password is not needed
   maxRetriesPerRequest: 0
+
+livenessProbe:
+  enabled: true
+  path: /liveness
+  initialDelaySeconds: 60
+  timeoutSeconds: 5
+  periodSeconds: 10
+  failureThreshold: 3
+
 
 schema: |-
   [
@@ -85,6 +103,16 @@ schema: |-
 route:
   enabled: true
   path: /
+  host: ''
   timeout:
-    enabled: false # defaults to 30s by openshift
-    duration: 60s # supported units (us, ms, s, m, h, d)
+    enabled: false  # defaults to 30s by openshift
+    duration: 60s  # supported units (us, ms, s, m, h, d)
+  rewriteTarget: ''
+  tls:
+    enabled: true
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+    useCerts: false
+    certificate: ''
+    key: ''
+    caCertificate: ''
