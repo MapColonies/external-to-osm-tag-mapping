@@ -2,6 +2,7 @@
 {{- $chartName := include "external-to-osm-tag-mapping.name" . -}}
 {{- $cloudProviderFlavor := include "external-to-osm-tag-mapping.cloudProviderFlavor" . -}}
 {{- $cloudProviderDockerRegistryUrl := include "external-to-osm-tag-mapping.cloudProviderDockerRegistryUrl" . -}}
+{{- $cloudProviderImagePullSecretName := include "external-to-osm-tag-mapping.cloudProviderImagePullSecretName" . -}}
 {{- $tag := include "external-to-osm-tag-mapping.tag" . -}}
 {{- if .Values.enabled -}}
 apiVersion: apps/v1
@@ -38,6 +39,10 @@ spec:
 {{ toYaml . | indent 8 }}
 {{- end }}
     spec:
+    {{- if $cloudProviderImagePullSecretName }}
+      imagePullSecrets:
+        - name: {{ $cloudProviderImagePullSecretName | quote }}
+    {{- end }}
       containers:
         - name: {{ $releaseName }}-{{ $chartName }}-deployment
           {{- with .Values.image }}
@@ -53,8 +58,6 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ $releaseName }}-{{ $chartName }}-configmap
-            - secretRef:
-                name: {{ $releaseName }}-{{ $chartName }}-secret
           volumeMounts:
             - name: schema
               mountPath: /mnt/schemas
@@ -76,3 +79,4 @@ spec:
           configMap:
             name: {{ .Release.Name }}-{{ $chartName }}-schema-configmap
 {{- end -}}
+  

@@ -21,7 +21,7 @@ export interface RegisterOptions {
   useChild?: boolean;
 }
 export const registerExternalValues = async (options?: RegisterOptions): Promise<DependencyContainer> => {
-  await initConfig();
+  await initConfig(true);
   const cleanupRegistry = new CleanupRegistry();
   const config = getConfig();
 

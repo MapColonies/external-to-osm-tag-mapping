@@ -13,6 +13,7 @@ annotations: {}
 podAnnotations: {}
 
 cloudProvider:
+  imagePullSecretName: acr-secret
   dockerRegistryUrl: my-registry-url.io
   flavor: openshift
 
@@ -68,8 +69,9 @@ schema: |-
       "addSchemaPrefix": false,
       "enableExternalFetch": "yes",
       "explodeKeys": ["explode1", "explode2"],
+      "explodePrefix": "",
+      "domainPrefix": "",
       "renameKeys": { "externalKey1": "explode2" }
-
     },
     {
       "name": "system2",
