@@ -25,7 +25,7 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 
 # Install production dependencies only
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev --ignore-scripts
 
 # Copy built app
 COPY --from=build /tmp/buildApp/dist ./dist
@@ -34,4 +34,4 @@ COPY ./config ./config
 USER node
 EXPOSE 8080
 
-CMD ["dumb-init", "node", "--import", "./instrumentation.mjs", "./index.js"]
+CMD ["dumb-init", "node", "--import", "./dist/instrumentation.mjs", "./dist/index.js"]
