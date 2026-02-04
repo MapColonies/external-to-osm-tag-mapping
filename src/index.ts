@@ -5,7 +5,7 @@ import { createServer } from 'http';
 import { createTerminus } from '@godaddy/terminus';
 import { Logger } from '@map-colonies/js-logger';
 import { DependencyContainer } from 'tsyringe';
-import { DEFAULT_SERVER_PORT, ON_SIGNAL, SERVICES } from './common/constants';
+import { ON_SIGNAL, SERVICES } from './common/constants';
 import { ConfigType } from './common/config';
 import { getApp } from './app';
 
@@ -32,7 +32,7 @@ void getApp()
     console.error('😢 - failed initializing the server');
     console.error(error);
 
-    if (depContainer !== undefined && depContainer.isRegistered(ON_SIGNAL)) {
+    if (depContainer?.isRegistered(ON_SIGNAL) === true) {
       const shutDown = depContainer.resolve<() => Promise<void>>(ON_SIGNAL);
       await shutDown();
     }

@@ -21,7 +21,10 @@ type PostMapHandler = RequestHandler<SchemaParams, ExternalFeature, ExternalFeat
 
 @injectable()
 export class SchemaController {
-  public constructor(@inject(SchemaManager) private readonly manager: SchemaManager, @inject(SERVICES.LOGGER) private readonly logger: Logger) {}
+  public constructor(
+    @inject(SchemaManager) private readonly manager: SchemaManager,
+    @inject(SERVICES.LOGGER) private readonly logger: Logger
+  ) {}
 
   public getSchemas: GetSchemasHandler = (req, res) => {
     const schemas = this.manager.getSchemas();
