@@ -1,4 +1,10 @@
 {
+  "configManagement": {
+    "offlineMode": true,
+    "name": "service-name",
+    "version": "1.0.0",
+    "serverUrl": ""
+  },
   "openapiConfig": {
     "filePath": "./openapi3.yaml",
     "basePath": "/docs",
@@ -6,6 +12,7 @@
     "uiPath": "/api"
   },
   "telemetry": {
+    "metrics": {},
     "tracing": {
       "isEnabled": false
     },
@@ -34,6 +41,8 @@
     "filePath": "schemas.json"
   },
   "db": {
+    "timeout": 3000,
+    "type": "redis",
     "host": "localhost",
     "port": 6379,
     "db": 0,

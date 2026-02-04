@@ -1,21 +1,21 @@
-import jsLogger, { Logger } from '@map-colonies/js-logger';
+import jsLogger from '@map-colonies/js-logger';
 import { getOtelMixin } from '@map-colonies/telemetry';
 import { trace } from '@opentelemetry/api';
 import redis, { RedisOptions } from 'ioredis';
 import { DependencyContainer, instancePerContainerCachingFactory } from 'tsyringe';
 import { CleanupRegistry } from '@map-colonies/cleanup-registry';
+import { Registry } from 'prom-client';
 import { ON_SIGNAL, REDIS_SYMBOL, SERVICES, SERVICE_NAME } from './common/constants';
 import { createConnection } from './common/db';
 
 import { IApplication } from './common/interfaces';
 import { IDOMAIN_FIELDS_REPO_SYMBOL } from './schema/DAL/domainFieldsRepository';
 import { RedisManager } from './schema/DAL/redisManager';
-import { Schema, schemaSymbol } from './schema/models/types';
+import { schemaSymbol } from './schema/models/types';
 import { getSchemas } from './schema/providers/schemaLoader';
 import { InjectionObject, registerDependencies } from './common/dependencyRegistration';
 import { ConfigType, getConfig, initConfig } from './common/config';
 import { getTracing } from './common/tracing';
-import Redis from 'ioredis';
 
 export interface RegisterOptions {
   override?: InjectionObject<unknown>[];
@@ -25,6 +25,9 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
   await initConfig(true);
   const cleanupRegistry = new CleanupRegistry();
   const config = getConfig();
+  const metricsRegistry = new Registry();
+  metricsRegistry.setDefaultLabels({});
+  // config.initializeMetrics(metricsRegistry);
 
   try {
     const bootstrapContainer = await registerDependencies(
@@ -36,7 +39,7 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
     const schemas = await getSchemas(bootstrapContainer);
 
     const connectToExternal = schemas.some((s) => s.enableExternalFetch === 'yes');
-    let redisConnection: Redis | undefined;
+    let redisConnection: redis | undefined;
     if (connectToExternal) {
       const { keyPrefix, ...redisConfig } = config.get('db') as RedisOptions;
       const prefix = typeof keyPrefix === 'string' && keyPrefix.length > 0 ? `${keyPrefix}:` : undefined;
@@ -48,6 +51,7 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
 
     const dependencies: InjectionObject<unknown>[] = [
       { token: SERVICES.CONFIG, provider: { useValue: config } },
+      { token: SERVICES.METRICS, provider: { useValue: metricsRegistry } },
       { token: SERVICES.CLEANUP_REGISTRY, provider: { useValue: cleanupRegistry } },
       {
         token: SERVICES.LOGGER,
@@ -99,10 +103,11 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
         token: SERVICES.HEALTHCHECK,
         provider: {
           useFactory: (container) => {
+            const timeout = config.get('db.timeout');
             return async (): Promise<void> => {
-              const redis = container.resolve<Redis | undefined>(REDIS_SYMBOL);
+              const redis = container.resolve<redis | undefined>(REDIS_SYMBOL);
               if (redis) {
-                await Promise.race([redis.ping(), new Promise((_, reject) => setTimeout(() => reject(new Error('ping timeout')), 3000))]);
+                await Promise.race([redis.ping(), new Promise((_, reject) => setTimeout(() => reject(new Error('ping timeout')), timeout))]);
               }
             };
           },

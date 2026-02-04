@@ -4,22 +4,25 @@ import './common/tracing';
 import { createServer } from 'http';
 import { createTerminus } from '@godaddy/terminus';
 import { Logger } from '@map-colonies/js-logger';
-import config from 'config';
 import { DependencyContainer } from 'tsyringe';
 import { DEFAULT_SERVER_PORT, ON_SIGNAL, SERVICES } from './common/constants';
+import { ConfigType } from './common/config';
 import { getApp } from './app';
-
-const port: number = config.get<number>('server.port') || DEFAULT_SERVER_PORT;
 
 let depContainer: DependencyContainer | undefined;
 
 void getApp()
-  .then(([app, depContainer]) => {
-    const logger = depContainer.resolve<Logger>(SERVICES.LOGGER);
+  .then(([app, container]) => {
+    const logger = container.resolve<Logger>(SERVICES.LOGGER);
+    const config = container.resolve<ConfigType>(SERVICES.CONFIG);
+    const port: number = config.get('server.port') || DEFAULT_SERVER_PORT;
+
     const server = createTerminus(createServer(app), {
-      healthChecks: { '/liveness': depContainer.resolve(SERVICES.HEALTHCHECK) },
-      onSignal: depContainer.resolve(ON_SIGNAL),
+      healthChecks: { '/liveness': container.resolve(SERVICES.HEALTHCHECK) },
+      onSignal: container.resolve(ON_SIGNAL),
     });
+
+    depContainer = container;
 
     server.listen(port, () => {
       logger.info(`app started on port ${port}`);
@@ -29,8 +32,8 @@ void getApp()
     console.error('😢 - failed initializing the server');
     console.error(error);
 
-    if (depContainer?.isRegistered(ON_SIGNAL) == true) {
-      const shutDown: () => Promise<void> = depContainer.resolve(ON_SIGNAL);
+    if (depContainer !== undefined && depContainer.isRegistered(ON_SIGNAL)) {
+      const shutDown = depContainer.resolve<() => Promise<void>>(ON_SIGNAL);
       await shutDown();
     }
 
