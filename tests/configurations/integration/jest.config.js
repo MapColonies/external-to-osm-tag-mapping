@@ -2,6 +2,8 @@ module.exports = {
   transform: {
     '^.+\\.ts$': 'ts-jest',
   },
+  modulePathIgnorePatterns: ['<rootDir>/dist'],
+
   coverageReporters: ['text', 'text-summary', 'html', 'json'],
   rootDir: '../../../.',
   testMatch: ['<rootDir>/tests/integration/**/*.spec.ts'],
