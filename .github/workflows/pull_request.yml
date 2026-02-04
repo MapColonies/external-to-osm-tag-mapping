@@ -73,7 +73,7 @@ jobs:
         run: npm run test
         env:
           NODE_ENV: test
-          db__host: redis # Double underscore for nested config
+          db__host: redis
           db__port: 6379
 
       - uses: actions/upload-artifact@v5
