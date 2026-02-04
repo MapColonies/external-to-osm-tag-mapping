@@ -1,8 +1,7 @@
 import { container, FactoryFunction } from 'tsyringe';
 import config from 'config';
 import jsLogger from '@map-colonies/js-logger';
-import Redis from 'ioredis';
-import { RedisOptions } from 'ioredis';
+import redis, { RedisOptions } from 'ioredis';
 import { getSchemas } from '../../src/schema/providers/schemaLoader';
 import { REDIS_SYMBOL, SERVICES } from '../../src/common/constants';
 import { schemaSymbol } from '../../src/schema/models/types';
@@ -27,7 +26,7 @@ async function registerTestValues(params?: { appConfig?: IApplication; redisOpti
 
   const schemas = await getSchemas(container);
 
-  const redisConnection: Redis = await createConnection({ ...config.get<RedisOptions>('db'), ...redisOptions });
+  const redisConnection: redis = await createConnection({ ...config.get<RedisOptions>('db'), ...redisOptions });
 
   container.register(schemaSymbol, { useValue: schemas });
   container.register(REDIS_SYMBOL, { useValue: redisConnection });
