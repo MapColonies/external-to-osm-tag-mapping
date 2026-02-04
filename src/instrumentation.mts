@@ -3,7 +3,6 @@
 // Because this file is a module it should imported using the `--import` flag in the `node` command, and should not be imported by any other file.
 import { tracingFactory } from './common/tracing.js';
 import { getConfig, initConfig } from './common/config.js';
-
 await initConfig(true);
 
 const config = getConfig();
