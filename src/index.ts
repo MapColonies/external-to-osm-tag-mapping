@@ -15,7 +15,7 @@ void getApp()
   .then(([app, container]) => {
     const logger = container.resolve<Logger>(SERVICES.LOGGER);
     const config = container.resolve<ConfigType>(SERVICES.CONFIG);
-    const port: number = config.get('server.port') || DEFAULT_SERVER_PORT;
+    const port = config.get('server.port');
 
     const server = createTerminus(createServer(app), {
       healthChecks: { '/liveness': container.resolve(SERVICES.HEALTHCHECK) },

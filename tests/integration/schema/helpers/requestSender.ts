@@ -5,7 +5,7 @@ import { container } from 'tsyringe';
 import { ServerBuilder } from '../../../../src/serverBuilder';
 import { Tags } from '../../../../src/common/types';
 
-let app: Application | null = null;
+let app: Application | undefined;
 
 export function init(): void {
   const builder = container.resolve<ServerBuilder>(ServerBuilder);

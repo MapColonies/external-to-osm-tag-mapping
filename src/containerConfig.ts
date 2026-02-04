@@ -27,7 +27,7 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
   const config = getConfig();
   const metricsRegistry = new Registry();
   metricsRegistry.setDefaultLabels({});
-  // config.initializeMetrics(metricsRegistry);
+  config.initializeMetrics(metricsRegistry);
 
   try {
     const bootstrapContainer = await registerDependencies(
