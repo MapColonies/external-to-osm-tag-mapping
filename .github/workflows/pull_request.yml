@@ -44,42 +44,43 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
-  tests:
-    name: Run Tests
-    runs-on: ubuntu-latest
-    container: node:24
+tests:
+  name: Run Tests
+  runs-on: ubuntu-latest
+  container: node:24
 
-    services:
-      redis:
-        image: redis
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+  services:
+    redis:
+      image: redis
+      options: >-
+        --health-cmd "redis-cli ping"
+        --health-interval 10s
+        --health-timeout 5s
+        --health-retries 5
 
-    strategy:
-      matrix:
-        node: [24.x]
+  strategy:
+    matrix:
+      node: [24.x]
 
-    steps:
-      - name: Check out Git repository
-        uses: actions/checkout@v4
+  steps:
+    - name: Check out Git repository
+      uses: actions/checkout@v4
 
-      - name: Install Node.js dependencies
-        run: npm ci
+    - name: Install Node.js dependencies
+      run: npm ci
 
-      - name: Run tests
-        run: npm run test
-        env:
-          REDIS_HOST: redis
-          REDIS_PORT: 6379
+    - name: Run tests
+      run: npm run test
+      env:
+        NODE_ENV: test
+        db__host: redis
+        db__port: 6379
 
-      - uses: actions/upload-artifact@v5
-        if: always()
-        with:
-          name: Test Reporters - Node v${{ matrix.node }}
-          path: reports/**
+    - uses: actions/upload-artifact@v5
+      if: always()
+      with:
+        name: Test Reporters - Node v${{ matrix.node }}
+        path: reports/**
 
   build_image:
     name: Build Image
