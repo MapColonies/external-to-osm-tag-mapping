@@ -54,7 +54,7 @@
     "@map-colonies/express-access-log-middleware": "^2.0.1",
     "@map-colonies/js-logger": "^1.0.1",
     "@map-colonies/openapi-express-viewer": "^4.0.0",
-    "@map-colonies/schemas": "^1.16.1",
+    "@map-colonies/schemas": "https://ghatmpstorage.blob.core.windows.net/npm-packages/schemas-78fc26b6b06ff8909880c0c3cf6f36aa12709fb2.tgz",
     "@map-colonies/telemetry": "^10.0.1",
     "@opentelemetry/api": "^1.7.0",
     "@opentelemetry/api-metrics": "^0.29.0",

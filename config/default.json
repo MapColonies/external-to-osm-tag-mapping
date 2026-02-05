@@ -41,13 +41,17 @@
     "filePath": "schemas.json"
   },
   "db": {
-    "timeout": 3000,
-    "type": "redis",
-    "host": "localhost",
-    "port": 6379,
-    "db": 0,
-    "maxRetriesPerRequest": 1
+    "timeout": 5000,
+    "redis": {
+      "host": "localhost",
+      "port": 6379,
+      "username": "",
+      "password": "",
+      "dbIndex": 0,
+      "keyPrefix": "external_mapping"
+    }
   },
+
   "application": {
     "hashKey": {
       "enabled": false,

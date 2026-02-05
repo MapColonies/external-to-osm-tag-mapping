@@ -1,14 +1,12 @@
 import jsLogger from '@map-colonies/js-logger';
 import { getOtelMixin } from '@map-colonies/telemetry';
 import { trace } from '@opentelemetry/api';
-import redis, { RedisOptions } from 'ioredis';
+import redis from 'ioredis';
 import { DependencyContainer, instancePerContainerCachingFactory } from 'tsyringe';
 import { CleanupRegistry } from '@map-colonies/cleanup-registry';
 import { Registry } from 'prom-client';
 import { ON_SIGNAL, REDIS_SYMBOL, SERVICES, SERVICE_NAME } from './common/constants';
 import { createConnection } from './common/db';
-
-import { IApplication } from './common/interfaces';
 import { IDOMAIN_FIELDS_REPO_SYMBOL } from './schema/DAL/domainFieldsRepository';
 import { RedisManager } from './schema/DAL/redisManager';
 import { schemaSymbol } from './schema/models/types';
@@ -41,12 +39,15 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
     const connectToExternal = schemas.some((s) => s.enableExternalFetch === 'yes');
     let redisConnection: redis | undefined;
     if (connectToExternal) {
-      const { keyPrefix, ...redisConfig } = config.get('db') as RedisOptions;
-      const prefix = typeof keyPrefix === 'string' && keyPrefix.length > 0 ? `${keyPrefix}:` : undefined;
-      redisConnection = await createConnection({
-        ...(redisConfig as RedisOptions),
-        keyPrefix: prefix,
-      });
+      const redis = config.get('db.redis');
+      if (redis) {
+        const { keyPrefix, ...redisConfig } = redis;
+        const prefix = typeof keyPrefix === 'string' && keyPrefix.length > 0 ? `${keyPrefix}:` : undefined;
+        redisConnection = await createConnection({
+          ...redisConfig,
+          keyPrefix: prefix,
+        });
+      }
     }
 
     const dependencies: InjectionObject<unknown>[] = [
@@ -68,7 +69,7 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
         provider: {
           useFactory: instancePerContainerCachingFactory((container) => {
             const config = container.resolve<ConfigType>(SERVICES.CONFIG);
-            return config.get('application') as IApplication;
+            return config.get('application');
           }),
         },
       },
@@ -94,8 +95,8 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
         token: IDOMAIN_FIELDS_REPO_SYMBOL,
         provider: {
           useFactory: instancePerContainerCachingFactory((container) => {
-            const redis = container.resolve<redis | undefined>(REDIS_SYMBOL);
-            return redis ? container.resolve(RedisManager) : {};
+            const redisInstance = container.resolve<redis | undefined>(REDIS_SYMBOL);
+            return redisInstance ? container.resolve(RedisManager) : {};
           }),
         },
       },
@@ -103,11 +104,12 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
         token: SERVICES.HEALTHCHECK,
         provider: {
           useFactory: (container) => {
-            const timeout = config.get('db.timeout');
             return async (): Promise<void> => {
-              const redis = container.resolve<redis | undefined>(REDIS_SYMBOL);
-              if (redis) {
-                await Promise.race([redis.ping(), new Promise((_, reject) => setTimeout(() => reject(new Error('ping timeout')), timeout))]);
+              const redisConfig = container.resolve<redis | undefined>(REDIS_SYMBOL);
+              if (redisConfig) {
+                const timeout = config.get('db.redis.connectTimeout');
+
+                await Promise.race([redisConfig.ping(), new Promise((_, reject) => setTimeout(() => reject(new Error('ping timeout')), timeout))]);
               }
             };
           },
