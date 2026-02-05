@@ -1,9 +1,8 @@
 import { type ConfigInstance, config } from '@map-colonies/config';
-import { commonBoilerplateV2, type commonBoilerplateV1Type } from '@map-colonies/schemas';
-import { IApplication } from './interfaces';
+import { vectorExternalToOsmTagMappingV1, type vectorExternalToOsmTagMappingV1Type } from '@map-colonies/schemas';
 
 // Choose here the type of the config instance and import this type from the entire application
-type ConfigType = ConfigInstance<commonBoilerplateV1Type & { app?: IApplication }>;
+type ConfigType = ConfigInstance<vectorExternalToOsmTagMappingV1Type>;
 
 let configInstance: ConfigType | undefined;
 
@@ -14,8 +13,8 @@ let configInstance: ConfigType | undefined;
  */
 async function initConfig(offlineMode?: boolean): Promise<void> {
   configInstance = await config({
-    schema: commonBoilerplateV2,
-    offlineMode: offlineMode,
+    schema: vectorExternalToOsmTagMappingV1,
+    offlineMode,
   });
 }
 
@@ -26,4 +25,5 @@ function getConfig(): ConfigType {
   return configInstance;
 }
 
-export { getConfig, initConfig, ConfigType };
+export { getConfig, initConfig };
+export type { ConfigType };
