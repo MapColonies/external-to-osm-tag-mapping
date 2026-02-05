@@ -13,11 +13,13 @@ import { getSchemas } from './schema/providers/schemaLoader';
 import { InjectionObject, registerDependencies } from './common/dependencyRegistration';
 import { ConfigType, getConfig, initConfig } from './common/config';
 import { getTracing } from './common/tracing';
+import { Schema } from './schema/models/types';
 
 export interface RegisterOptions {
   override?: InjectionObject<unknown>[];
   useChild?: boolean;
 }
+
 export const registerExternalValues = async (options?: RegisterOptions): Promise<DependencyContainer> => {
   await initConfig(true);
   const cleanupRegistry = new CleanupRegistry();
@@ -34,20 +36,6 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
     );
 
     const schemas = await getSchemas(bootstrapContainer);
-
-    const connectToExternal = schemas.some((s) => s.enableExternalFetch === 'yes');
-    let redisConnection: redis | undefined;
-    if (connectToExternal) {
-      const redis = config.get('db.redis');
-      if (redis) {
-        const { keyPrefix, ...redisConfig } = redis;
-        const prefix = typeof keyPrefix === 'string' && keyPrefix.length > 0 ? `${keyPrefix}:` : undefined;
-        redisConnection = await createConnection({
-          ...redisConfig,
-          keyPrefix: prefix,
-        });
-      }
-    }
 
     const dependencies: InjectionObject<unknown>[] = [
       { token: SERVICES.CONFIG, provider: { useValue: config } },
@@ -88,7 +76,40 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
       },
       {
         token: REDIS_SYMBOL,
-        provider: { useValue: redisConnection },
+        provider: {
+          useFactory: instancePerContainerCachingFactory(async (container) => {
+            const config = container.resolve<ConfigType>(SERVICES.CONFIG);
+            const schemas = container.resolve<Schema[]>(SERVICES.SCHEMAS);
+            const cleanup = container.resolve<CleanupRegistry>(SERVICES.CLEANUP_REGISTRY);
+
+            const connectToExternal = schemas.some((s) => s.enableExternalFetch === 'yes');
+            if (!connectToExternal) {
+              return undefined;
+            }
+
+            const redisConfig = config.get('db.redis');
+            if (!redisConfig) {
+              return undefined;
+            }
+
+            const { keyPrefix, ...rest } = redisConfig;
+            const prefix = typeof keyPrefix === 'string' && keyPrefix.length > 0 ? `${keyPrefix}:` : undefined;
+
+            const redisConnection = await createConnection({
+              ...rest,
+              keyPrefix: prefix,
+            });
+
+            cleanup.register({
+              id: REDIS_SYMBOL,
+              func: async () => {
+                await redisConnection.quit();
+              },
+            });
+
+            return redisConnection;
+          }),
+        },
       },
       {
         token: IDOMAIN_FIELDS_REPO_SYMBOL,
@@ -104,11 +125,11 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
         provider: {
           useFactory: (container) => {
             return async (): Promise<void> => {
-              const redisConfig = container.resolve<redis | undefined>(REDIS_SYMBOL);
-              if (redisConfig) {
+              const redisInstance = container.resolve<redis | undefined>(REDIS_SYMBOL);
+              if (redisInstance) {
+                const config = container.resolve<ConfigType>(SERVICES.CONFIG);
                 const timeout = config.get('db.redis.connectTimeout');
-
-                await Promise.race([redisConfig.ping(), new Promise((_, reject) => setTimeout(() => reject(new Error('ping timeout')), timeout))]);
+                await Promise.race([redisInstance.ping(), new Promise((_, reject) => setTimeout(() => reject(new Error('ping timeout')), timeout))]);
               }
             };
           },
