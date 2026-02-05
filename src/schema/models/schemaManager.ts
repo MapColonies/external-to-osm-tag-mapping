@@ -5,7 +5,7 @@ import { Tags } from '../../common/types';
 import { KEYS_SEPARATOR, REDIS_KEYS_SEPARATOR, SERVICES } from '../../common/constants';
 import { KeyNotFoundError } from '../DAL/errors';
 import { keyConstructor } from '../DAL/keys';
-import { Schema, schemaSymbol } from './types';
+import { Schema } from './types';
 
 interface SchemaMetadataBase {
   keyIgnoreSets: Set<string>;
@@ -33,7 +33,7 @@ export class JSONSyntaxError extends SyntaxError {}
 export class SchemaManager {
   private readonly schemas: Record<string, SchemaMetadata>;
   public constructor(
-    @inject(schemaSymbol) private readonly inputSchemas: Schema[],
+    @inject(SERVICES.SCHEMAS) private readonly inputSchemas: Schema[],
     @inject(IDOMAIN_FIELDS_REPO_SYMBOL) private readonly domainFieldsRepo: IDomainFieldsRepository,
     @inject(SERVICES.LOGGER) private readonly logger: Logger
   ) {

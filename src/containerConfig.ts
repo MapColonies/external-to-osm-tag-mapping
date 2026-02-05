@@ -9,7 +9,6 @@ import { ON_SIGNAL, REDIS_SYMBOL, SERVICES, SERVICE_NAME } from './common/consta
 import { createConnection } from './common/db';
 import { IDOMAIN_FIELDS_REPO_SYMBOL } from './schema/DAL/domainFieldsRepository';
 import { RedisManager } from './schema/DAL/redisManager';
-import { schemaSymbol } from './schema/models/types';
 import { getSchemas } from './schema/providers/schemaLoader';
 import { InjectionObject, registerDependencies } from './common/dependencyRegistration';
 import { ConfigType, getConfig, initConfig } from './common/config';
@@ -84,7 +83,7 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
         },
       },
       {
-        token: schemaSymbol,
+        token: SERVICES.SCHEMAS,
         provider: { useValue: schemas },
       },
       {
