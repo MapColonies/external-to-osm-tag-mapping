@@ -41,17 +41,19 @@
     "filePath": "schemas.json"
   },
   "db": {
-    "timeout": 5000,
     "redis": {
       "host": "localhost",
       "port": 6379,
       "username": "",
       "password": "",
       "dbIndex": 0,
-      "keyPrefix": "external_mapping"
+      "prefix": "external_mapping",
+      "connectTimeoutMs": 5000,
+      "tls": {
+        "enabled": false
+      }
     }
   },
-
   "application": {
     "hashKey": {
       "enabled": true,

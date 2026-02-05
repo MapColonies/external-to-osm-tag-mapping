@@ -13,12 +13,6 @@ import { getSchemas } from './schema/providers/schemaLoader';
 import { InjectionObject, registerDependencies } from './common/dependencyRegistration';
 import { ConfigType, getConfig, initConfig } from './common/config';
 import { getTracing } from './common/tracing';
-import { Schema } from './schema/models/types';
-
-export interface RegisterOptions {
-  override?: InjectionObject<unknown>[];
-  useChild?: boolean;
-}
 
 export const registerExternalValues = async (options?: RegisterOptions): Promise<DependencyContainer> => {
   await initConfig(true);
@@ -77,27 +71,30 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
       {
         token: REDIS_SYMBOL,
         provider: {
-          useFactory: instancePerContainerCachingFactory(async (container) => {
+          useFactory: instancePerContainerCachingFactory(async (container): Promise<redis | undefined> => {
             const config = container.resolve<ConfigType>(SERVICES.CONFIG);
-            const schemas = container.resolve<Schema[]>(SERVICES.SCHEMAS);
             const cleanup = container.resolve<CleanupRegistry>(SERVICES.CLEANUP_REGISTRY);
 
-            const connectToExternal = schemas.some((s) => s.enableExternalFetch === 'yes');
-            if (!connectToExternal) {
-              return undefined;
-            }
-
             const redisConfig = config.get('db.redis');
+
             if (!redisConfig) {
               return undefined;
             }
 
-            const { keyPrefix, ...rest } = redisConfig;
-            const prefix = typeof keyPrefix === 'string' && keyPrefix.length > 0 ? `${keyPrefix}:` : undefined;
+            const { prefix, connectTimeoutMs, tls, ...rest } = redisConfig;
+            const usedPrefix = prefix ?? '';
+
+            let tlsOptions = undefined;
+            if (tls.enabled) {
+              const { enabled, ...tlsCerts } = tls;
+              tlsOptions = tlsCerts;
+            }
 
             const redisConnection = await createConnection({
               ...rest,
-              keyPrefix: prefix,
+              keyPrefix: usedPrefix,
+              connectTimeout: connectTimeoutMs,
+              ...(tlsOptions && { tls: tlsOptions }),
             });
 
             cleanup.register({
@@ -114,10 +111,10 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
       {
         token: IDOMAIN_FIELDS_REPO_SYMBOL,
         provider: {
-          useFactory: instancePerContainerCachingFactory((container) => {
-            const redisInstance = container.resolve<redis | undefined>(REDIS_SYMBOL);
+          useFactory: async (container): Promise<RedisManager | Record<string, never>> => {
+            const redisInstance = await container.resolve<Promise<redis | undefined>>(REDIS_SYMBOL);
             return redisInstance ? container.resolve(RedisManager) : {};
-          }),
+          },
         },
       },
       {
@@ -125,10 +122,12 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
         provider: {
           useFactory: (container) => {
             return async (): Promise<void> => {
-              const redisInstance = container.resolve<redis | undefined>(REDIS_SYMBOL);
+              const redisInstance = await container.resolve<Promise<redis | undefined>>(REDIS_SYMBOL);
+
               if (redisInstance) {
                 const config = container.resolve<ConfigType>(SERVICES.CONFIG);
-                const timeout = config.get('db.redis.connectTimeout');
+                const timeout = config.get('db.redis.connectTimeoutMs');
+
                 await Promise.race([redisInstance.ping(), new Promise((_, reject) => setTimeout(() => reject(new Error('ping timeout')), timeout))]);
               }
             };
@@ -149,3 +148,8 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
     throw error;
   }
 };
+
+export interface RegisterOptions {
+  override?: InjectionObject<unknown>[];
+  useChild?: boolean;
+}
