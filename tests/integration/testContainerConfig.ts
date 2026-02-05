@@ -5,7 +5,6 @@ import { RedisOptions } from 'ioredis';
 import { Registry } from 'prom-client';
 import { getSchemas } from '../../src/schema/providers/schemaLoader';
 import { REDIS_SYMBOL, SERVICES } from '../../src/common/constants';
-import { schemaSymbol } from '../../src/schema/models/types';
 import { createConnection } from '../../src/common/db';
 import { IDOMAIN_FIELDS_REPO_SYMBOL } from '../../src/schema/DAL/domainFieldsRepository';
 import { RedisManager } from '../../src/schema/DAL/redisManager';
@@ -37,7 +36,7 @@ export const registerTestValues = async (params?: { appConfig?: IApplication; re
     ...redisOptions,
   });
 
-  container.register(schemaSymbol, { useValue: schemas });
+  container.register(SERVICES.SCHEMAS, { useValue: schemas });
   container.register(REDIS_SYMBOL, { useValue: redisConnection });
   container.register(IDOMAIN_FIELDS_REPO_SYMBOL, { useClass: RedisManager });
 };

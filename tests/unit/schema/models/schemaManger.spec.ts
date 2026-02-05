@@ -3,7 +3,7 @@ import { container } from 'tsyringe';
 import jsLogger from '@map-colonies/js-logger';
 import { IDOMAIN_FIELDS_REPO_SYMBOL } from '../../../../src/schema/DAL/domainFieldsRepository';
 import { JSONSyntaxError, SchemaManager, SchemaNotFoundError } from '../../../../src/schema/models/schemaManager';
-import { Schema, schemaSymbol } from '../../../../src/schema/models/types';
+import { Schema } from '../../../../src/schema/models/types';
 import { SERVICES } from '../../../../src/common/constants';
 
 const schemas: Schema[] = [
@@ -58,7 +58,7 @@ describe('SchemaManager', () => {
 
   beforeAll(() => {
     getFields = jest.fn();
-    container.register(schemaSymbol, { useValue: schemas });
+    container.register(SERVICES.SCHEMAS, { useValue: schemas });
     container.register(IDOMAIN_FIELDS_REPO_SYMBOL, { useValue: { getFields } });
     container.register(SERVICES.LOGGER, { useValue: jsLogger({ enabled: false }) });
 
