@@ -54,7 +54,7 @@
 
   "application": {
     "hashKey": {
-      "enabled": false,
+      "enabled": true,
       "value": ""
     }
   }
