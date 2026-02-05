@@ -6,8 +6,8 @@ global:
 
 mclabels:
   component: backend
-  partOf: boilerplates
-  owner: common
+  partOf: vector-services
+  owner: vector
   prometheus:
     enabled: true
 
