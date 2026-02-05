@@ -184,8 +184,8 @@ export class SchemaManager {
           return acc;
         }, {});
         explodeFieldsTags = { ...explodeFieldsTags, ...explodedFields };
-      } catch {
-        this.logger.error({ msg: 'failed to parse json for explode key', key: explodeKeys[index] });
+      } catch (err) {
+        this.logger.error({ msg: 'failed to parse json for explode key', key: explodeKeys[index], err });
         throw new JSONSyntaxError(`failed to parse fetched json for key: ${explodeKeys[index]}`);
       }
     });
