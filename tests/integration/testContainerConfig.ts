@@ -32,7 +32,7 @@ export const registerTestValues = async (params?: { appConfig?: IApplication; re
 
   const schemas = await getSchemas(container);
   const redisConnection = await createConnection({
-    ...config.get<RedisOptions>('db'),
+    ...config.get<RedisOptions>('db.redis'),
     ...redisOptions,
   });
 
