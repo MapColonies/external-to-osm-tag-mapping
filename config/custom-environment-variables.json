@@ -44,22 +44,30 @@
     "filePath": "SCHEMA_FILE_PATH"
   },
   "db": {
-    "host": "DB_HOST",
-    "port": {
-      "__name": "DB_PORT",
-      "__format": "number"
-    },
-    "db": {
-      "__name": "DB_INDEX",
-      "__format": "number"
-    },
-    "username": "DB_USERNAME",
-    "password": "DB_PASSWORD",
-    "maxRetriesPerRequest": {
-      "__name": "DB_MAX_RETRIES_PER_REQUEST",
-      "__format": "number"
-    },
-    "keyPrefix": "DB_KEY_PREFIX"
+    "redis": {
+      "host": "DB_HOST",
+      "port": {
+        "__name": "DB_PORT",
+        "__format": "number"
+      },
+      "dbIndex": {
+        "__name": "REDIS_DB_INDEX",
+        "__format": "number"
+      },
+      "username": "DB_USERNAME",
+      "password": "DB_PASSWORD",
+      "prefix": "REDIS_KEY_PREFIX",
+      "connectTimeoutMs": {
+        "__name": "REDIS_CONNECT_TIMEOUT",
+        "__format": "number"
+      },
+      "tls": {
+        "enabled": {
+          "__name": "REDIS_ENABLE_TLS_AUTH",
+          "__format": "boolean"
+        }
+      }
+    }
   },
   "application": {
     "hashKey": {
