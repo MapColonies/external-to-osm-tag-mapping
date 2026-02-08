@@ -58,10 +58,6 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
-    strategy:
-      matrix:
-        node: [24.x]
-
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v4
@@ -74,6 +70,7 @@ jobs:
         env:
           NODE_ENV: test
           DB_HOST: redis
+          DB_PORT: 6379
 
       - uses: actions/upload-artifact@v5
         if: always()
