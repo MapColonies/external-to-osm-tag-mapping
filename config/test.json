@@ -5,12 +5,22 @@
   },
   "db": {
     "redis": {
-      "timeout": 3000,
-      "type": "redis",
-      "host": "localhost",
+      "host": "redis",
       "port": 6379,
-      "db": 0,
-      "maxRetriesPerRequest": 1
+      "username": "",
+      "password": "",
+      "dbIndex": 0,
+      "prefix": "external_mapping",
+      "connectTimeoutMs": 5000,
+      "tls": {
+        "enabled": false
+      }
+    }
+  },
+  "application": {
+    "hashKey": {
+      "enabled": true,
+      "value": ""
     }
   }
 }
