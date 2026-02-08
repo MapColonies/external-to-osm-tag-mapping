@@ -23,6 +23,7 @@ WORKDIR /usr/src/app
 
 # Copy only package files for production deps
 COPY package*.json ./
+COPY openapi3.yaml ./
 
 # Install production dependencies only
 RUN npm ci --omit=dev --ignore-scripts
