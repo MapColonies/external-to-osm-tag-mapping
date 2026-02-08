@@ -1,8 +1,8 @@
 import { container } from 'tsyringe';
-import config from 'config';
 import jsLogger from '@map-colonies/js-logger';
 import { RedisOptions } from 'ioredis';
 import { Registry } from 'prom-client';
+import { getConfig, initConfig } from '@src/common/config';
 import { getSchemas } from '../../src/schema/providers/schemaLoader';
 import { REDIS_SYMBOL, SERVICES } from '../../src/common/constants';
 import { createConnection } from '../../src/common/db';
@@ -11,8 +11,9 @@ import { RedisManager } from '../../src/schema/DAL/redisManager';
 import { IApplication } from '../../src/common/interfaces';
 
 export const registerTestValues = async (params?: { appConfig?: IApplication; redisOptions?: RedisOptions }): Promise<void> => {
-  const { appConfig, redisOptions = {} } = params ?? {};
-
+  const { appConfig } = params ?? {};
+  await initConfig(true);
+  const config = getConfig();
   container.register(SERVICES.CONFIG, { useValue: config });
   container.register(SERVICES.LOGGER, { useValue: jsLogger({ enabled: false }) });
 
@@ -26,14 +27,32 @@ export const registerTestValues = async (params?: { appConfig?: IApplication; re
     });
   } else {
     container.register(SERVICES.APPLICATION, {
-      useValue: config.get<IApplication>('application'),
+      useValue: config.get('application'),
     });
   }
 
   const schemas = await getSchemas(container);
+
+  const redisConfig = config.get('db.redis');
+
+  if (!redisConfig) {
+    return undefined;
+  }
+
+  const { prefix, connectTimeoutMs, tls, ...rest } = redisConfig;
+  const usedPrefix = prefix ?? '';
+
+  let tlsOptions = undefined;
+  if (tls.enabled) {
+    const { enabled, ...tlsCerts } = tls;
+    tlsOptions = tlsCerts;
+  }
+
   const redisConnection = await createConnection({
-    ...config.get<RedisOptions>('db.redis'),
-    ...redisOptions,
+    ...rest,
+    keyPrefix: usedPrefix,
+    connectTimeout: connectTimeoutMs,
+    ...(tlsOptions && { tls: tlsOptions }),
   });
 
   container.register(SERVICES.SCHEMAS, { useValue: schemas });
