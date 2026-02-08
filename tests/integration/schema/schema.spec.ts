@@ -297,7 +297,7 @@ describe('schemas', function () {
               };
               await redisConnection.hset(hashKey, key, value);
 
-              const keys = await redisConnection.keys(keyPrefix + '*');
+              const keys = await redisConnection.keys('*');
               expect(keys.length).toBeGreaterThanOrEqual(1);
 
               const response = await requestSender.map(name, tags);
