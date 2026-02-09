@@ -13,6 +13,7 @@ import { getSchemas } from './schema/providers/schemaLoader';
 import { InjectionObject, registerDependencies } from './common/dependencyRegistration';
 import { ConfigType, getConfig, initConfig } from './common/config';
 import { getTracing } from './common/tracing';
+import { getRedisConfig } from './schema/utils/redisConfig';
 
 export const registerExternalValues = async (options?: RegisterOptions): Promise<DependencyContainer> => {
   await initConfig(true);
@@ -72,30 +73,8 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
         token: REDIS_SYMBOL,
         provider: {
           useFactory: instancePerContainerCachingFactory(async (container): Promise<redis | undefined> => {
-            const config = container.resolve<ConfigType>(SERVICES.CONFIG);
             const cleanup = container.resolve<CleanupRegistry>(SERVICES.CLEANUP_REGISTRY);
-
-            const redisConfig = config.get('db.redis');
-
-            if (!redisConfig) {
-              return undefined;
-            }
-
-            const { prefix, connectTimeoutMs, tls, ...rest } = redisConfig;
-            const usedPrefix = prefix ?? '';
-
-            let tlsOptions = undefined;
-            if (tls.enabled) {
-              const { enabled, ...tlsCerts } = tls;
-              tlsOptions = tlsCerts;
-            }
-
-            const redisConnection = await createConnection({
-              ...rest,
-              keyPrefix: usedPrefix,
-              connectTimeout: connectTimeoutMs,
-              ...(tlsOptions && { tls: tlsOptions }),
-            });
+            const redisConnection = await createConnection(getRedisConfig());
 
             cleanup.register({
               id: REDIS_SYMBOL,
