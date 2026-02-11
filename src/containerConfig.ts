@@ -2,45 +2,52 @@ import jsLogger from '@map-colonies/js-logger';
 import { getOtelMixin } from '@map-colonies/telemetry';
 import { trace } from '@opentelemetry/api';
 import redis from 'ioredis';
-import { DependencyContainer, instancePerContainerCachingFactory } from 'tsyringe';
+import { DependencyContainer, instanceCachingFactory, instancePerContainerCachingFactory } from 'tsyringe';
 import { CleanupRegistry } from '@map-colonies/cleanup-registry';
 import { Registry } from 'prom-client';
 import { ON_SIGNAL, REDIS_SYMBOL, SERVICES, SERVICE_NAME } from './common/constants';
 import { createConnection } from './common/db';
 import { IDOMAIN_FIELDS_REPO_SYMBOL } from './schema/DAL/domainFieldsRepository';
 import { RedisManager } from './schema/DAL/redisManager';
-import { getSchemas } from './schema/providers/schemaLoader';
 import { InjectionObject, registerDependencies } from './common/dependencyRegistration';
 import { ConfigType, getConfig } from './common/config';
-import { getTracing } from './common/tracing';
+import { getSchemas } from './schema/providers/schemaLoader';
 
 export const registerExternalValues = async (options?: RegisterOptions): Promise<DependencyContainer> => {
   const cleanupRegistry = new CleanupRegistry();
-  const config = getConfig();
-  const metricsRegistry = new Registry();
-  metricsRegistry.setDefaultLabels({});
-  config.initializeMetrics(metricsRegistry);
 
   try {
     const bootstrapContainer = await registerDependencies(
-      [{ token: SERVICES.CONFIG, provider: { useValue: config } }],
+      [{ token: SERVICES.CONFIG, provider: { useValue: getConfig() } }],
       options?.override,
       options?.useChild
     );
 
     const schemas = await getSchemas(bootstrapContainer);
-
     const dependencies: InjectionObject<unknown>[] = [
-      { token: SERVICES.CONFIG, provider: { useValue: config } },
-      { token: SERVICES.METRICS, provider: { useValue: metricsRegistry } },
+      { token: SERVICES.CONFIG, provider: { useValue: getConfig() } },
+      {
+        token: SERVICES.METRICS,
+        provider: {
+          useFactory: instanceCachingFactory((container) => {
+            const config = container.resolve<ConfigType>(SERVICES.CONFIG);
+            const metricsRegistry = new Registry();
+            config.initializeMetrics(metricsRegistry);
+
+            return metricsRegistry;
+          }),
+        },
+      },
       { token: SERVICES.CLEANUP_REGISTRY, provider: { useValue: cleanupRegistry } },
+      { token: SERVICES.TRACER, provider: { useValue: trace.getTracer(SERVICE_NAME) } },
       {
         token: SERVICES.LOGGER,
         provider: {
-          useFactory: instancePerContainerCachingFactory((container) => {
+          useFactory: instanceCachingFactory((container) => {
             const config = container.resolve<ConfigType>(SERVICES.CONFIG);
             const loggerConfig = config.get('telemetry.logger');
-            return jsLogger({ ...loggerConfig, mixin: getOtelMixin() });
+
+            return jsLogger({ ...loggerConfig, prettyPrint: loggerConfig.prettyPrint, mixin: getOtelMixin() });
           }),
         },
       },
@@ -50,16 +57,6 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
           useFactory: instancePerContainerCachingFactory((container) => {
             const config = container.resolve<ConfigType>(SERVICES.CONFIG);
             return config.get('application');
-          }),
-        },
-      },
-      {
-        token: SERVICES.TRACER,
-        provider: {
-          useFactory: instancePerContainerCachingFactory((container) => {
-            const cleanup = container.resolve<CleanupRegistry>(SERVICES.CLEANUP_REGISTRY);
-            cleanup.register({ id: SERVICES.TRACER, func: getTracing().stop.bind(getTracing()) });
-            return trace.getTracer(SERVICE_NAME);
           }),
         },
       },

@@ -3,7 +3,6 @@ import jsLogger from '@map-colonies/js-logger';
 import { RedisOptions } from 'ioredis';
 import { Registry } from 'prom-client';
 import { getConfig, initConfig } from '@src/common/config';
-import { getRedisConfig } from '@src/schema/utils/redisConfig';
 import { getSchemas } from '../../src/schema/providers/schemaLoader';
 import { REDIS_SYMBOL, SERVICES } from '../../src/common/constants';
 import { createConnection } from '../../src/common/db';
@@ -34,7 +33,7 @@ export const registerTestValues = async (params?: { appConfig?: IApplication; re
 
   const schemas = await getSchemas(container);
 
-  const redisConnection = await createConnection(getRedisConfig());
+  const redisConnection = await createConnection(config);
 
   container.register(SERVICES.SCHEMAS, { useValue: schemas });
   container.register(REDIS_SYMBOL, { useValue: redisConnection });
