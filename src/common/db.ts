@@ -1,5 +1,6 @@
-import redis, { RedisOptions } from 'ioredis';
+import redis from 'ioredis';
 import { HOSTNAME } from './constants';
+import { ConfigType } from './config';
 
 const RETRY_DELAY_INCREASE = 50;
 const RETRY_DELAY_TOP = 2000;
@@ -9,16 +10,34 @@ const retryFunction = (times: number): number => {
   return delay;
 };
 
-export const createConnection = async (redisOptions: RedisOptions): Promise<redis> => {
+export const createConnection = async (config: ConfigType): Promise<redis> => {
   let redisInstance: redis | undefined;
-  try {
-    redisOptions = {
-      ...redisOptions,
-      retryStrategy: retryFunction,
-      lazyConnect: true,
-      connectionName: HOSTNAME,
-    };
+  const redisConfig = config.get('db.redis');
 
+  if (!redisConfig) {
+    throw new Error("Config doesn't have redis");
+  }
+
+  const { prefix, connectTimeoutMs, tls, ...rest } = redisConfig;
+  const usedPrefix = prefix ?? '';
+
+  let tlsOptions = undefined;
+  if (tls.enabled) {
+    const { enabled, ...tlsCerts } = tls;
+    tlsOptions = tlsCerts;
+  }
+
+  const redisOptions = {
+    ...rest,
+    keyPrefix: usedPrefix,
+    connectTimeout: connectTimeoutMs,
+    ...(tlsOptions && { tls: tlsOptions }),
+    retryStrategy: retryFunction,
+    lazyConnect: true,
+    connectionName: HOSTNAME,
+  };
+
+  try {
     redisInstance = new redis(redisOptions);
     await redisInstance.connect();
     return redisInstance;

@@ -13,7 +13,6 @@ import { getSchemas } from './schema/providers/schemaLoader';
 import { InjectionObject, registerDependencies } from './common/dependencyRegistration';
 import { ConfigType, getConfig, initConfig } from './common/config';
 import { getTracing } from './common/tracing';
-import { getRedisConfig } from './schema/utils/redisConfig';
 
 export const registerExternalValues = async (options?: RegisterOptions): Promise<DependencyContainer> => {
   await initConfig(true);
@@ -74,7 +73,8 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
         provider: {
           useFactory: instancePerContainerCachingFactory(async (container): Promise<redis | undefined> => {
             const cleanup = container.resolve<CleanupRegistry>(SERVICES.CLEANUP_REGISTRY);
-            const redisConnection = await createConnection(getRedisConfig());
+            const config = container.resolve<ConfigType>(SERVICES.CONFIG);
+            const redisConnection = await createConnection(config);
 
             cleanup.register({
               id: REDIS_SYMBOL,
