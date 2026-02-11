@@ -17,7 +17,7 @@
     "prebuild": "npm run clean",
     "start:dev": "npm run build && cd dist && cross-env CONFIG_OFFLINE_MODE=true  node --enable-source-maps --import ./instrumentation.mjs ./index.js",
     "build": "tsc --project tsconfig.build.json  && npm run assets:copy",
-    "start": "npm run build && cd dist && node ./index.js",
+    "start": "npm run build && cd dist && node --import ./instrumentation.mjs ./index.js",
     "assets:copy": "copyfiles -f ./config/* ./dist/config && copyfiles -f ./openapi3.yaml ./dist/ && copyfiles ./package.json dist && copyfiles -f ./schemas.json ./dist/",
     "clean": "rimraf dist",
     "prepare": "node .husky/install.mjs"
