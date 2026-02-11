@@ -4,7 +4,7 @@ import compression from 'compression';
 import { middleware as OpenApiMiddleware } from 'express-openapi-validator';
 import { Logger } from '@map-colonies/js-logger';
 import httpLogger from '@map-colonies/express-access-log-middleware';
-import { OpenapiViewerRouter, OpenapiRouterConfig } from '@map-colonies/openapi-express-viewer';
+import { OpenapiViewerRouter } from '@map-colonies/openapi-express-viewer';
 import { container, inject, injectable } from 'tsyringe';
 import { getErrorHandlerMiddleware } from '@map-colonies/error-express-handler';
 import { getTraceContexHeaderMiddleware } from '@map-colonies/telemetry';
@@ -55,7 +55,7 @@ export class ServerBuilder {
 
   private buildDocsRoutes(): void {
     const openapiRouter = new OpenapiViewerRouter({
-      ...this.config.get<OpenapiRouterConfig>('openapiConfig'),
+      ...this.config.get('openapiConfig'),
       filePathOrSpec: this.config.get<string>('openapiConfig.filePath'),
     });
     openapiRouter.setup();
