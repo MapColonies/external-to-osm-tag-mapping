@@ -11,11 +11,10 @@ import { IDOMAIN_FIELDS_REPO_SYMBOL } from './schema/DAL/domainFieldsRepository'
 import { RedisManager } from './schema/DAL/redisManager';
 import { getSchemas } from './schema/providers/schemaLoader';
 import { InjectionObject, registerDependencies } from './common/dependencyRegistration';
-import { ConfigType, getConfig, initConfig } from './common/config';
+import { ConfigType, getConfig } from './common/config';
 import { getTracing } from './common/tracing';
 
 export const registerExternalValues = async (options?: RegisterOptions): Promise<DependencyContainer> => {
-  await initConfig(true);
   const cleanupRegistry = new CleanupRegistry();
   const config = getConfig();
   const metricsRegistry = new Registry();
