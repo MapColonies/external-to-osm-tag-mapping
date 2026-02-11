@@ -1,4 +1,4 @@
-import jsLogger from '@map-colonies/js-logger';
+import jsLogger, { Logger } from '@map-colonies/js-logger';
 import { getOtelMixin } from '@map-colonies/telemetry';
 import { trace } from '@opentelemetry/api';
 import redis from 'ioredis';
@@ -66,19 +66,22 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
       },
       {
         token: REDIS_SYMBOL,
-        provider: {
-          useFactory: instancePerContainerCachingFactory(async (container): Promise<redis | undefined> => {
-            const cleanup = container.resolve<CleanupRegistry>(SERVICES.CLEANUP_REGISTRY);
-            const config = container.resolve<ConfigType>(SERVICES.CONFIG);
-            const redisConnection = await createConnection(config);
+        provider: { useFactory: instancePerContainerCachingFactory(createConnection) },
+        postInjectionHook: async (deps: DependencyContainer): Promise<void> => {
+          const logger = deps.resolve<Logger>(SERVICES.LOGGER);
+          try {
+            const redis = deps.resolve<redis>(SERVICES.REDIS);
 
-            cleanup.register({
-              id: REDIS_SYMBOL,
-              func: redisConnection.quit.bind(redisConnection),
+            await redis.connect();
+
+            cleanupRegistry.register({
+              id: SERVICES.REDIS,
+              func: redis.quit.bind(redis),
             });
-
-            return redisConnection;
-          }),
+          } catch (error) {
+            logger.error({ msg: 'Connection to redis failed', error });
+            throw error;
+          }
         },
       },
       {

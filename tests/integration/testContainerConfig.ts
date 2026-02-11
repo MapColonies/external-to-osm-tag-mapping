@@ -33,7 +33,7 @@ export const registerTestValues = async (params?: { appConfig?: IApplication; re
 
   const schemas = await getSchemas(container);
 
-  const redisConnection = await createConnection(config);
+  const redisConnection = await createConnection(container);
 
   container.register(SERVICES.SCHEMAS, { useValue: schemas });
   container.register(REDIS_SYMBOL, { useValue: redisConnection });

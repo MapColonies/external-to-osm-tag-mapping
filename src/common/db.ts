@@ -1,5 +1,6 @@
-import redis from 'ioredis';
-import { HOSTNAME } from './constants';
+import redis, { RedisOptions } from 'ioredis';
+import { DependencyContainer } from 'tsyringe';
+import { HOSTNAME, SERVICES } from './constants';
 import { ConfigType } from './config';
 
 const RETRY_DELAY_INCREASE = 50;
@@ -10,8 +11,7 @@ const retryFunction = (times: number): number => {
   return delay;
 };
 
-export const createConnection = async (config: ConfigType): Promise<redis> => {
-  let redisInstance: redis | undefined;
+const createConnectionOptions = (config: ConfigType): RedisOptions => {
   const redisConfig = config.get('db.redis');
 
   if (!redisConfig) {
@@ -27,7 +27,7 @@ export const createConnection = async (config: ConfigType): Promise<redis> => {
     tlsOptions = tlsCerts;
   }
 
-  const redisOptions = {
+  return {
     ...rest,
     keyPrefix: usedPrefix,
     connectTimeout: connectTimeoutMs,
@@ -36,6 +36,12 @@ export const createConnection = async (config: ConfigType): Promise<redis> => {
     lazyConnect: true,
     connectionName: HOSTNAME,
   };
+};
+
+export const createConnection = async (container: DependencyContainer): Promise<redis> => {
+  let redisInstance: redis | undefined;
+  const config = container.resolve<ConfigType>(SERVICES.CONFIG);
+  const redisOptions = createConnectionOptions(config);
 
   try {
     redisInstance = new redis(redisOptions);
