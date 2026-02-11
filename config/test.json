@@ -5,12 +5,12 @@
   },
   "db": {
     "redis": {
-      "host": "redis",
+      "host": "redisHost",
       "port": 6379,
       "username": "",
       "password": "",
       "dbIndex": 0,
-      "prefix": "external_mapping",
+      "prefix": "",
       "connectTimeoutMs": 5000,
       "tls": {
         "enabled": false
