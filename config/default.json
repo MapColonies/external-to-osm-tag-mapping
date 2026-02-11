@@ -1,10 +1,4 @@
 {
-  "configManagement": {
-    "offlineMode": true,
-    "name": "service-name",
-    "version": "1.0.0",
-    "serverUrl": ""
-  },
   "openapiConfig": {
     "filePath": "./openapi3.yaml",
     "basePath": "/docs",
@@ -42,12 +36,12 @@
   },
   "db": {
     "redis": {
-      "host": "localhost",
+      "host": "redisHost",
       "port": 6379,
       "username": "",
       "password": "",
       "dbIndex": 0,
-      "prefix": "external_mapping",
+      "prefix": "",
       "connectTimeoutMs": 5000,
       "tls": {
         "enabled": false
