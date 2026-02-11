@@ -74,9 +74,7 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
 
             cleanup.register({
               id: REDIS_SYMBOL,
-              func: async () => {
-                await redisConnection.quit();
-              },
+              func: redisConnection.quit.bind(redisConnection),
             });
 
             return redisConnection;
