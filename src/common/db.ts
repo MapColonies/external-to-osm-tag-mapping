@@ -1,6 +1,5 @@
 import redis, { RedisOptions } from 'ioredis';
-import { DependencyContainer } from 'tsyringe';
-import { HOSTNAME, SERVICES } from './constants';
+import { HOSTNAME } from './constants';
 import { ConfigType } from './config';
 
 const RETRY_DELAY_INCREASE = 50;
@@ -11,7 +10,8 @@ const retryFunction = (times: number): number => {
   return delay;
 };
 
-const createConnectionOptions = (config: ConfigType): RedisOptions => {
+const createConnectionOptions = (config: ConfigType, overrides: Partial<RedisOptions> = {}): RedisOptions => {
+  console.log('NAZI1', overrides);
   const redisConfig = config.get('db.redis');
 
   if (!redisConfig) {
@@ -21,11 +21,21 @@ const createConnectionOptions = (config: ConfigType): RedisOptions => {
   const { prefix, connectTimeoutMs, tls, ...rest } = redisConfig;
   const usedPrefix = prefix ?? '';
 
-  let tlsOptions = undefined;
+  let tlsOptions: RedisOptions['tls'] | undefined;
   if (tls.enabled) {
     const { enabled, ...tlsCerts } = tls;
     tlsOptions = tlsCerts;
   }
+  // console.log('NAZI2', {
+  //   ...rest,
+  //   keyPrefix: usedPrefix,
+  //   connectTimeout: connectTimeoutMs,
+  //   ...(tlsOptions && { tls: tlsOptions }),
+  //   retryStrategy: retryFunction,
+  //   lazyConnect: true,
+  //   connectionName: HOSTNAME,
+  //   ...overrides,
+  // });
 
   return {
     ...rest,
@@ -35,13 +45,13 @@ const createConnectionOptions = (config: ConfigType): RedisOptions => {
     retryStrategy: retryFunction,
     lazyConnect: true,
     connectionName: HOSTNAME,
+    ...overrides,
   };
 };
 
-export const createConnection = async (container: DependencyContainer): Promise<redis> => {
+export const createConnection = async (config: ConfigType, overrides: Partial<RedisOptions> = {}): Promise<redis> => {
   let redisInstance: redis | undefined;
-  const config = container.resolve<ConfigType>(SERVICES.CONFIG);
-  const redisOptions = createConnectionOptions(config);
+  const redisOptions = createConnectionOptions(config, overrides);
 
   try {
     redisInstance = new redis(redisOptions);
