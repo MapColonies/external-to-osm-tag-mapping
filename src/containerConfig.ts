@@ -11,19 +11,14 @@ import { IDOMAIN_FIELDS_REPO_SYMBOL } from './schema/DAL/domainFieldsRepository'
 import { RedisManager } from './schema/DAL/redisManager';
 import { InjectionObject, registerDependencies } from './common/dependencyRegistration';
 import { ConfigType, getConfig } from './common/config';
-import { getSchemas } from './schema/providers/schemaLoader';
+import { SCHEMA_PROVIDER_SYMBOL, SchemaProviderConstructor, schemaProviderFactory } from './schema/providers/schemaLoader';
+import { SCHEMA_ROUTER_SYMBOL, schemaRouterFactory } from './schema/routers/schemaRouter';
+import { IApplication } from './common/interfaces';
 
 export const registerExternalValues = async (options?: RegisterOptions): Promise<DependencyContainer> => {
   const cleanupRegistry = new CleanupRegistry();
 
   try {
-    const bootstrapContainer = await registerDependencies(
-      [{ token: SERVICES.CONFIG, provider: { useValue: getConfig() } }],
-      options?.override,
-      options?.useChild
-    );
-
-    const schemas = await getSchemas(bootstrapContainer);
     const dependencies: InjectionObject<unknown>[] = [
       { token: SERVICES.CONFIG, provider: { useValue: getConfig() } },
       {
@@ -52,6 +47,19 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
         },
       },
       {
+        token: SCHEMA_PROVIDER_SYMBOL,
+        provider: { useFactory: instancePerContainerCachingFactory(schemaProviderFactory) },
+        postInjectionHook: async (container): Promise<void> => {
+          const provider = container.resolve<SchemaProviderConstructor>(SCHEMA_PROVIDER_SYMBOL);
+          if (provider === undefined) {
+            throw new Error('Schema provider is undefined');
+          }
+          const schemas = await container.resolve(provider).loadSchemas();
+
+          container.register(SERVICES.SCHEMAS, { useValue: schemas });
+        },
+      },
+      {
         token: SERVICES.APPLICATION,
         provider: {
           useFactory: instancePerContainerCachingFactory((container) => {
@@ -61,21 +69,20 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
         },
       },
       {
-        token: SERVICES.SCHEMAS,
-        provider: { useValue: schemas },
-      },
-      {
         token: REDIS_SYMBOL,
-        provider: { useFactory: instancePerContainerCachingFactory(createConnection) },
+        provider: {
+          useFactory: instancePerContainerCachingFactory(async (container) => {
+            const config = container.resolve<ConfigType>(SERVICES.CONFIG);
+            return createConnection(config);
+          }),
+        },
         postInjectionHook: async (deps: DependencyContainer): Promise<void> => {
           const logger = deps.resolve<Logger>(SERVICES.LOGGER);
           try {
-            const redis = deps.resolve<redis>(SERVICES.REDIS);
-
-            await redis.connect();
-
+            const redisPromise = deps.resolve<Promise<redis>>(REDIS_SYMBOL);
+            const redis = await redisPromise;
             cleanupRegistry.register({
-              id: SERVICES.REDIS,
+              id: REDIS_SYMBOL,
               func: redis.quit.bind(redis),
             });
           } catch (error) {
@@ -87,9 +94,12 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
       {
         token: IDOMAIN_FIELDS_REPO_SYMBOL,
         provider: {
-          useFactory: async (container): Promise<RedisManager | Record<string, never>> => {
-            const redisInstance = await container.resolve<Promise<redis | undefined>>(REDIS_SYMBOL);
-            return redisInstance ? container.resolve(RedisManager) : {};
+          useFactory: async (container): Promise<RedisManager> => {
+            const redisInstance = await container.resolve<Promise<redis>>(REDIS_SYMBOL);
+            const config = container.resolve<ConfigType>(SERVICES.CONFIG);
+
+            const applicationConfig: IApplication = config.get('application')!;
+            return new RedisManager(redisInstance, applicationConfig, config);
           },
         },
       },
@@ -114,6 +124,12 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
         token: ON_SIGNAL,
         provider: {
           useValue: cleanupRegistry.trigger.bind(cleanupRegistry),
+        },
+      },
+      {
+        token: SCHEMA_ROUTER_SYMBOL,
+        provider: {
+          useFactory: instancePerContainerCachingFactory(schemaRouterFactory),
         },
       },
     ];

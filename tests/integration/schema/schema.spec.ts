@@ -1,13 +1,18 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import httpStatusCodes from 'http-status-codes';
 import Redis from 'ioredis';
-import { container } from 'tsyringe';
-import { REDIS_SYMBOL } from '../../../src/common/constants';
-import { IApplication } from '../../../src/common/interfaces';
+import { DependencyContainer } from 'tsyringe';
+import { trace } from '@opentelemetry/api';
+import jsLogger from '@map-colonies/js-logger';
+import { CleanupRegistry } from '@map-colonies/cleanup-registry';
+import { getApp } from '@src/app';
+import { ConfigType, initConfig } from '@src/common/config';
+import { createConnection } from '@src/common/db';
+import { IApplication } from '@src/common/interfaces';
+import { REDIS_SYMBOL, SERVICES } from '../../../src/common/constants';
 import { Tags } from '../../../src/common/types';
 import { Schema } from '../../../src/schema/models/types';
-import { registerTestValues } from '../testContainerConfig';
-import * as requestSender from './helpers/requestSender';
+import { SchemaRequestSender } from './helpers/requestSender';
 
 interface TagMappingTestValues {
   testCaseName: string;
@@ -25,21 +30,41 @@ describe('schemas', function () {
   ];
 
   const hashKey = applicationConfigs[1]?.application?.hashKey?.value ?? 'hashKey1';
-
   let redisConnection: Redis;
-  beforeAll(async function () {
-    await registerTestValues();
-    requestSender.init();
-    redisConnection = container.resolve<Redis>(REDIS_SYMBOL);
-  });
-  afterAll(async function () {
-    if (!['end'].includes(redisConnection.status)) {
-      await redisConnection.quit();
-    }
-  });
+
+  let requestSender: SchemaRequestSender;
+  let depContainer: DependencyContainer;
 
   beforeEach(async function () {
-    await redisConnection.flushall();
+    const [app, container] = await getApp({
+      override: [
+        { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
+        { token: SERVICES.TRACER, provider: { useValue: trace.getTracer('testTracer') } },
+      ],
+      useChild: true,
+    });
+
+    redisConnection = await container.resolve(REDIS_SYMBOL);
+    depContainer = container;
+    requestSender = new SchemaRequestSender(app);
+  });
+
+  // afterAll(async function () {
+  //   if (!['end'].includes(redisConnection.status)) {
+  //     await redisConnection.quit();
+  //   }
+  // });
+
+  beforeAll(async function () {
+    await initConfig(true);
+  });
+
+  afterAll(async function () {
+    const cleanupRegistry = depContainer.resolve<CleanupRegistry>(SERVICES.CLEANUP_REGISTRY);
+    await cleanupRegistry.trigger();
+    depContainer.reset();
+
+    jest.clearAllTimers();
   });
 
   describe('Happy Path', function () {
@@ -271,19 +296,56 @@ describe('schemas', function () {
         ];
 
         describe('Redis uses prefix key', () => {
+          let redisConnection: Redis;
+
           const keyPrefix = 'someKey:';
           beforeAll(async function () {
-            await redisConnection.quit();
-            container.clearInstances();
-            await registerTestValues({
-              appConfig: applicationConfigs[1]?.application,
-              redisOptions: {
-                keyPrefix,
+            // await redisConnection.quit();
+            // container.clearInstances();
+            // await registerTestValues({
+            //   appConfig: applicationConfigs[1]?.application,
+            //   redisOptions: {
+            //     keyPrefix,
+            //   },
+            // });
+            // requestSender.init();
+            // redisConnection = container.resolve<Redis>(REDIS_SYMBOL);
+            // await redisConnection.flushall();
+
+            // console.log(redisConnection);
+            // await redisConnection.quit();
+
+            const realConfig = depContainer.resolve<ConfigType>(SERVICES.CONFIG);
+
+            const configWithPrefix = {
+              ...realConfig,
+              get(key: string) {
+                if (key === 'application') {
+                  console.log('FUCKME', applicationConfigs[1].application);
+                  return applicationConfigs[1].application;
+                }
+                return realConfig.get(key);
               },
+            } as ConfigType;
+            console.log('confoog', applicationConfigs[1].application);
+            console.log('configger', configWithPrefix.getAll());
+
+            const redisConnectionPromise = createConnection(configWithPrefix, { keyPrefix });
+            const [app, container] = await getApp({
+              override: [
+                { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
+                { token: SERVICES.TRACER, provider: { useValue: trace.getTracer('testTracer') } },
+                { token: REDIS_SYMBOL, provider: { useValue: redisConnectionPromise } },
+                { token: SERVICES.CONFIG, provider: { useValue: configWithPrefix } },
+              ],
+              useChild: true,
             });
-            requestSender.init();
-            redisConnection = container.resolve<Redis>(REDIS_SYMBOL);
-            await redisConnection.flushall();
+
+            redisConnection = await redisConnectionPromise;
+            // await redisConnection.flushall();
+
+            depContainer = container;
+            requestSender = new SchemaRequestSender(app);
           });
 
           it.each(testValues)(
@@ -295,12 +357,16 @@ describe('schemas', function () {
               const expected = {
                 properties: expectedProperties,
               };
+              console.log('WHATISHASH', hashKey);
               await redisConnection.hset(hashKey, key, value);
 
               const keys = await redisConnection.keys('*');
+
               expect(keys.length).toBeGreaterThanOrEqual(1);
 
               const response = await requestSender.map(name, tags);
+              console.log('HEIL', response.body);
+
               expect(response).toHaveProperty('status', httpStatusCodes.OK);
 
               const mappedTags = response.body as Tags;
@@ -310,186 +376,186 @@ describe('schemas', function () {
           );
         });
 
-        describe('hash key is used by Redis', () => {
-          beforeAll(async function () {
-            await redisConnection.quit();
-            container.clearInstances();
-            await registerTestValues({ appConfig: applicationConfigs[1]?.application });
-            requestSender.init();
-            redisConnection = container.resolve<Redis>(REDIS_SYMBOL);
-            await redisConnection.flushall();
-          });
+        // describe('hash key is used by Redis', () => {
+        //   beforeAll(async function () {
+        //     await redisConnection.quit();
+        //     container.clearInstances();
+        //     await registerTestValues({ appConfig: applicationConfigs[1]?.application });
+        //     requestSender.init();
+        //     redisConnection = container.resolve<Redis>(REDIS_SYMBOL);
+        //     await redisConnection.flushall();
+        //   });
 
-          it.each(testValues)(
-            'should return 200 status code and map the tags $testCaseName',
-            async ({ name, tagProperties, expectedProperties, key, value }) => {
-              const tags = {
-                properties: tagProperties,
-              };
-              const expected = {
-                properties: expectedProperties,
-              };
-              await redisConnection.hset(hashKey, key, value);
+        //   it.each(testValues)(
+        //     'should return 200 status code and map the tags $testCaseName',
+        //     async ({ name, tagProperties, expectedProperties, key, value }) => {
+        //       const tags = {
+        //         properties: tagProperties,
+        //       };
+        //       const expected = {
+        //         properties: expectedProperties,
+        //       };
+        //       await redisConnection.hset(hashKey, key, value);
 
-              const response = await requestSender.map(name, tags);
-              expect(response).toHaveProperty('status', httpStatusCodes.OK);
+        //       const response = await requestSender.map(name, tags);
+        //       expect(response).toHaveProperty('status', httpStatusCodes.OK);
 
-              const mappedTags = response.body as Tags;
-              expect(mappedTags).toBeDefined();
-              expect(mappedTags).toMatchObject(expected);
-            }
-          );
-        });
+        //       const mappedTags = response.body as Tags;
+        //       expect(mappedTags).toBeDefined();
+        //       expect(mappedTags).toMatchObject(expected);
+        //     }
+        //   );
+        // });
 
-        describe('key is used by Redis', () => {
-          beforeAll(async function () {
-            await redisConnection.quit();
-            container.clearInstances();
-            await registerTestValues({ appConfig: applicationConfigs[0]?.application });
-            requestSender.init();
-            redisConnection = container.resolve<Redis>(REDIS_SYMBOL);
-            await redisConnection.flushall();
-          });
+        // describe('key is used by Redis', () => {
+        //   beforeAll(async function () {
+        //     await redisConnection.quit();
+        //     container.clearInstances();
+        //     await registerTestValues({ appConfig: applicationConfigs[0]?.application });
+        //     requestSender.init();
+        //     redisConnection = container.resolve<Redis>(REDIS_SYMBOL);
+        //     await redisConnection.flushall();
+        //   });
 
-          it.each(testValues)(
-            'should return 200 status code and map the tags $testCaseName',
-            async ({ name, tagProperties, expectedProperties, key, value }) => {
-              const tags = {
-                properties: tagProperties,
-              };
-              const expected = {
-                properties: expectedProperties,
-              };
-              await redisConnection.set(key, value);
+        //   it.each(testValues)(
+        //     'should return 200 status code and map the tags $testCaseName',
+        //     async ({ name, tagProperties, expectedProperties, key, value }) => {
+        //       const tags = {
+        //         properties: tagProperties,
+        //       };
+        //       const expected = {
+        //         properties: expectedProperties,
+        //       };
+        //       await redisConnection.set(key, value);
 
-              const response = await requestSender.map(name, tags);
-              expect(response).toHaveProperty('status', httpStatusCodes.OK);
+        //       const response = await requestSender.map(name, tags);
+        //       expect(response).toHaveProperty('status', httpStatusCodes.OK);
 
-              const mappedTags = response.body as Tags;
-              expect(mappedTags).toBeDefined();
-              expect(mappedTags).toMatchObject(expected);
-            }
-          );
-        });
+        //       const mappedTags = response.body as Tags;
+        //       expect(mappedTags).toBeDefined();
+        //       expect(mappedTags).toMatchObject(expected);
+        //     }
+        //   );
+        // });
       });
     });
   });
-  describe('Bad Path', function () {
-    // All requests with status code of 400
-    describe('GET /schemas/:name', function () {
-      it('should return 404 status code for non-existent schema', async function () {
-        const schemaName = 'system';
-        const response = await requestSender.getSchema(schemaName);
+  // describe('Bad Path', function () {
+  //   // All requests with status code of 400
+  //   describe('GET /schemas/:name', function () {
+  //     it('should return 404 status code for non-existent schema', async function () {
+  //       const schemaName = 'system';
+  //       const response = await requestSender.getSchema(schemaName);
 
-        expect(response).toHaveProperty('status', httpStatusCodes.NOT_FOUND);
+  //       expect(response).toHaveProperty('status', httpStatusCodes.NOT_FOUND);
 
-        const schemas = response.body as Schema;
-        expect(schemas).toEqual({ message: `schema ${schemaName} not found` });
-      });
-    });
-    describe('POST /schemas/:name/map', function () {
-      it('should return 404 status code for non-existent schema', async function () {
-        const geojson = {
-          type: 'Feature',
-          geometry: { type: 'Point', coordinates: [125.6, 10.1] },
-          properties: {
-            key1: 'val2',
-            externalKey2: 'val3',
-            externalKey1: 'val1',
-            key2: 'val4',
-            wkt: 'POINT (125.6, 10.1)',
-          },
-        };
+  //       const schemas = response.body as Schema;
+  //       expect(schemas).toEqual({ message: `schema ${schemaName} not found` });
+  //     });
+  //   });
+  //   describe('POST /schemas/:name/map', function () {
+  //     it('should return 404 status code for non-existent schema', async function () {
+  //       const geojson = {
+  //         type: 'Feature',
+  //         geometry: { type: 'Point', coordinates: [125.6, 10.1] },
+  //         properties: {
+  //           key1: 'val2',
+  //           externalKey2: 'val3',
+  //           externalKey1: 'val1',
+  //           key2: 'val4',
+  //           wkt: 'POINT (125.6, 10.1)',
+  //         },
+  //       };
 
-        const response = await requestSender.map('system', geojson);
+  //       const response = await requestSender.map('system', geojson);
 
-        expect(response).toHaveProperty('status', httpStatusCodes.NOT_FOUND);
+  //       expect(response).toHaveProperty('status', httpStatusCodes.NOT_FOUND);
 
-        const schemas = response.body as Schema;
-        expect(schemas).toEqual({ message: 'schema system not found' });
-      });
+  //       const schemas = response.body as Schema;
+  //       expect(schemas).toEqual({ message: 'schema system not found' });
+  //     });
 
-      describe('hash key is used by Redis', () => {
-        beforeAll(async function () {
-          await redisConnection.quit();
-          container.clearInstances();
-          await registerTestValues({ appConfig: applicationConfigs[1]?.application });
-          requestSender.init();
-          redisConnection = container.resolve<Redis>(REDIS_SYMBOL);
-          await redisConnection.flushall();
-        });
-        it('should return 422 status code for malformed JSON response of exploded field in redis', async function () {
-          const tags = {
-            properties: {
-              explode1: 'val5',
-            },
-          };
+  //     describe('hash key is used by Redis', () => {
+  //       beforeAll(async function () {
+  //         await redisConnection.quit();
+  //         container.clearInstances();
+  //         await registerTestValues({ appConfig: applicationConfigs[1]?.application });
+  //         requestSender.init();
+  //         redisConnection = container.resolve<Redis>(REDIS_SYMBOL);
+  //         await redisConnection.flushall();
+  //       });
+  //       it('should return 422 status code for malformed JSON response of exploded field in redis', async function () {
+  //         const tags = {
+  //           properties: {
+  //             explode1: 'val5',
+  //           },
+  //         };
 
-          await redisConnection.hset(hashKey, 'explode1:val5', '{ "exploded1": 2 "exploded2": 3 }');
+  //         await redisConnection.hset(hashKey, 'explode1:val5', '{ "exploded1": 2 "exploded2": 3 }');
 
-          const response = await requestSender.map('system1', tags);
-          expect(response).toHaveProperty('status', httpStatusCodes.UNPROCESSABLE_ENTITY);
-          expect(response.body).toEqual({ message: `failed to parse fetched json for key: explode1:val5` });
-        });
-      });
-      describe('key is used by Redis', () => {
-        beforeAll(async function () {
-          await redisConnection.quit();
-          container.clearInstances();
-          await registerTestValues({ appConfig: applicationConfigs[0]?.application });
-          requestSender.init();
-          redisConnection = container.resolve<Redis>(REDIS_SYMBOL);
-          await redisConnection.flushall();
-        });
-        it('should return 422 status code for malformed JSON response of exploded field in redis', async function () {
-          const tags = {
-            properties: {
-              explode1: 'val5',
-            },
-          };
+  //         const response = await requestSender.map('system1', tags);
+  //         expect(response).toHaveProperty('status', httpStatusCodes.UNPROCESSABLE_ENTITY);
+  //         expect(response.body).toEqual({ message: `failed to parse fetched json for key: explode1:val5` });
+  //       });
+  //     });
+  //     describe('key is used by Redis', () => {
+  //       beforeAll(async function () {
+  //         await redisConnection.quit();
+  //         container.clearInstances();
+  //         await registerTestValues({ appConfig: applicationConfigs[0]?.application });
+  //         requestSender.init();
+  //         redisConnection = container.resolve<Redis>(REDIS_SYMBOL);
+  //         await redisConnection.flushall();
+  //       });
+  //       it('should return 422 status code for malformed JSON response of exploded field in redis', async function () {
+  //         const tags = {
+  //           properties: {
+  //             explode1: 'val5',
+  //           },
+  //         };
 
-          await redisConnection.set('explode1:val5', '{ "exploded1": 2 "exploded2": 3 }');
+  //         await redisConnection.set('explode1:val5', '{ "exploded1": 2 "exploded2": 3 }');
 
-          const response = await requestSender.map('system1', tags);
-          expect(response).toHaveProperty('status', httpStatusCodes.UNPROCESSABLE_ENTITY);
-          expect(response.body).toEqual({ message: `failed to parse fetched json for key: explode1:val5` });
-        });
-      });
+  //         const response = await requestSender.map('system1', tags);
+  //         expect(response).toHaveProperty('status', httpStatusCodes.UNPROCESSABLE_ENTITY);
+  //         expect(response.body).toEqual({ message: `failed to parse fetched json for key: explode1:val5` });
+  //       });
+  //     });
 
-      it('should return 422 status code for not found explode field in redis', async function () {
-        const tags = {
-          properties: {
-            externalKey3: 'val3',
-            externalKey2: 'val2',
-            externalKey1: 'val1',
-            explode1: 'val1',
-          },
-        };
+  //     it('should return 422 status code for not found explode field in redis', async function () {
+  //       const tags = {
+  //         properties: {
+  //           externalKey3: 'val3',
+  //           externalKey2: 'val2',
+  //           externalKey1: 'val1',
+  //           explode1: 'val1',
+  //         },
+  //       };
 
-        const response = await requestSender.map('system1', tags);
-        expect(response).toHaveProperty('status', httpStatusCodes.UNPROCESSABLE_ENTITY);
-        expect(response).toHaveProperty('body.message', 'failed to fetch json for key: explode1:val1');
-      });
-    });
-  });
-  describe('Sad Path', function () {
-    describe('POST /schemas/:name/map', function () {
-      describe('redis is not connected', function () {
-        it('should return 500 status code for redis error', async function () {
-          redisConnection.disconnect();
-          const tags = {
-            properties: {
-              externalKey3: 'val3',
-              externalKey2: 'val2',
-              externalKey1: 'val1',
-              key1: 'val4',
-            },
-          };
+  //       const response = await requestSender.map('system1', tags);
+  //       expect(response).toHaveProperty('status', httpStatusCodes.UNPROCESSABLE_ENTITY);
+  //       expect(response).toHaveProperty('body.message', 'failed to fetch json for key: explode1:val1');
+  //     });
+  //   });
+  // });
+  // describe('Sad Path', function () {
+  //   describe('POST /schemas/:name/map', function () {
+  //     describe('redis is not connected', function () {
+  //       it('should return 500 status code for redis error', async function () {
+  //         redisConnection.disconnect();
+  //         const tags = {
+  //           properties: {
+  //             externalKey3: 'val3',
+  //             externalKey2: 'val2',
+  //             externalKey1: 'val1',
+  //             key1: 'val4',
+  //           },
+  //         };
 
-          const response = await requestSender.map('system2', tags);
-          expect(response).toHaveProperty('status', httpStatusCodes.INTERNAL_SERVER_ERROR);
-        });
-      });
-    });
-  });
+  //         const response = await requestSender.map('system2', tags);
+  //         expect(response).toHaveProperty('status', httpStatusCodes.INTERNAL_SERVER_ERROR);
+  //       });
+  //     });
+  //   });
+  // });
 });

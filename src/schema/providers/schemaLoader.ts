@@ -1,21 +1,29 @@
-import { DependencyContainer } from 'tsyringe';
+import { DependencyContainer, FactoryFunction } from 'tsyringe';
+import { ConfigType } from '@src/common/config';
 import { SERVICES } from '../../common/constants';
-import { Constructor, IConfig } from '../../common/interfaces';
-import { Schema } from '../models/types';
+import { Constructor } from '../../common/interfaces';
 import { FileSchemaProvider } from './fileProvider/fileProvider';
 import { ISchemaProvider } from './provider';
 
-const schemaProviders: Record<string, Constructor<ISchemaProvider> | undefined> = {
+const schemaProviders: Record<string, SchemaProviderConstructor> = {
   file: FileSchemaProvider,
 };
 
-export const getSchemas = async (container: DependencyContainer): Promise<Schema[]> => {
-  const config = container.resolve<IConfig>(SERVICES.CONFIG);
-  const providerKey = config.get<string>('schema.provider');
-  const provider = schemaProviders[providerKey];
-  if (provider) {
-    return container.resolve(provider).loadSchemas();
-  } else {
+export type SchemaProviderConstructor = Constructor<ISchemaProvider> | undefined;
+
+export const SCHEMA_PROVIDER_SYMBOL = Symbol('schemaProviderFactory');
+
+export const schemaProviderFactory: FactoryFunction<SchemaProviderConstructor> = (container: DependencyContainer) => {
+  const config = container.resolve<ConfigType>(SERVICES.CONFIG);
+
+  const providerKey = config.get('schema.provider');
+  if (providerKey == null) {
     throw new Error('no schemas found');
   }
+  const provider = schemaProviders[providerKey];
+
+  if (!provider) {
+    throw new Error('no schemas found');
+  }
+  return provider;
 };

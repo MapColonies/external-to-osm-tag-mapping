@@ -1,10 +1,12 @@
 import { inject, injectable } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
-import { IDomainFieldsRepository, IDOMAIN_FIELDS_REPO_SYMBOL } from '../DAL/domainFieldsRepository';
+import redis from 'ioredis';
+import { IDOMAIN_FIELDS_REPO_SYMBOL } from '../DAL/domainFieldsRepository';
 import { Tags } from '../../common/types';
-import { KEYS_SEPARATOR, REDIS_KEYS_SEPARATOR, SERVICES } from '../../common/constants';
+import { KEYS_SEPARATOR, REDIS_KEYS_SEPARATOR, REDIS_SYMBOL, SERVICES } from '../../common/constants';
 import { KeyNotFoundError } from '../DAL/errors';
 import { keyConstructor } from '../DAL/keys';
+import { RedisManager } from '../DAL/redisManager';
 import { Schema } from './types';
 
 interface SchemaMetadataBase {
@@ -34,7 +36,8 @@ export class SchemaManager {
   private readonly schemas: Record<string, SchemaMetadata>;
   public constructor(
     @inject(SERVICES.SCHEMAS) private readonly inputSchemas: Schema[],
-    @inject(IDOMAIN_FIELDS_REPO_SYMBOL) private readonly domainFieldsRepo: IDomainFieldsRepository,
+    @inject(REDIS_SYMBOL) private readonly redisInstance: Promise<redis>,
+    @inject(IDOMAIN_FIELDS_REPO_SYMBOL) private readonly domainFieldsRepoPromise: Promise<RedisManager>,
     @inject(SERVICES.LOGGER) private readonly logger: Logger
   ) {
     this.schemas = inputSchemas.reduce((acc, curr) => {
@@ -148,8 +151,10 @@ export class SchemaManager {
   };
 
   private readonly getDomainFieldsCodedValues = async (domainKeys: string[]): Promise<Tags> => {
+    console.log('NIGGER', await (await this.domainFieldsRepoPromise).getAllTable());
+
     let domainFieldsTags: Tags = {};
-    const fieldsCodedValues = await this.domainFieldsRepo.getFields(domainKeys);
+    const fieldsCodedValues = await (await this.domainFieldsRepoPromise).getFields(domainKeys);
 
     // for each domain field create new domain field tag with the correct value
     fieldsCodedValues.forEach((codedValue, index) => {
@@ -166,8 +171,14 @@ export class SchemaManager {
 
   private readonly getExplodeFields = async (explodeKeys: string[]): Promise<Tags> => {
     let explodeFieldsTags: Tags = {};
-    const explodeFields = await this.domainFieldsRepo.getFields(explodeKeys);
+    console.log('NIGGER', await (await this.domainFieldsRepoPromise).getAllTable());
 
+    if (explodeKeys.length > 0) {
+      console.log('BULBUL1', explodeKeys);
+      // console.log('BULBUL2', await this.domainFieldsRepoPromise);
+      // console.log('BULBUL3', redis);
+    }
+    const explodeFields = await (await this.domainFieldsRepoPromise).getFields(explodeKeys);
     // for each explode field parse for new Object.
     explodeFields.forEach((jsonString, index) => {
       if (jsonString === null) {
