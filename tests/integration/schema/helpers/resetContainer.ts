@@ -27,6 +27,11 @@ export const setupRedisTestEnvironment = (
   beforeAll(async function () {
     const depContainer = getDepContainer();
     const realConfig = depContainer.resolve<ConfigType>(SERVICES.CONFIG);
+    const redisConfig = realConfig.get('redis');
+    const usedRedisConfig = {
+      ...redisConfig,
+      ...redisOptions,
+    };
 
     const configWithOverride = {
       ...realConfig,
@@ -34,11 +39,14 @@ export const setupRedisTestEnvironment = (
         if (key === 'application') {
           return appConfig;
         }
+        if (key === 'redis') {
+          return usedRedisConfig;
+        }
         return realConfig.get(key);
       },
     } as ConfigType;
 
-    const redisConnectionPromise = createConnection(configWithOverride.get('redis'), redisOptions);
+    const redisConnectionPromise = createConnection(configWithOverride.get('redis'));
     const [app, containerInstance] = await getApp({
       override: [
         { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
