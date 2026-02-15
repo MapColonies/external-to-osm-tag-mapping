@@ -11,7 +11,6 @@ const retryFunction = (times: number): number => {
 };
 
 const createConnectionOptions = (config: ConfigType, overrides: Partial<RedisOptions> = {}): RedisOptions => {
-  console.log('NAZI1', overrides);
   const redisConfig = config.get('db.redis');
 
   if (!redisConfig) {
@@ -26,16 +25,6 @@ const createConnectionOptions = (config: ConfigType, overrides: Partial<RedisOpt
     const { enabled, ...tlsCerts } = tls;
     tlsOptions = tlsCerts;
   }
-  // console.log('NAZI2', {
-  //   ...rest,
-  //   keyPrefix: usedPrefix,
-  //   connectTimeout: connectTimeoutMs,
-  //   ...(tlsOptions && { tls: tlsOptions }),
-  //   retryStrategy: retryFunction,
-  //   lazyConnect: true,
-  //   connectionName: HOSTNAME,
-  //   ...overrides,
-  // });
 
   return {
     ...rest,

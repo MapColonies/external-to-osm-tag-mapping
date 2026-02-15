@@ -151,8 +151,6 @@ export class SchemaManager {
   };
 
   private readonly getDomainFieldsCodedValues = async (domainKeys: string[]): Promise<Tags> => {
-    console.log('NIGGER', await (await this.domainFieldsRepoPromise).getAllTable());
-
     let domainFieldsTags: Tags = {};
     const fieldsCodedValues = await (await this.domainFieldsRepoPromise).getFields(domainKeys);
 
@@ -171,13 +169,7 @@ export class SchemaManager {
 
   private readonly getExplodeFields = async (explodeKeys: string[]): Promise<Tags> => {
     let explodeFieldsTags: Tags = {};
-    console.log('NIGGER', await (await this.domainFieldsRepoPromise).getAllTable());
 
-    if (explodeKeys.length > 0) {
-      console.log('BULBUL1', explodeKeys);
-      // console.log('BULBUL2', await this.domainFieldsRepoPromise);
-      // console.log('BULBUL3', redis);
-    }
     const explodeFields = await (await this.domainFieldsRepoPromise).getFields(explodeKeys);
     // for each explode field parse for new Object.
     explodeFields.forEach((jsonString, index) => {
