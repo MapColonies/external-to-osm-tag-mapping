@@ -47,7 +47,7 @@ jobs:
 
     services:
       redis:
-        image: redis:8.2-alpine
+        image: redis:8.4.0
         ports:
           - 6379:6379
         options: >-
@@ -68,6 +68,7 @@ jobs:
       - name: Run tests
         run: npm run test
         env:
+          NODE_ENV: test
           REDIS_HOST: redis
           REDIS_PORT: 6379
 
