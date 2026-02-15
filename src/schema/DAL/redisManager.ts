@@ -14,15 +14,13 @@ export class RedisManager implements IDomainFieldsRepository {
   ) {
     const appConfig = this.config.get('application');
     const { enabled, value } = appConfig.hashKey;
-    if (enabled && value != null && value !== '') {
+    if (enabled && value !== undefined) {
       this.getData = async (fields: string[]): Promise<(string | null)[]> => {
-        const result = await this.redisInstance.hmget(value, ...fields);
-        return result;
+        return this.redisInstance.hmget(value, ...fields);
       };
     } else {
       this.getData = async (fields: string[]): Promise<(string | null)[]> => {
-        const result = await this.redisInstance.mget(fields);
-        return result;
+        return this.redisInstance.mget(fields);
       };
     }
   }
