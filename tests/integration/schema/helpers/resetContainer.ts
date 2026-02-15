@@ -66,11 +66,9 @@ export const setupRedisTestEnvironment = (
     await connection.flushall();
   });
 
-  // helpers/resetContainer.ts
   afterAll(async function () {
-    // Close Redis connection first - be more aggressive
     if (connection.status !== 'end') {
-      connection.disconnect(false); // false = don't wait for pending commands
+      connection.disconnect(false);
     }
 
     const cleanupRegistry = container.resolve<CleanupRegistry>(SERVICES.CLEANUP_REGISTRY);
