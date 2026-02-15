@@ -72,7 +72,7 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
         provider: {
           useFactory: instancePerContainerCachingFactory(async (container) => {
             const config = container.resolve<ConfigType>(SERVICES.CONFIG);
-            return createConnection(config);
+            return createConnection(config.get('redis'));
           }),
         },
         postInjectionHook: async (deps: DependencyContainer): Promise<void> => {

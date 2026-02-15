@@ -1,6 +1,6 @@
 import redis, { RedisOptions } from 'ioredis';
 import { HOSTNAME } from './constants';
-import { ConfigType } from './config';
+import { RedisConfig } from './config';
 
 const RETRY_DELAY_INCREASE = 50;
 const RETRY_DELAY_TOP = 2000;
@@ -10,15 +10,8 @@ const retryFunction = (times: number): number => {
   return delay;
 };
 
-const createConnectionOptions = (config: ConfigType, overrides: Partial<RedisOptions> = {}): RedisOptions => {
-  const redisConfig = config.get('db.redis');
-
-  if (!redisConfig) {
-    throw new Error("Config doesn't have redis");
-  }
-
-  const { prefix, connectTimeoutMs, tls, ...rest } = redisConfig;
-  const usedPrefix = prefix ?? '';
+const createConnectionOptions = (config: RedisConfig, overrides: Partial<RedisOptions> = {}): RedisOptions => {
+  const { prefix, connectTimeoutMs, tls, ...rest } = config;
 
   let tlsOptions: RedisOptions['tls'] | undefined;
   if (tls.enabled) {
@@ -28,7 +21,7 @@ const createConnectionOptions = (config: ConfigType, overrides: Partial<RedisOpt
 
   return {
     ...rest,
-    keyPrefix: usedPrefix,
+    keyPrefix: prefix,
     connectTimeout: connectTimeoutMs,
     ...(tlsOptions && { tls: tlsOptions }),
     retryStrategy: retryFunction,
@@ -38,7 +31,7 @@ const createConnectionOptions = (config: ConfigType, overrides: Partial<RedisOpt
   };
 };
 
-export const createConnection = async (config: ConfigType, overrides: Partial<RedisOptions> = {}): Promise<redis> => {
+export const createConnection = async (config: RedisConfig, overrides: Partial<RedisOptions> = {}): Promise<redis> => {
   let redisInstance: redis | undefined;
   const redisOptions = createConnectionOptions(config, overrides);
 
