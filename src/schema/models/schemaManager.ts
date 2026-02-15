@@ -1,5 +1,5 @@
 import { inject, injectable } from 'tsyringe';
-import { Logger } from '@map-colonies/js-logger';
+import { type Logger } from '@map-colonies/js-logger';
 import redis from 'ioredis';
 import { IDOMAIN_FIELDS_REPO_SYMBOL } from '../DAL/domainFieldsRepository';
 import { Tags } from '../../common/types';
@@ -87,21 +87,21 @@ export class SchemaManager {
 
     let finalTags: Tags = Object.entries(tags).reduce((acc: Tags, [key, value]) => {
       // remove tag if it's an ignored key
-      if (schema.keyIgnoreSets.has(key)) {
+      if (schema?.keyIgnoreSets.has(key) ?? false) {
         return acc;
       }
 
       // check if tag's key should be renamed
-      if (schema.renameKeys && Object.prototype.hasOwnProperty.call(schema.renameKeys, key)) {
-        key = schema.renameKeys[key];
+      if (schema?.renameKeys && Object.prototype.hasOwnProperty.call(schema.renameKeys, key)) {
+        key = schema.renameKeys[key]!;
       }
 
-      if (schema.enableExternalFetch) {
+      if (schema!.enableExternalFetch) {
         // check each tag if it's an explode field and put it in explodeKeys
-        if (schema.explodeKeysSet.has(key) && value !== null) {
-          explodeKeys.push(`${keyConstructor(schema.explodePrefix, key, value.toString())}`);
+        if (schema!.explodeKeysSet.has(key) && value !== null) {
+          explodeKeys.push(`${keyConstructor(schema!.explodePrefix, key, value.toString())}`);
         } else if (value !== null) {
-          domainKeys.push(`${keyConstructor(schema.domainPrefix, key.toUpperCase(), value.toString())}`);
+          domainKeys.push(`${keyConstructor(schema!.domainPrefix, key.toUpperCase(), value.toString())}`);
         }
       }
 
@@ -129,7 +129,7 @@ export class SchemaManager {
 
     finalTags = { ...finalTags, ...domainFieldsTags, ...explodeFieldsTags };
 
-    if (this.schemas[name].addSchemaPrefix) {
+    if (this.schemas[name]?.addSchemaPrefix ?? false) {
       // for each key add a system name prefix
       finalTags = Object.entries(finalTags).reduce((acc: Tags, [key, value]) => {
         acc[this.concatenateKeysPrefix(name, key)] = value;
@@ -159,7 +159,7 @@ export class SchemaManager {
       if (codedValue !== null) {
         domainFieldsTags = {
           ...domainFieldsTags,
-          [domainKeys[index].split(REDIS_KEYS_SEPARATOR)[1] + '_DOMAIN']: codedValue,
+          [domainKeys[index]!.split(REDIS_KEYS_SEPARATOR)[1] + '_DOMAIN']: codedValue,
         };
       }
     });

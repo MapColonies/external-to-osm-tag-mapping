@@ -93,9 +93,9 @@ describe('SchemaManager', () => {
 
   describe('#getSchema', () => {
     it('should return the specific schema', () => {
-      const res = schemaManager.getSchema(schemas[0].name);
+      const res = schemaManager.getSchema(schemas[0]!.name);
 
-      expect(res).toMatchObject(schemas[0]);
+      expect(res).toMatchObject(schemas[0]!);
     });
 
     it('should return undefined for non-existent schema', () => {

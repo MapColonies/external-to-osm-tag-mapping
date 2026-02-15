@@ -1,7 +1,7 @@
 import { promises as fsp } from 'fs';
 import { inject, injectable } from 'tsyringe';
 import { SERVICES } from '../../../common/constants';
-import { IConfig } from '../../../common/interfaces';
+import { type IConfig } from '../../../common/interfaces';
 import { ISchemaProvider } from '../provider';
 import { Schema } from '../../models/types';
 import { parseSchema } from '../../utils/schemaParser';

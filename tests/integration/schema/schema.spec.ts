@@ -31,7 +31,7 @@ describe('schemas', function () {
     { application: { hashKey: { enabled: true, value: 'hashKey1' } } },
   ];
 
-  const hashKey = applicationConfigs[1]?.application?.hashKey?.value ?? 'hashKey1';
+  const hashKey = applicationConfigs[1]!.application!.hashKey.value!;
   let requestSender: SchemaRequestSender;
   let depContainer: DependencyContainer;
   let redisConnection: Redis;
@@ -292,7 +292,8 @@ describe('schemas', function () {
 
         describe('Redis uses prefix key', () => {
           const keyPrefix = 'someKey:';
-          const { getConnection, getRequestSender } = setupRedisTestEnvironment(() => depContainer, applicationConfigs[1]?.application, {
+
+          const { getConnection, getRequestSender } = setupRedisTestEnvironment(() => depContainer, applicationConfigs[1]!.application!, {
             keyPrefix,
           });
 
@@ -318,7 +319,7 @@ describe('schemas', function () {
         });
 
         describe('hash key is used by Redis', () => {
-          const { getConnection, getRequestSender } = setupRedisTestEnvironment(() => depContainer, applicationConfigs[1]?.application);
+          const { getConnection, getRequestSender } = setupRedisTestEnvironment(() => depContainer, applicationConfigs[1]!.application!);
 
           it.each(testValues)(
             'should return 200 status code and map the tags $testCaseName',
@@ -339,7 +340,7 @@ describe('schemas', function () {
         });
 
         describe('key is used by Redis', () => {
-          const { getConnection, getRequestSender } = setupRedisTestEnvironment(() => depContainer, applicationConfigs[0]?.application);
+          const { getConnection, getRequestSender } = setupRedisTestEnvironment(() => depContainer, applicationConfigs[0]!.application!);
 
           it.each(testValues)(
             'should return 200 status code and map the tags $testCaseName',
@@ -397,7 +398,7 @@ describe('schemas', function () {
       });
 
       describe('hash key is used by Redis', () => {
-        const { getConnection, getRequestSender } = setupRedisTestEnvironment(() => depContainer, applicationConfigs[1]?.application);
+        const { getConnection, getRequestSender } = setupRedisTestEnvironment(() => depContainer, applicationConfigs[1]!.application!);
 
         it('should return 422 status code for malformed JSON response of exploded field in redis', async function () {
           const tags = {
@@ -415,7 +416,7 @@ describe('schemas', function () {
       });
 
       describe('key is used by Redis', () => {
-        const { getConnection, getRequestSender } = setupRedisTestEnvironment(() => depContainer, applicationConfigs[0]?.application);
+        const { getConnection, getRequestSender } = setupRedisTestEnvironment(() => depContainer, applicationConfigs[0]!.application!);
 
         it('should return 422 status code for malformed JSON response of exploded field in redis', async function () {
           const tags = {
