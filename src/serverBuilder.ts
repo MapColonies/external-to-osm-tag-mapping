@@ -2,7 +2,7 @@ import express, { Router } from 'express';
 import bodyParser from 'body-parser';
 import compression from 'compression';
 import { middleware as OpenApiMiddleware } from 'express-openapi-validator';
-import { Logger } from '@map-colonies/js-logger';
+import { type Logger } from '@map-colonies/js-logger';
 import httpLogger from '@map-colonies/express-access-log-middleware';
 import { OpenapiViewerRouter } from '@map-colonies/openapi-express-viewer';
 import { inject, injectable } from 'tsyringe';
@@ -12,7 +12,7 @@ import { Registry } from 'prom-client';
 import { collectMetricsExpressMiddleware } from '@map-colonies/telemetry/prom-metrics';
 import { SCHEMA_ROUTER_SYMBOL } from './schema/routers/schemaRouter';
 import { SERVICES } from './common/constants';
-import { IConfig } from './common/interfaces';
+import { type IConfig } from './common/interfaces';
 
 @injectable()
 export class ServerBuilder {

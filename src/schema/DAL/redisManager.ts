@@ -1,6 +1,6 @@
 import redis from 'ioredis';
 import { inject, injectable } from 'tsyringe';
-import { ConfigType } from '@src/common/config';
+import { type ConfigType } from '@src/common/config';
 import { REDIS_SYMBOL, SERVICES } from '../../common/constants';
 import { IDomainFieldsRepository } from './domainFieldsRepository';
 

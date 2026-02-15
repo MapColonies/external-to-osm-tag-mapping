@@ -16,7 +16,7 @@
     "test": "tsc --noEmit && npm run test:unit && npm run test:integration",
     "prebuild": "npm run clean",
     "start:dev": "npm run build && cd dist && cross-env CONFIG_OFFLINE_MODE=true  node --enable-source-maps --import ./instrumentation.mjs ./index.js",
-    "build": "tsc --project tsconfig.build.json  && npm run assets:copy",
+    "build": "tsc --project tsconfig.build.json && npm run assets:copy",
     "start": "npm run build && cd dist && node --import ./instrumentation.mjs ./index.js",
     "assets:copy": "copyfiles -f ./config/* ./dist/config && copyfiles -f ./openapi3.yaml ./dist/ && copyfiles ./package.json dist && copyfiles -f ./schemas.json ./dist/",
     "clean": "rimraf dist",
@@ -63,6 +63,7 @@
     "tsyringe": "^4.10.0"
   },
   "devDependencies": {
+    "@map-colonies/tsconfig": "^2.0.0",
     "@commitlint/cli": "^19.8.0",
     "@map-colonies/commitlint-config": "^1.1.1",
     "@map-colonies/eslint-config": "^6.0.0",

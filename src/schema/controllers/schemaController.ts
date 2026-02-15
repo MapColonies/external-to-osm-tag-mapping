@@ -3,7 +3,7 @@ import httpStatus from 'http-status-codes';
 import { injectable, inject } from 'tsyringe';
 import { HttpError } from '@map-colonies/error-express-handler';
 import type { Feature, Geometry } from 'geojson';
-import { Logger } from '@map-colonies/js-logger';
+import { type Logger } from '@map-colonies/js-logger';
 import { SERVICES } from '../../common/constants';
 import { JSONSyntaxError, SchemaManager, SchemaNotFoundError } from '../models/schemaManager';
 import { Tags } from '../../common/types';
