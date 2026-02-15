@@ -27,7 +27,8 @@ data:
   DB_INDEX: {{ .index | quote }}
   DB_MAX_RETRIES_PER_REQUEST: {{ .maxRetriesPerRequest | quote }}
   DB_CONNECT_TIMEOUT_MS: {{ .connectTimeoutMs | quote }}
-  DB_TLS_ENABLED: {{ .tls.enabled | quote }}
+  {{- if .tls.enabled | quote-}}
+  DB_TLS_ENABLED: true
   {{- if .tls.cert }}
   DB_TLS_CERT: {{ .tls.cert | quote }}
   {{- end }}
@@ -36,6 +37,9 @@ data:
   {{- end }}
   {{- if .tls.ca }}
   DB_TLS_CA: {{ .tls.ca | quote }}
+  {{- end }}
+  {{- else-}}
+  DB_TLS_ENABLED: false
   {{- end }}
   {{- end }}
   {{- if .Values.env.hashKey.enabled }}
