@@ -10,10 +10,12 @@ import { ConfigType } from './common/config';
 import { getApp } from './app';
 
 let depContainer: DependencyContainer | undefined;
+let logger: Logger;
 
 void getApp()
   .then(([app, container]) => {
-    const logger = container.resolve<Logger>(SERVICES.LOGGER);
+    logger = container.resolve<Logger>(SERVICES.LOGGER);
+
     const config = container.resolve<ConfigType>(SERVICES.CONFIG);
     const port = config.get('server.port');
 
@@ -29,8 +31,8 @@ void getApp()
     });
   })
   .catch(async (error: Error) => {
-    console.error('😢 - failed initializing the server');
-    console.error(error);
+    logger.error('😢 - failed initializing the server');
+    logger.error(error);
 
     if (depContainer?.isRegistered(ON_SIGNAL) === true) {
       const shutDown = depContainer.resolve<() => Promise<void>>(ON_SIGNAL);
