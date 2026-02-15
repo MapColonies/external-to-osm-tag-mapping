@@ -96,8 +96,11 @@ export class SchemaManager {
       }
 
       // check if tag's key should be renamed
-      if (schema.renameKeys && Object.prototype.hasOwnProperty.call(schema.renameKeys, key)) {
-        key = schema.renameKeys[key]!;
+      if (schema.renameKeys && Object.prototype.hasOwnProperty.call(schema.renameKeys, key) && schema.renameKeys[key] !== undefined) {
+        const renamedKey = schema.renameKeys[key];
+        if (renamedKey !== undefined) {
+          key = renamedKey;
+        }
       }
 
       if (schema.enableExternalFetch) {
@@ -160,14 +163,17 @@ export class SchemaManager {
 
     // for each domain field create new domain field tag with the correct value
     fieldsCodedValues.forEach((codedValue, index) => {
-      if (codedValue !== null) {
+      const currentKey = domainKeys[index];
+
+      if (codedValue !== null && currentKey !== undefined) {
+        const fieldName = currentKey.split(REDIS_KEYS_SEPARATOR)[1];
+
         domainFieldsTags = {
           ...domainFieldsTags,
-          [domainKeys[index]!.split(REDIS_KEYS_SEPARATOR)[1] + '_DOMAIN']: codedValue,
+          [`${fieldName}_DOMAIN`]: codedValue,
         };
       }
     });
-
     return domainFieldsTags;
   };
 
