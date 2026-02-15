@@ -2,6 +2,7 @@
 import { container } from 'tsyringe';
 import Redis from 'ioredis';
 import jsLogger from '@map-colonies/js-logger';
+import { initConfig } from '@src/common/config';
 import { IDOMAIN_FIELDS_REPO_SYMBOL } from '../../../../src/schema/DAL/domainFieldsRepository';
 import { JSONSyntaxError, SchemaManager, SchemaNotFoundError } from '../../../../src/schema/models/schemaManager';
 import { Schema } from '../../../../src/schema/models/types';
@@ -58,7 +59,9 @@ describe('SchemaManager', () => {
   let getFields: jest.Mock;
   let mockRedis: jest.Mocked<Partial<Redis>>;
 
-  beforeAll(() => {
+  beforeAll(async () => {
+    await initConfig(true);
+
     mockRedis = {
       get: jest.fn(),
       set: jest.fn(),
