@@ -1,38 +1,34 @@
-# Build stage
-FROM node:24-alpine AS build
+FROM node:24 AS build
+
 
 WORKDIR /tmp/buildApp
 
-# Copy package files and install all dependencies
-COPY package*.json ./
-RUN npm ci --ignore-scripts
+COPY ./package*.json ./
+COPY .husky/ .husky/
 
-# Copy source and build
+RUN npm install
 COPY . .
 RUN npm run build
 
-# Production stage
-FROM node:24-alpine AS production
+FROM node:24.10.0-alpine3.22 AS production
 
-RUN apk add --no-cache dumb-init
+RUN apk add dumb-init
 
 ENV NODE_ENV=production
 ENV SERVER_PORT=8080
 
+
 WORKDIR /usr/src/app
 
-# Copy only package files for production deps
-COPY package*.json ./
-COPY openapi3.yaml ./
+COPY --chown=node:node package*.json ./
+COPY .husky/ .husky/
 
-# Install production dependencies only
-RUN npm ci --omit=dev --ignore-scripts
+RUN npm ci --only=production
 
-# Copy built app
-COPY --from=build /tmp/buildApp/dist ./dist
-COPY ./config ./config
+COPY --chown=node:node --from=build /tmp/buildApp/dist .
+COPY --chown=node:node ./config ./config
+
 
 USER node
 EXPOSE 8080
-
-CMD ["dumb-init", "node", "--import", "./dist/instrumentation.mjs", "./dist/index.js"]
+CMD ["dumb-init", "node", "--import", "./instrumentation.mjs", "./index.js"]
