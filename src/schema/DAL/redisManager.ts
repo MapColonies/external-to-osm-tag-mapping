@@ -2,7 +2,6 @@ import redis from 'ioredis';
 import { inject, injectable } from 'tsyringe';
 import { ConfigType } from '@src/common/config';
 import { REDIS_SYMBOL, SERVICES } from '../../common/constants';
-import { IApplication } from '../../common/interfaces';
 import { IDomainFieldsRepository } from './domainFieldsRepository';
 
 @injectable()
@@ -12,15 +11,10 @@ export class RedisManager implements IDomainFieldsRepository {
 
   public constructor(
     @inject(REDIS_SYMBOL) public readonly redisInstance: redis,
-    @inject(SERVICES.APPLICATION) public readonly appConfig: IApplication,
     @inject(SERVICES.CONFIG) public readonly config: ConfigType
   ) {
+    const appConfig = this.config.get('application');
     const { enabled, value } = appConfig.hashKey;
-    console.log('configga', this.config.get('application'));
-    console.log('APPLICATIONIGGA', this.appConfig);
-    // const {
-    //   hashKey: { enabled, value },
-    // } = this.config.get('application')!;
     if (enabled && value != null && value !== '') {
       this.getData = async (fields: string[]): Promise<(string | null)[]> => {
         const result = await this.redisInstance.hmget(value, ...fields);
@@ -28,14 +22,11 @@ export class RedisManager implements IDomainFieldsRepository {
       };
 
       this.getAll = async (): Promise<Record<string, string>> => {
-        console.log('kaki', value);
         await this.redisInstance.hset('kaki', { a: '1', b: '2' });
-        console.log('hitler', await this.redisInstance.hgetall('someKey:hashKey1'));
         return this.redisInstance.hgetall('hitelr');
       };
     } else {
       this.getData = async (fields: string[]): Promise<(string | null)[]> => {
-        console.log('HARA2', fields);
         const result = await this.redisInstance.mget(fields);
         return result;
       };
@@ -65,10 +56,6 @@ export class RedisManager implements IDomainFieldsRepository {
 
   public async getFields(fields: string[]): Promise<(string | null)[]> {
     try {
-      if (fields.length > 0 && fields[0] == 'explode1:val4') {
-        console.log('HARA', fields);
-        console.log(this.appConfig);
-      }
       const result = await this.getData(fields);
       return result;
     } catch (error) {

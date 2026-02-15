@@ -54,8 +54,6 @@ export class SchemaController {
     try {
       response.properties = await this.manager.map(name, tags);
     } catch (error) {
-      console.log('ERROR');
-      console.log(error);
       if (error instanceof SchemaNotFoundError) {
         (error as HttpError).statusCode = httpStatus.NOT_FOUND;
       }

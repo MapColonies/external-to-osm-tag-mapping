@@ -13,7 +13,6 @@ import { InjectionObject, registerDependencies } from './common/dependencyRegist
 import { ConfigType, getConfig } from './common/config';
 import { SCHEMA_PROVIDER_SYMBOL, SchemaProviderConstructor, schemaProviderFactory } from './schema/providers/schemaLoader';
 import { SCHEMA_ROUTER_SYMBOL, schemaRouterFactory } from './schema/routers/schemaRouter';
-import { IApplication } from './common/interfaces';
 
 export const registerExternalValues = async (options?: RegisterOptions): Promise<DependencyContainer> => {
   const cleanupRegistry = new CleanupRegistry();
@@ -98,8 +97,7 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
             const redisInstance = await container.resolve<Promise<redis>>(REDIS_SYMBOL);
             const config = container.resolve<ConfigType>(SERVICES.CONFIG);
 
-            const applicationConfig: IApplication = config.get('application')!;
-            return new RedisManager(redisInstance, applicationConfig, config);
+            return new RedisManager(redisInstance, config);
           },
         },
       },
