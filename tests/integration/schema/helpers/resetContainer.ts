@@ -38,7 +38,7 @@ export const setupRedisTestEnvironment = (
       },
     } as ConfigType;
 
-    const redisConnectionPromise = createConnection(configWithOverride, redisOptions);
+    const redisConnectionPromise = createConnection(configWithOverride.get('redis'), redisOptions);
     const [app, containerInstance] = await getApp({
       override: [
         { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
