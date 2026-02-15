@@ -10,7 +10,7 @@ const retryFunction = (times: number): number => {
   return delay;
 };
 
-const createConnectionOptions = (config: RedisConfig, overrides: Partial<RedisOptions> = {}): RedisOptions => {
+const createConnectionOptions = (config: RedisConfig): RedisOptions => {
   const { tls, ...rest } = config;
 
   let tlsOptions: RedisOptions['tls'] | undefined;
@@ -25,13 +25,12 @@ const createConnectionOptions = (config: RedisConfig, overrides: Partial<RedisOp
     retryStrategy: retryFunction,
     lazyConnect: true,
     connectionName: HOSTNAME,
-    ...overrides,
   };
 };
 
-export const createConnection = async (config: RedisConfig, overrides: Partial<RedisOptions> = {}): Promise<redis> => {
+export const createConnection = async (config: RedisConfig): Promise<redis> => {
   let redisInstance: redis | undefined;
-  const redisOptions = createConnectionOptions(config, overrides);
+  const redisOptions = createConnectionOptions(config);
 
   try {
     redisInstance = new redis(redisOptions);
