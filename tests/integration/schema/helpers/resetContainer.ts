@@ -67,10 +67,6 @@ export const setupRedisTestEnvironment = (
   });
 
   afterAll(async function () {
-    if (connection.status !== 'end') {
-      connection.disconnect(false);
-    }
-
     const cleanupRegistry = container.resolve<CleanupRegistry>(SERVICES.CLEANUP_REGISTRY);
     await cleanupRegistry.trigger();
     container.reset();
