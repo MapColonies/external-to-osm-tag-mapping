@@ -22,8 +22,5 @@ export const schemaProviderFactory: FactoryFunction<SchemaProviderConstructor> =
   }
   const provider = schemaProviders[providerKey];
 
-  if (!provider) {
-    throw new Error('no schemas found');
-  }
   return provider;
 };
