@@ -5,7 +5,7 @@ global:
   environment: {}
 
 mclabels:
-  component: backend
+  component: osm
   partOf: vector-services
   owner: vector
   prometheus:
