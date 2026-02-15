@@ -11,7 +11,7 @@ const retryFunction = (times: number): number => {
 };
 
 const createConnectionOptions = (config: RedisConfig, overrides: Partial<RedisOptions> = {}): RedisOptions => {
-  const { prefix, connectTimeoutMs, tls, ...rest } = config;
+  const { tls, ...rest } = config;
 
   let tlsOptions: RedisOptions['tls'] | undefined;
   if (tls.enabled) {
@@ -21,8 +21,6 @@ const createConnectionOptions = (config: RedisConfig, overrides: Partial<RedisOp
 
   return {
     ...rest,
-    keyPrefix: prefix,
-    connectTimeout: connectTimeoutMs,
     ...(tlsOptions && { tls: tlsOptions }),
     retryStrategy: retryFunction,
     lazyConnect: true,
