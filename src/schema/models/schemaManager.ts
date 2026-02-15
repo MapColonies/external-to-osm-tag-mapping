@@ -86,22 +86,26 @@ export class SchemaManager {
     const explodeKeys: string[] = []; // array to hold all explode keys
 
     let finalTags: Tags = Object.entries(tags).reduce((acc: Tags, [key, value]) => {
-      // remove tag if it's an ignored key
-      if (schema?.keyIgnoreSets.has(key) ?? false) {
+      if (schema === undefined) {
+        this.logger.error({ msg: 'schema not found', schemaName: name });
+        throw new SchemaNotFoundError(`schema ${name} not found`);
+      }
+
+      if (schema.keyIgnoreSets.has(key)) {
         return acc;
       }
 
       // check if tag's key should be renamed
-      if (schema?.renameKeys && Object.prototype.hasOwnProperty.call(schema.renameKeys, key)) {
+      if (schema.renameKeys && Object.prototype.hasOwnProperty.call(schema.renameKeys, key)) {
         key = schema.renameKeys[key]!;
       }
 
-      if (schema!.enableExternalFetch) {
+      if (schema.enableExternalFetch) {
         // check each tag if it's an explode field and put it in explodeKeys
-        if (schema!.explodeKeysSet.has(key) && value !== null) {
-          explodeKeys.push(`${keyConstructor(schema!.explodePrefix, key, value.toString())}`);
+        if (schema.explodeKeysSet.has(key) && value !== null) {
+          explodeKeys.push(`${keyConstructor(schema.explodePrefix, key, value.toString())}`);
         } else if (value !== null) {
-          domainKeys.push(`${keyConstructor(schema!.domainPrefix, key.toUpperCase(), value.toString())}`);
+          domainKeys.push(`${keyConstructor(schema.domainPrefix, key.toUpperCase(), value.toString())}`);
         }
       }
 
