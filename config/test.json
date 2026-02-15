@@ -3,18 +3,16 @@
     "provider": "file",
     "filePath": "schemas.json"
   },
-  "db": {
-    "redis": {
-      "host": "redis",
-      "port": 6379,
-      "username": "",
-      "password": "",
-      "dbIndex": 0,
-      "prefix": "",
-      "connectTimeoutMs": 5000,
-      "tls": {
-        "enabled": false
-      }
+  "redis": {
+    "host": "redis",
+    "port": 6379,
+    "username": "",
+    "password": "",
+    "dbIndex": 0,
+    "prefix": "",
+    "connectTimeoutMs": 5000,
+    "tls": {
+      "enabled": false
     }
   },
   "application": {
