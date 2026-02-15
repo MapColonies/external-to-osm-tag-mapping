@@ -4,6 +4,7 @@ import { vectorExternalToOsmTagMappingV1, type vectorExternalToOsmTagMappingV1Ty
 // Choose here the type of the config instance and import this type from the entire application
 type ConfigType = ConfigInstance<vectorExternalToOsmTagMappingV1Type>;
 type RedisConfig = vectorExternalToOsmTagMappingV1Type['redis'];
+type IApplication = vectorExternalToOsmTagMappingV1Type['application'];
 
 let configInstance: ConfigType | undefined;
 
@@ -27,4 +28,4 @@ function getConfig(): ConfigType {
 }
 
 export { getConfig, initConfig };
-export type { ConfigType, RedisConfig };
+export type { ConfigType, RedisConfig, IApplication };
