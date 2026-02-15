@@ -66,8 +66,8 @@ jobs:
       - name: Run tests
         run: npm run test
         env:
-          REDIS_HOST: localhost
-          DB_PORT: 6379
+          REDIS_HOST: redis
+          REDIS_PORT: 6379
 
       - uses: actions/upload-artifact@v5
         if: always()
