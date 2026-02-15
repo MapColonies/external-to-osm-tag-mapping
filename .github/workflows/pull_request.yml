@@ -48,6 +48,8 @@ jobs:
     services:
       redis:
         image: redis:8.2-alpine
+        ports:
+          - 6379:6379
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
