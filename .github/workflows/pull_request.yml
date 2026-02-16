@@ -4,8 +4,11 @@ on: [pull_request]
 
 jobs:
   eslint:
-    name: Run eslint
+    name: Run eslint (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [24.x]
 
     steps:
       - name: Check out Git repository
@@ -14,7 +17,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: ${{ matrix.node-version }}
           cache: 'npm'
 
       - name: Install dependencies
@@ -35,9 +38,14 @@ jobs:
           file: ./openapi3.yaml
 
   tests:
-    name: Run Tests
+    name: Run Tests (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
-    container: node:24
+    strategy:
+      matrix:
+        node-version: [24.x]
+
+    container:
+      image: node:${{ matrix.node-version }}
 
     services:
       redis:
@@ -62,16 +70,16 @@ jobs:
           REDIS_HOST: redis
           REDIS_PORT: 6379
 
-      - uses: actions/upload-artifact@v5
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v5
         if: always()
         with:
-          name: Test Reporters - Node v${{ matrix.node }}
+          name: Test Reporters - Node v${{ matrix.node-version }}
           path: reports/**
 
   build_image:
     name: Build Image
     runs-on: ubuntu-latest
-
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v4
