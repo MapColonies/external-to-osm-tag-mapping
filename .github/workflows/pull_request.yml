@@ -7,10 +7,6 @@ jobs:
     name: Run eslint
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node: [24.x]
-
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v4
@@ -18,7 +14,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node }}
+          node-version: 24
           cache: 'npm'
 
       - name: Install dependencies
@@ -41,15 +37,11 @@ jobs:
   tests:
     name: Run Tests
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node: [24.x]
+    container: node:24
 
     services:
       redis:
         image: redis:8.4.0
-        ports:
-          - 6379:6379
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
@@ -60,17 +52,15 @@ jobs:
       - name: Check out Git repository
         uses: actions/checkout@v4
 
-      - name: Init Nodejs
-        uses: MapColonies/shared-workflows/actions/init-npm@init-npm-v1
-        with:
-          node-version: ${{ matrix.node }}
+      - name: Install Node.js dependencies
+        run: npm ci
 
       - name: Run tests
         run: npm run test
         env:
           NODE_ENV: test
-          REDIS_HOST: redis
-          REDIS_PORT: 6379
+          DB_HOST: redis
+          DB_PORT: 6379
 
       - uses: actions/upload-artifact@v5
         if: always()
