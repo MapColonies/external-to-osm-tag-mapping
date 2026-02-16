@@ -41,7 +41,7 @@ jobs:
 
     services:
       redis:
-        image: redis:8.4.0
+        image: redis
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
@@ -59,8 +59,8 @@ jobs:
         run: npm run test
         env:
           NODE_ENV: test
-          DB_HOST: redis
-          DB_PORT: 6379
+          REDIS_HOST: redis
+          REDIS_PORT: 6379
 
       - uses: actions/upload-artifact@v5
         if: always()
