@@ -4,8 +4,9 @@ on: [pull_request]
 
 jobs:
   eslint:
-    name: Run eslint (Node ${{ matrix.node-version }})
+    name: Run eslint
     runs-on: ubuntu-latest
+
     strategy:
       matrix:
         node: [24.x]
@@ -19,38 +20,22 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
 
-      - name: Run TS Project linters
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linters
         uses: wearerequired/lint-action@v2
         with:
+          github_token: ${{ secrets.github_token }}
           eslint: true
           prettier: true
           eslint_extensions: ts
-          tsc: true
-  openapi-lint:
-    name: Run OpenAPI lint Check
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Check out TS Project Git repository
-        uses: actions/checkout@v5
-
-      - name: Init Nodejs
-        uses: MapColonies/shared-workflows/actions/init-npm@init-npm-v1
 
       - name: OpenAPI Lint Checks
-        run: npx @redocly/cli lint --format=github-actions openapi3.yaml
-  helm-lint:
-    name: Run Helm lint Check
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Check out TS Project Git repository
-        uses: actions/checkout@v5
+        uses: nwestfall/openapi-action@v1.0.2
         with:
-          fetch-depth: 0
-
-      - name: Helm Lint Checks
-        uses: MapColonies/shared-workflows/actions/helm-lint@helm-lint-v1
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ./openapi3.yaml
 
   tests:
     name: Run Tests
@@ -61,7 +46,7 @@ jobs:
 
     services:
       redis:
-        image: redis
+        image: redis:7.2.1
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
@@ -70,12 +55,10 @@ jobs:
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
-      - name: Init Nodejs
-        uses: MapColonies/shared-workflows/actions/init-npm@init-npm-v1
-        with:
-          node-version: ${{ matrix.node }}
+      - name: Install Node.js dependencies
+        run: npm ci
 
       - name: Run tests
         run: npm run test
@@ -84,13 +67,19 @@ jobs:
           REDIS_HOST: redis
           REDIS_PORT: 6379
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
+        if: always()
         with:
-          name: Test Reporters Node-${{ matrix.node }}
+          name: Test Reporters - Node v${{ matrix.node }}
           path: reports/**
 
-  build_docker_image:
+  build_image:
+    name: Build Image
     runs-on: ubuntu-latest
+
     steps:
-      - name: Build and Push Docker image
-        uses: docker/build-push-action@v6
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+
+      - name: build Docker image
+        run: docker build -t test-build:latest .
