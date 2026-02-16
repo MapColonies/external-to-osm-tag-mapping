@@ -9,16 +9,17 @@ jobs:
 
     strategy:
       matrix:
-        node: [24.x]
+        node: ['24.x']
 
     steps:
-      - name: Check out TS Project Git repository
-        uses: actions/checkout@v5
+      - name: Check out Git repository
+        uses: actions/checkout@v4
 
-      - name: Init Nodejs
-        uses: MapColonies/shared-workflows/actions/init-npm@init-npm-v1
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
@@ -38,11 +39,15 @@ jobs:
           file: ./openapi3.yaml
 
   tests:
-    name: Run Tests
+    name: Run Tests (Node ${{ matrix.node }})
     runs-on: ubuntu-latest
+
     strategy:
       matrix:
-        node: [24.x]
+        node: ['24']
+      fail-fast: false
+
+    container: node:${{ matrix.node }}
 
     services:
       redis:
@@ -63,7 +68,6 @@ jobs:
       - name: Run tests
         run: npm run test
         env:
-          NODE_ENV: test
           REDIS_HOST: redis
           REDIS_PORT: 6379
 
