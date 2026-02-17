@@ -40,7 +40,6 @@
     "username": "",
     "password": "",
     "dbIndex": 0,
-    "prefix": "",
     "connectTimeoutMs": 5000,
     "tls": {
       "enabled": false
@@ -48,8 +47,7 @@
   },
   "application": {
     "hashKey": {
-      "enabled": true,
-      "value": ""
+      "enabled": false
     }
   }
 }
