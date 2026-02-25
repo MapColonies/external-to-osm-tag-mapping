@@ -29,6 +29,7 @@ export const SERVICES = {
 
 export const REDIS_SYMBOL = Symbol('REDIS');
 export const ON_SIGNAL = Symbol('onSignal');
+export const redisConfigPath = 'redis';
 
 export const KEYS_SEPARATOR = '_';
 export const REDIS_KEYS_SEPARATOR = ':';

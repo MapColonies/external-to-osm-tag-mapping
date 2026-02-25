@@ -6,7 +6,7 @@ import jsLogger from '@map-colonies/js-logger';
 import { CleanupRegistry } from '@map-colonies/cleanup-registry';
 import { getApp } from '@src/app';
 import { ConfigType, IApplication } from '@src/common/config';
-import { REDIS_SYMBOL, SERVICES } from '@src/common/constants';
+import { REDIS_SYMBOL, redisConfigPath, SERVICES } from '@src/common/constants';
 import { createConnection } from '@src/common/db';
 import { SchemaRequestSender } from './requestSender';
 
@@ -26,7 +26,7 @@ export const setupRedisTestEnvironment = (
   beforeAll(async function () {
     const depContainer = getDepContainer();
     const realConfig = depContainer.resolve<ConfigType>(SERVICES.CONFIG);
-    const redisConfig = realConfig.get('redis');
+    const redisConfig = realConfig.get(redisConfigPath);
     const usedRedisConfig = {
       ...redisConfig,
       ...redisOptions,
@@ -38,14 +38,14 @@ export const setupRedisTestEnvironment = (
         if (key === 'application') {
           return appConfig;
         }
-        if (key === 'redis') {
+        if (key === redisConfigPath) {
           return usedRedisConfig;
         }
         return realConfig.get(key);
       },
     } as ConfigType;
 
-    const redisConnectionPromise = createConnection(configWithOverride.get('redis'));
+    const redisConnectionPromise = createConnection(configWithOverride.get(redisConfigPath));
     const [app, containerInstance] = await getApp({
       override: [
         { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
