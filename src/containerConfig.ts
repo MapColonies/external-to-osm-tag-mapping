@@ -5,7 +5,7 @@ import redis from 'ioredis';
 import { DependencyContainer, instanceCachingFactory, instancePerContainerCachingFactory } from 'tsyringe';
 import { CleanupRegistry } from '@map-colonies/cleanup-registry';
 import { Registry } from 'prom-client';
-import { ON_SIGNAL, REDIS_SYMBOL, SERVICES, SERVICE_NAME } from './common/constants';
+import { ON_SIGNAL, REDIS_SYMBOL, SERVICES, SERVICE_NAME, redisConfigPath } from './common/constants';
 import { createConnection } from './common/db';
 import { IDOMAIN_FIELDS_REPO_SYMBOL } from './schema/DAL/domainFieldsRepository';
 import { RedisManager } from './schema/DAL/redisManager';
@@ -72,7 +72,7 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
         provider: {
           useFactory: instancePerContainerCachingFactory(async (container) => {
             const config = container.resolve<ConfigType>(SERVICES.CONFIG);
-            return createConnection(config.get('redis'));
+            return createConnection(config.get(redisConfigPath));
           }),
         },
         postInjectionHook: async (deps: DependencyContainer): Promise<void> => {
@@ -110,7 +110,7 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
 
               if (redisInstance) {
                 const config = container.resolve<ConfigType>(SERVICES.CONFIG);
-                const timeout = config.get('db.redis.connectTimeoutMs');
+                const timeout = config.get(redisConfigPath).connectTimeoutMs;
 
                 await Promise.race([redisInstance.ping(), new Promise((_, reject) => setTimeout(() => reject(new Error('ping timeout')), timeout))]);
               }
