@@ -1,9 +1,8 @@
 import { inject, injectable } from 'tsyringe';
 import { type Logger } from '@map-colonies/js-logger';
-import redis from 'ioredis';
 import { IDOMAIN_FIELDS_REPO_SYMBOL } from '../DAL/domainFieldsRepository';
 import { Tags } from '../../common/types';
-import { KEYS_SEPARATOR, REDIS_KEYS_SEPARATOR, REDIS_SYMBOL, SERVICES } from '../../common/constants';
+import { KEYS_SEPARATOR, REDIS_KEYS_SEPARATOR, SERVICES } from '../../common/constants';
 import { KeyNotFoundError } from '../DAL/errors';
 import { keyConstructor } from '../DAL/keys';
 import { RedisManager } from '../DAL/redisManager';
@@ -36,7 +35,6 @@ export class SchemaManager {
   private readonly schemas: Record<string, SchemaMetadata>;
   public constructor(
     @inject(SERVICES.SCHEMAS) private readonly inputSchemas: Schema[],
-    @inject(REDIS_SYMBOL) private readonly redisInstance: Promise<redis>,
     @inject(IDOMAIN_FIELDS_REPO_SYMBOL) private readonly domainFieldsRepoPromise: Promise<RedisManager>,
     @inject(SERVICES.LOGGER) private readonly logger: Logger
   ) {

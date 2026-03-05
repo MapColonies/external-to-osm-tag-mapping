@@ -26,7 +26,7 @@ export class SchemaController {
     @inject(SERVICES.LOGGER) private readonly logger: Logger
   ) {}
 
-  public getSchemas: GetSchemasHandler = (req, res) => {
+  public getSchemas: GetSchemasHandler = (_, res) => {
     const schemas = this.manager.getSchemas();
     return res.status(httpStatus.OK).json(schemas);
   };
