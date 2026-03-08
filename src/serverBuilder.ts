@@ -37,7 +37,8 @@ export class ServerBuilder {
   private registerPreRoutesMiddleware(): void {
     this.serverInstance.use(collectMetricsExpressMiddleware({ registry: this.metricsRegistry }));
 
-    this.serverInstance.use(httpLogger({ logger: this.logger }));
+    this.serverInstance.use(httpLogger({ logger: this.logger, ignorePaths: ['/metrics'] }));
+
     if (this.config.get<boolean>('server.response.compression.enabled')) {
       this.serverInstance.use(compression(this.config.get<compression.CompressionFilter>('server.response.compression.options')));
     }
