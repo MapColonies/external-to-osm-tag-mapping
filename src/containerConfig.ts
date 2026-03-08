@@ -13,6 +13,7 @@ import { InjectionObject, registerDependencies } from './common/dependencyRegist
 import { ConfigType, getConfig } from './common/config';
 import { SCHEMA_PROVIDER_SYMBOL, SchemaProviderConstructor, schemaProviderFactory } from './schema/providers/schemaLoader';
 import { SCHEMA_ROUTER_SYMBOL, schemaRouterFactory } from './schema/routers/schemaRouter';
+import { getTracing } from './common/tracing';
 
 export const registerExternalValues = async (options?: RegisterOptions): Promise<DependencyContainer> => {
   const cleanupRegistry = new CleanupRegistry();
@@ -33,7 +34,16 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
         },
       },
       { token: SERVICES.CLEANUP_REGISTRY, provider: { useValue: cleanupRegistry } },
-      { token: SERVICES.TRACER, provider: { useValue: trace.getTracer(SERVICE_NAME) } },
+      {
+        token: SERVICES.TRACER,
+        provider: {
+          useFactory: instancePerContainerCachingFactory(() => {
+            cleanupRegistry.register({ id: SERVICES.TRACER, func: getTracing().stop.bind(getTracing()) });
+            const tracer = trace.getTracer(SERVICE_NAME);
+            return tracer;
+          }),
+        },
+      },
       {
         token: SERVICES.LOGGER,
         provider: {
