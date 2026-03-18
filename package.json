@@ -53,7 +53,7 @@
     "@map-colonies/express-access-log-middleware": "^2.0.1",
     "@map-colonies/js-logger": "^1.0.1",
     "@map-colonies/openapi-express-viewer": "^5.0.0",
-    "@map-colonies/schemas": "https://ghatmpstorage.blob.core.windows.net/npm-packages/schemas-bfd1c0cf1c7157fcf2ec20f44d4e5bf236754a77.tgz",
+    "@map-colonies/schemas": "https://ghatmpstorage.blob.core.windows.net/npm-packages/schemas-33a46c4a186e4f1be9db9de123f95db30393871d.tgz",
     "@map-colonies/telemetry": "^10.1.0",
     "compression": "^1.8.1",
     "express-openapi-validator": "^5.6.2",
