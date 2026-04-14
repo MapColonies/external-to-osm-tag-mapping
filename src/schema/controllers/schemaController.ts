@@ -2,8 +2,8 @@ import { RequestHandler } from 'express';
 import httpStatus from 'http-status-codes';
 import { injectable, inject } from 'tsyringe';
 import { HttpError } from '@map-colonies/error-express-handler';
-import { Feature, Geometry } from 'geojson';
-import { Logger } from '@map-colonies/js-logger';
+import type { Feature, Geometry } from 'geojson';
+import { type Logger } from '@map-colonies/js-logger';
 import { SERVICES } from '../../common/constants';
 import { JSONSyntaxError, SchemaManager, SchemaNotFoundError } from '../models/schemaManager';
 import { Tags } from '../../common/types';
@@ -21,9 +21,12 @@ type PostMapHandler = RequestHandler<SchemaParams, ExternalFeature, ExternalFeat
 
 @injectable()
 export class SchemaController {
-  public constructor(@inject(SchemaManager) private readonly manager: SchemaManager, @inject(SERVICES.LOGGER) private readonly logger: Logger) {}
+  public constructor(
+    @inject(SchemaManager) private readonly manager: SchemaManager,
+    @inject(SERVICES.LOGGER) private readonly logger: Logger
+  ) {}
 
-  public getSchemas: GetSchemasHandler = (req, res) => {
+  public getSchemas: GetSchemasHandler = (_, res) => {
     const schemas = this.manager.getSchemas();
     return res.status(httpStatus.OK).json(schemas);
   };

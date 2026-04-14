@@ -1,11 +1,12 @@
 import { inject, injectable } from 'tsyringe';
-import { Logger } from '@map-colonies/js-logger';
-import { IDomainFieldsRepository, IDOMAIN_FIELDS_REPO_SYMBOL } from '../DAL/domainFieldsRepository';
+import { type Logger } from '@map-colonies/js-logger';
+import { IDOMAIN_FIELDS_REPO_SYMBOL } from '../DAL/domainFieldsRepository';
 import { Tags } from '../../common/types';
 import { KEYS_SEPARATOR, REDIS_KEYS_SEPARATOR, SERVICES } from '../../common/constants';
 import { KeyNotFoundError } from '../DAL/errors';
 import { keyConstructor } from '../DAL/keys';
-import { Schema, schemaSymbol } from './types';
+import { RedisManager } from '../DAL/redisManager';
+import { Schema } from './types';
 
 interface SchemaMetadataBase {
   keyIgnoreSets: Set<string>;
@@ -33,8 +34,8 @@ export class JSONSyntaxError extends SyntaxError {}
 export class SchemaManager {
   private readonly schemas: Record<string, SchemaMetadata>;
   public constructor(
-    @inject(schemaSymbol) private readonly inputSchemas: Schema[],
-    @inject(IDOMAIN_FIELDS_REPO_SYMBOL) private readonly domainFieldsRepo: IDomainFieldsRepository,
+    @inject(SERVICES.SCHEMAS) private readonly inputSchemas: Schema[],
+    @inject(IDOMAIN_FIELDS_REPO_SYMBOL) private readonly domainFieldsRepoPromise: Promise<RedisManager>,
     @inject(SERVICES.LOGGER) private readonly logger: Logger
   ) {
     this.schemas = inputSchemas.reduce((acc, curr) => {
@@ -83,14 +84,21 @@ export class SchemaManager {
     const explodeKeys: string[] = []; // array to hold all explode keys
 
     let finalTags: Tags = Object.entries(tags).reduce((acc: Tags, [key, value]) => {
-      // remove tag if it's an ignored key
+      if (schema === undefined) {
+        this.logger.error({ msg: 'schema not found', schemaName: name });
+        throw new SchemaNotFoundError(`schema ${name} not found`);
+      }
+
       if (schema.keyIgnoreSets.has(key)) {
         return acc;
       }
 
       // check if tag's key should be renamed
-      if (schema.renameKeys && Object.prototype.hasOwnProperty.call(schema.renameKeys, key)) {
-        key = schema.renameKeys[key];
+      if (schema.renameKeys && Object.prototype.hasOwnProperty.call(schema.renameKeys, key) && schema.renameKeys[key] !== undefined) {
+        const renamedKey = schema.renameKeys[key];
+        if (renamedKey !== undefined) {
+          key = renamedKey;
+        }
       }
 
       if (schema.enableExternalFetch) {
@@ -126,7 +134,7 @@ export class SchemaManager {
 
     finalTags = { ...finalTags, ...domainFieldsTags, ...explodeFieldsTags };
 
-    if (this.schemas[name].addSchemaPrefix) {
+    if (this.schemas[name]?.addSchemaPrefix ?? false) {
       // for each key add a system name prefix
       finalTags = Object.entries(finalTags).reduce((acc: Tags, [key, value]) => {
         acc[this.concatenateKeysPrefix(name, key)] = value;
@@ -149,25 +157,28 @@ export class SchemaManager {
 
   private readonly getDomainFieldsCodedValues = async (domainKeys: string[]): Promise<Tags> => {
     let domainFieldsTags: Tags = {};
-    const fieldsCodedValues = await this.domainFieldsRepo.getFields(domainKeys);
+    const fieldsCodedValues = await (await this.domainFieldsRepoPromise).getFields(domainKeys);
 
     // for each domain field create new domain field tag with the correct value
     fieldsCodedValues.forEach((codedValue, index) => {
-      if (codedValue !== null) {
+      const currentKey = domainKeys[index];
+
+      if (codedValue !== null && currentKey !== undefined) {
+        const fieldName = currentKey.split(REDIS_KEYS_SEPARATOR)[1];
+
         domainFieldsTags = {
           ...domainFieldsTags,
-          [domainKeys[index].split(REDIS_KEYS_SEPARATOR)[1] + '_DOMAIN']: codedValue,
+          [`${fieldName}_DOMAIN`]: codedValue,
         };
       }
     });
-
     return domainFieldsTags;
   };
 
   private readonly getExplodeFields = async (explodeKeys: string[]): Promise<Tags> => {
     let explodeFieldsTags: Tags = {};
-    const explodeFields = await this.domainFieldsRepo.getFields(explodeKeys);
 
+    const explodeFields = await (await this.domainFieldsRepoPromise).getFields(explodeKeys);
     // for each explode field parse for new Object.
     explodeFields.forEach((jsonString, index) => {
       if (jsonString === null) {
@@ -184,8 +195,8 @@ export class SchemaManager {
           return acc;
         }, {});
         explodeFieldsTags = { ...explodeFieldsTags, ...explodedFields };
-      } catch (error) {
-        this.logger.error({ msg: 'failed to parse json for explode key', key: explodeKeys[index] });
+      } catch (err) {
+        this.logger.error({ msg: 'failed to parse json for explode key', key: explodeKeys[index], err });
         throw new JSONSyntaxError(`failed to parse fetched json for key: ${explodeKeys[index]}`);
       }
     });

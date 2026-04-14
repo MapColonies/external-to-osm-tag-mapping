@@ -22,8 +22,6 @@ interface EnableExternalFetching extends BaseSchema {
 
 export type Schema = DisableExternalFetching | EnableExternalFetching;
 
-export const schemaSymbol = Symbol('schemas');
-
 export const schemasTypeDefinition: JTDSchemaType<Schema[]> = {
   elements: {
     discriminator: 'enableExternalFetch',

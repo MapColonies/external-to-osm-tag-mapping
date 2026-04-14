@@ -1,10 +1,12 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { container } from 'tsyringe';
+import Redis from 'ioredis';
 import jsLogger from '@map-colonies/js-logger';
+import { initConfig } from '@src/common/config';
 import { IDOMAIN_FIELDS_REPO_SYMBOL } from '../../../../src/schema/DAL/domainFieldsRepository';
 import { JSONSyntaxError, SchemaManager, SchemaNotFoundError } from '../../../../src/schema/models/schemaManager';
-import { Schema, schemaSymbol } from '../../../../src/schema/models/types';
-import { SERVICES } from '../../../../src/common/constants';
+import { Schema } from '../../../../src/schema/models/types';
+import { REDIS_SYMBOL, SERVICES } from '../../../../src/common/constants';
 
 const schemas: Schema[] = [
   {
@@ -55,10 +57,25 @@ const schemas: Schema[] = [
 describe('SchemaManager', () => {
   let schemaManager: SchemaManager;
   let getFields: jest.Mock;
+  let mockRedis: jest.Mocked<Partial<Redis>>;
 
-  beforeAll(() => {
+  beforeAll(async () => {
+    await initConfig(true);
+
+    mockRedis = {
+      get: jest.fn(),
+      set: jest.fn(),
+      hget: jest.fn(),
+      hset: jest.fn(),
+      del: jest.fn(),
+      keys: jest.fn(),
+      disconnect: jest.fn(),
+    };
+
     getFields = jest.fn();
-    container.register(schemaSymbol, { useValue: schemas });
+
+    container.register(REDIS_SYMBOL, { useValue: mockRedis as Redis });
+    container.register(SERVICES.SCHEMAS, { useValue: schemas });
     container.register(IDOMAIN_FIELDS_REPO_SYMBOL, { useValue: { getFields } });
     container.register(SERVICES.LOGGER, { useValue: jsLogger({ enabled: false }) });
 
@@ -79,9 +96,9 @@ describe('SchemaManager', () => {
 
   describe('#getSchema', () => {
     it('should return the specific schema', () => {
-      const res = schemaManager.getSchema(schemas[0].name);
+      const res = schemaManager.getSchema(schemas[0]!.name);
 
-      expect(res).toMatchObject(schemas[0]);
+      expect(res).toMatchObject(schemas[0]!);
     });
 
     it('should return undefined for non-existent schema', () => {

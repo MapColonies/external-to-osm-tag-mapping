@@ -2,7 +2,9 @@ import { Router } from 'express';
 import { FactoryFunction } from 'tsyringe';
 import { SchemaController } from '../controllers/schemaController';
 
-const schemaRouterFactory: FactoryFunction<Router> = (dependencyContainer) => {
+export const SCHEMA_ROUTER_SYMBOL = Symbol('schemaRouter');
+
+export const schemaRouterFactory: FactoryFunction<Router> = (dependencyContainer) => {
   const router = Router();
   const controller = dependencyContainer.resolve(SchemaController);
 
@@ -12,5 +14,3 @@ const schemaRouterFactory: FactoryFunction<Router> = (dependencyContainer) => {
 
   return router;
 };
-
-export { schemaRouterFactory };

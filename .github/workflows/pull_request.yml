@@ -7,23 +7,27 @@ jobs:
     name: Run eslint
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        node: ['24.x']
+
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v4
         with:
-          node-version: 16
+          node-version: ${{ matrix.node }}
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
 
       - name: Run linters
-        uses: wearerequired/lint-action@v1
+        uses: wearerequired/lint-action@v2
         with:
           github_token: ${{ secrets.github_token }}
-          # Enable linters
           eslint: true
           prettier: true
           eslint_extensions: ts
@@ -34,51 +38,38 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           file: ./openapi3.yaml
 
-  security:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@master
-      - name: Run Snyk to check for vulnerabilities
-        uses: snyk/actions/node@master
-        continue-on-error: true
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-
   tests:
-    name: Run Tests
+    name: Run Tests (Node ${{ matrix.node }})
     runs-on: ubuntu-latest
-    container: node:16
+
+    strategy:
+      matrix:
+        node: ['24']
+      fail-fast: false
+
+    container: node:${{ matrix.node }}
 
     services:
       redis:
-        # Docker Hub image
-        image: redis
-
-        # Set health checks to wait until redis has started
+        image: redis:7.2.1
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
 
-    strategy:
-      matrix:
-        node: [14.x, 16.x]
-
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v2
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v1
-        with:
-          node-version: ${{ matrix.node }}
+        uses: actions/checkout@v4
 
       - name: Install Node.js dependencies
         run: npm ci
 
       - name: Run tests
         run: npm run test
+        env:
+          REDIS_HOST: redis
+          REDIS_PORT: 6379
 
       - uses: actions/upload-artifact@v5
         with:
@@ -91,7 +82,7 @@ jobs:
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: build Docker image
         run: docker build -t test-build:latest .
