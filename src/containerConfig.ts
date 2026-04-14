@@ -1,88 +1,155 @@
-import jsLogger, { LoggerOptions } from '@map-colonies/js-logger';
+import jsLogger, { Logger } from '@map-colonies/js-logger';
 import { getOtelMixin } from '@map-colonies/telemetry';
 import { trace } from '@opentelemetry/api';
-import config from 'config';
-import Redis from 'ioredis';
-import { RedisOptions } from 'ioredis';
-import { container } from 'tsyringe';
-import { ON_SIGNAL, REDIS_SYMBOL, SERVICES, SERVICE_NAME } from './common/constants';
+import redis from 'ioredis';
+import { DependencyContainer, instanceCachingFactory, instancePerContainerCachingFactory } from 'tsyringe';
+import { CleanupRegistry } from '@map-colonies/cleanup-registry';
+import { Registry } from 'prom-client';
+import { ON_SIGNAL, REDIS_SYMBOL, SERVICES, SERVICE_NAME, redisConfigPath } from './common/constants';
 import { createConnection } from './common/db';
-import { IApplication } from './common/interfaces';
-import { tracing } from './common/tracing';
 import { IDOMAIN_FIELDS_REPO_SYMBOL } from './schema/DAL/domainFieldsRepository';
 import { RedisManager } from './schema/DAL/redisManager';
-import { schemaSymbol } from './schema/models/types';
-import { getSchemas } from './schema/providers/schemaLoader';
+import { InjectionObject, registerDependencies } from './common/dependencyRegistration';
+import { ConfigType, getConfig } from './common/config';
+import { SCHEMA_PROVIDER_SYMBOL, SchemaProviderConstructor, schemaProviderFactory } from './schema/providers/schemaLoader';
+import { SCHEMA_ROUTER_SYMBOL, schemaRouterFactory } from './schema/routers/schemaRouter';
+import { getTracing } from './common/tracing';
 
-async function registerExternalValues(): Promise<void> {
-  container.register(SERVICES.CONFIG, { useValue: config });
-  container.register(SERVICES.APPLICATION, { useValue: config.get<IApplication>('application') });
-  const loggerConfig = config.get<LoggerOptions>('telemetry.logger');
-  const logger = jsLogger({ ...loggerConfig, mixin: getOtelMixin() });
-  container.register(SERVICES.LOGGER, { useValue: logger });
+export const registerExternalValues = async (options?: RegisterOptions): Promise<DependencyContainer> => {
+  const cleanupRegistry = new CleanupRegistry();
 
-  const tracer = trace.getTracer(SERVICE_NAME);
-  container.register(SERVICES.TRACER, { useValue: tracer });
+  try {
+    const dependencies: InjectionObject<unknown>[] = [
+      { token: SERVICES.CONFIG, provider: { useValue: getConfig() } },
+      {
+        token: SERVICES.METRICS,
+        provider: {
+          useFactory: instanceCachingFactory((container) => {
+            const config = container.resolve<ConfigType>(SERVICES.CONFIG);
+            const metricsRegistry = new Registry();
+            config.initializeMetrics(metricsRegistry);
 
-  const schemas = await getSchemas(container);
-  container.register(schemaSymbol, { useValue: schemas });
+            return metricsRegistry;
+          }),
+        },
+      },
+      { token: SERVICES.CLEANUP_REGISTRY, provider: { useValue: cleanupRegistry } },
+      {
+        token: SERVICES.TRACER,
+        provider: {
+          useFactory: instancePerContainerCachingFactory(() => {
+            cleanupRegistry.register({ id: SERVICES.TRACER, func: getTracing().stop.bind(getTracing()) });
+            const tracer = trace.getTracer(SERVICE_NAME);
+            return tracer;
+          }),
+        },
+      },
+      {
+        token: SERVICES.LOGGER,
+        provider: {
+          useFactory: instanceCachingFactory((container) => {
+            const config = container.resolve<ConfigType>(SERVICES.CONFIG);
+            const loggerConfig = config.get('telemetry.logger');
 
-  const connectToExternal = schemas.some((schema) => {
-    return schema.enableExternalFetch === 'yes';
-  });
+            return jsLogger({ ...loggerConfig, prettyPrint: loggerConfig.prettyPrint, mixin: getOtelMixin() });
+          }),
+        },
+      },
+      {
+        token: SCHEMA_PROVIDER_SYMBOL,
+        provider: { useFactory: instancePerContainerCachingFactory(schemaProviderFactory) },
+        postInjectionHook: async (container): Promise<void> => {
+          const provider = container.resolve<SchemaProviderConstructor>(SCHEMA_PROVIDER_SYMBOL);
+          if (provider === undefined) {
+            throw new Error('Schema provider is undefined');
+          }
+          const schemas = await container.resolve(provider).loadSchemas();
 
-  let redisConnection: Redis | undefined;
+          container.register(SERVICES.SCHEMAS, { useValue: schemas });
+        },
+      },
+      {
+        token: SERVICES.APPLICATION,
+        provider: {
+          useFactory: instancePerContainerCachingFactory((container) => {
+            const config = container.resolve<ConfigType>(SERVICES.CONFIG);
+            return config.get('application');
+          }),
+        },
+      },
+      {
+        token: REDIS_SYMBOL,
+        provider: {
+          useFactory: instancePerContainerCachingFactory(async (container) => {
+            const config = container.resolve<ConfigType>(SERVICES.CONFIG);
+            return createConnection(config.get(redisConfigPath));
+          }),
+        },
+        postInjectionHook: async (deps: DependencyContainer): Promise<void> => {
+          const logger = deps.resolve<Logger>(SERVICES.LOGGER);
+          try {
+            const redisPromise = deps.resolve<Promise<redis>>(REDIS_SYMBOL);
+            const redis = await redisPromise;
+            cleanupRegistry.register({
+              id: REDIS_SYMBOL,
+              func: redis.quit.bind(redis),
+            });
+          } catch (error) {
+            logger.error({ msg: 'Connection to redis failed', error });
+            throw error;
+          }
+        },
+      },
+      {
+        token: IDOMAIN_FIELDS_REPO_SYMBOL,
+        provider: {
+          useFactory: async (container): Promise<RedisManager> => {
+            const redisInstance = await container.resolve<Promise<redis>>(REDIS_SYMBOL);
+            const config = container.resolve<ConfigType>(SERVICES.CONFIG);
 
-  container.register(ON_SIGNAL, {
-    useValue: async (): Promise<void> => {
-      const promises: Promise<void>[] = [tracing.stop()];
-      if (connectToExternal && redisConnection !== undefined) {
-        redisConnection.disconnect();
+            return new RedisManager(redisInstance, config);
+          },
+        },
+      },
+      {
+        token: SERVICES.HEALTHCHECK,
+        provider: {
+          useFactory: (container) => {
+            return async (): Promise<void> => {
+              const redisInstance = await container.resolve<Promise<redis | undefined>>(REDIS_SYMBOL);
 
-        const promisifyQuit = new Promise<void>((resolve) => {
-          redisConnection = redisConnection as Redis;
-          redisConnection.once('end', () => {
-            resolve();
-          });
-          void redisConnection.quit();
-        });
+              if (redisInstance) {
+                const config = container.resolve<ConfigType>(SERVICES.CONFIG);
+                const timeout = config.get(redisConfigPath).connectTimeoutMs;
 
-        promises.push(promisifyQuit);
-      }
-      await Promise.all(promises);
-    },
-  });
+                await Promise.race([redisInstance.ping(), new Promise((_, reject) => setTimeout(() => reject(new Error('ping timeout')), timeout))]);
+              }
+            };
+          },
+        },
+      },
+      {
+        token: ON_SIGNAL,
+        provider: {
+          useValue: cleanupRegistry.trigger.bind(cleanupRegistry),
+        },
+      },
+      {
+        token: SCHEMA_ROUTER_SYMBOL,
+        provider: {
+          useFactory: instancePerContainerCachingFactory(schemaRouterFactory),
+        },
+      },
+    ];
 
-  if (connectToExternal) {
-    const { keyPrefix, ...redisConfig } = config.get<RedisOptions>('db');
-    redisConnection = await createConnection({ ...redisConfig, keyPrefix: keyPrefix ? `${keyPrefix}:` : undefined });
-
-    redisConnection.on('connect', () => {
-      logger.info(`redis client is connected.`);
-    });
-
-    redisConnection.on('error', (err: Error) => {
-      logger.error({ err: err, msg: 'redis client got an error' });
-    });
-
-    redisConnection.on('reconnecting', (delay: number) => {
-      logger.info(`redis client reconnecting, next reconnection attemp in ${delay}ms`);
-    });
-
-    container.register(REDIS_SYMBOL, { useValue: redisConnection });
-    container.register(IDOMAIN_FIELDS_REPO_SYMBOL, { useClass: RedisManager });
-  } else {
-    container.register(IDOMAIN_FIELDS_REPO_SYMBOL, { useValue: {} });
+    return await registerDependencies(dependencies, options?.override, options?.useChild);
+  } catch (error) {
+    await cleanupRegistry.trigger();
+    throw error;
   }
+};
 
-  container.register(SERVICES.HEALTHCHECK, {
-    useValue: async (): Promise<void> => {
-      if (redisConnection === undefined) {
-        return Promise.resolve();
-      }
-      await redisConnection.ping();
-    },
-  });
+export interface RegisterOptions {
+  override?: InjectionObject<unknown>[];
+  useChild?: boolean;
 }
-
-export { registerExternalValues };

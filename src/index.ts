@@ -1,25 +1,27 @@
-/* eslint-disable import/first */
-// this import must be called before the first import of tsyring
 import 'reflect-metadata';
-import './common/tracing';
 import { createServer } from 'http';
 import { createTerminus } from '@godaddy/terminus';
 import { Logger } from '@map-colonies/js-logger';
-import { container } from 'tsyringe';
-import config from 'config';
-import { DEFAULT_SERVER_PORT, ON_SIGNAL, SERVICES } from './common/constants';
+import { DependencyContainer } from 'tsyringe';
+import { ON_SIGNAL, SERVICES } from './common/constants';
+import { ConfigType } from './common/config';
 import { getApp } from './app';
 
-const port: number = config.get<number>('server.port') || DEFAULT_SERVER_PORT;
+let depContainer: DependencyContainer | undefined;
 
 void getApp()
-  .then((app) => {
+  .then(([app, container]) => {
     const logger = container.resolve<Logger>(SERVICES.LOGGER);
+
+    const config = container.resolve<ConfigType>(SERVICES.CONFIG);
+    const port = config.get('server.port');
+
     const server = createTerminus(createServer(app), {
-      // eslint-disable-next-line @typescript-eslint/naming-convention
       healthChecks: { '/liveness': container.resolve(SERVICES.HEALTHCHECK) },
       onSignal: container.resolve(ON_SIGNAL),
     });
+
+    depContainer = container;
 
     server.listen(port, () => {
       logger.info(`app started on port ${port}`);
@@ -27,7 +29,11 @@ void getApp()
   })
   .catch(async (error: Error) => {
     console.error('😢 - failed initializing the server');
-    console.error(error.message);
-    const shutDown: () => Promise<void> = container.resolve(ON_SIGNAL);
-    await shutDown();
+    console.error(error);
+    if (depContainer?.isRegistered(ON_SIGNAL) === true) {
+      const shutDown = depContainer.resolve<() => Promise<void>>(ON_SIGNAL);
+      await shutDown();
+    }
+
+    process.exit(1);
   });

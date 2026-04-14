@@ -14,18 +14,22 @@ export const IGNORED_OUTGOING_TRACE_ROUTES = [/^.*\/v1\/metrics.*$/];
 export const IGNORED_INCOMING_TRACE_ROUTES = [/^.*\/docs.*$/, /^.*\/metrics.*/];
 
 /* eslint-disable @typescript-eslint/naming-convention */
-export const SERVICES: Record<string, symbol> = {
+export const SERVICES = {
   HEALTHCHECK: Symbol('healthcheck'),
   LOGGER: Symbol('LOGGER'),
   CONFIG: Symbol('CONFIG'),
   TRACER: Symbol('TRACER'),
   METER: Symbol('METER'),
   APPLICATION: Symbol('APPLICATION'),
-};
+  METRICS: Symbol('METRICS'),
+  SCHEMAS: Symbol('SCHEMAS'),
+  CLEANUP_REGISTRY: Symbol('cleanupRegistry'),
+} satisfies Record<string, symbol>;
 /* eslint-enable @typescript-eslint/naming-convention */
 
 export const REDIS_SYMBOL = Symbol('REDIS');
 export const ON_SIGNAL = Symbol('onSignal');
+export const redisConfigPath = 'redis';
 
 export const KEYS_SEPARATOR = '_';
 export const REDIS_KEYS_SEPARATOR = ':';
