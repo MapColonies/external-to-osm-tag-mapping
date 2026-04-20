@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.9.1](https://github.com/MapColonies/external-to-osm-tag-mapping/compare/v1.9.0...v1.9.1) (2026-04-20)
+
+
+### Bug Fixes
+
+* match the prefix in config to RedisOptions MAPCO-10473 ([9b9c223](https://github.com/MapColonies/external-to-osm-tag-mapping/commit/9b9c223618155f2b5446222fdc31fb5a84b0d1bf))
+
 ## [1.9.0](https://github.com/MapColonies/external-to-osm-tag-mapping/compare/v1.8.1...v1.9.0) (2026-04-14)
 
 
