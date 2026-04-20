@@ -11,7 +11,7 @@ const retryFunction = (times: number): number => {
 };
 
 const createConnectionOptions = (config: RedisConfig): RedisOptions => {
-  const { tls, dbIndex, ...rest } = config;
+  const { tls, dbIndex, prefix, ...rest } = config;
 
   let tlsOptions: RedisOptions['tls'] | undefined;
   if (tls.enabled) {
@@ -21,6 +21,7 @@ const createConnectionOptions = (config: RedisConfig): RedisOptions => {
 
   return {
     db: dbIndex,
+    keyPrefix: prefix,
     ...rest,
     ...(tlsOptions && { tls: tlsOptions }),
     retryStrategy: retryFunction,
