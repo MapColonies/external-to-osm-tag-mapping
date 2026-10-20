@@ -139,10 +139,12 @@ describe('SchemaManager', () => {
         externalKey4: 'val4',
       };
       const expected = {
-        system3_externalKey1: 'val1',
-        system3_externalKey2: 'val2',
-        system3_externalKey3: 'val3',
-        system3_externalKey4: 'val4',
+        tags: {
+          system3_externalKey1: 'val1',
+          system3_externalKey2: 'val2',
+          system3_externalKey3: 'val3',
+          system3_externalKey4: 'val4',
+        },
       };
 
       const res = await schemaManager.map(name, tags);
@@ -159,10 +161,12 @@ describe('SchemaManager', () => {
         externalKey4: 'val4',
       };
       const expected = {
-        externalKey1: 'val1',
-        externalKey2: 'val2',
-        externalKey3: 'val3',
-        externalKey4: 'val4',
+        tags: {
+          externalKey1: 'val1',
+          externalKey2: 'val2',
+          externalKey3: 'val3',
+          externalKey4: 'val4',
+        },
       };
 
       const res = await schemaManager.map(name, tags);
@@ -179,10 +183,12 @@ describe('SchemaManager', () => {
         externalKey4: 'val4',
       };
       const expected = {
-        system1_renamedExternalKey1: 'val1',
-        system1_externalKey2: 'val2',
-        system1_externalKey3: 'val3',
-        system1_externalKey4: 'val4',
+        tags: {
+          system1_renamedExternalKey1: 'val1',
+          system1_externalKey2: 'val2',
+          system1_externalKey3: 'val3',
+          system1_externalKey4: 'val4',
+        },
       };
 
       getFields.mockResolvedValue([null, null, null, null]);
@@ -198,7 +204,10 @@ describe('SchemaManager', () => {
         externalKey1: 'val1',
       };
       const expected = {
-        system1_renamedExternalKey1_DOMAIN: '1',
+        tags: {
+          system1_renamedExternalKey1: 'val1',
+          system1_renamedExternalKey1_DOMAIN: '1',
+        },
       };
 
       getFields.mockReturnValueOnce(['1']);
@@ -214,9 +223,11 @@ describe('SchemaManager', () => {
         externalKeyRename: 'val1',
       };
       const expected = {
-        system1_explode2: 'val1',
-        system1_exploded1_DOMAIN: '2',
-        system1_exploded2_DOMAIN: '3',
+        tags: {
+          system1_explode2: 'val1',
+          system1_exploded1_DOMAIN: '2',
+          system1_exploded2_DOMAIN: '3',
+        },
       };
 
       getFields.mockReturnValueOnce(['{ "exploded1": 2, "exploded2": 3 }']);
@@ -236,14 +247,16 @@ describe('SchemaManager', () => {
         explode1: 'val5',
       };
       const expected = {
-        system1_renamedExternalKey1: 'val1',
-        system1_EXTERNALKEY2: 'val2',
-        system1_externalKey3: 'val3',
-        system1_externalKey4: 'val4',
-        system1_explode1: 'val5',
-        system1_EXTERNALKEY2_DOMAIN: '2',
-        system1_exploded1_DOMAIN: '2',
-        system1_exploded2_DOMAIN: '3',
+        tags: {
+          system1_renamedExternalKey1: 'val1',
+          system1_EXTERNALKEY2: 'val2',
+          system1_externalKey3: 'val3',
+          system1_externalKey4: 'val4',
+          system1_explode1: 'val5',
+          system1_EXTERNALKEY2_DOMAIN: '2',
+          system1_exploded1_DOMAIN: '2',
+          system1_exploded2_DOMAIN: '3',
+        },
       };
 
       getFields.mockReturnValueOnce([null, '2', null, null]);
@@ -264,14 +277,16 @@ describe('SchemaManager', () => {
         explode1: 'val5',
       };
       const expected = {
-        system5_renamedExternalKey1: 'val1',
-        system5_EXTERNALKEY2: 'val2',
-        system5_externalKey3: 'val3',
-        system5_externalKey4: 'val4',
-        system5_explode1: 'val5',
-        system5_EXTERNALKEY2_DOMAIN: '2',
-        system5_exploded1_DOMAIN: '2',
-        system5_exploded2_DOMAIN: '3',
+        tags: {
+          system5_renamedExternalKey1: 'val1',
+          system5_EXTERNALKEY2: 'val2',
+          system5_externalKey3: 'val3',
+          system5_externalKey4: 'val4',
+          system5_explode1: 'val5',
+          system5_EXTERNALKEY2_DOMAIN: '2',
+          system5_exploded1_DOMAIN: '2',
+          system5_exploded2_DOMAIN: '3',
+        },
       };
 
       getFields.mockReturnValueOnce([null, '2', null, null]);
@@ -292,10 +307,12 @@ describe('SchemaManager', () => {
         key1: 'val1',
       };
       const expected = {
-        system2_externalKey1: 'val1',
-        system2_externalKey2: 'val2',
-        system2_externalKey3: 'val3',
-        system2_externalKey4: 'val4',
+        tags: {
+          system2_externalKey1: 'val1',
+          system2_externalKey2: 'val2',
+          system2_externalKey3: 'val3',
+          system2_externalKey4: 'val4',
+        },
       };
 
       getFields.mockReturnValueOnce([null, null, null, null]);
@@ -315,18 +332,20 @@ describe('SchemaManager', () => {
         key1: 'val1',
       };
       const expected = {
-        system2_externalKey1: 'val1',
-        system2_EXTERNALKEY2: 'val2',
-        system2_externalKey3: 'val3',
-        system2_externalKey4: 'val4',
-        system2_EXTERNALKEY2_DOMAIN: '2',
+        tags: {
+          system2_externalKey1: 'val1',
+          system2_EXTERNALKEY2: 'val2',
+          system2_externalKey3: 'val3',
+          system2_externalKey4: 'val4',
+          system2_EXTERNALKEY2_DOMAIN: '2',
+        },
       };
 
       getFields.mockResolvedValue([null, '2', null, null]);
-      const expectedKeysLength = Object.keys(expected).length;
+      const expectedKeysLength = Object.keys(expected.tags).length;
 
       const res = await schemaManager.map(name, tags);
-      const keysLength = Object.keys(res).length;
+      const keysLength = Object.keys(res.tags).length;
 
       expect(res).toMatchObject(expected);
       expect(keysLength).toBe(expectedKeysLength);
@@ -343,16 +362,18 @@ describe('SchemaManager', () => {
         explode1: 'שלום\\עולם',
       };
       const expected = {
-        system5_renamedExternalKey1: 'בדיקה',
-        system5_externalKey2: 'val2',
-        system5_externalKey3: 'val3',
-        system5_externalKey4: 'val4',
-        system5_externalKEY5: 'שלום שלום/מנכ"ל',
-        system5_explode1: 'שלום\\עולם',
-        system5_externalKey2_DOMAIN: '2',
-        system5_externalKEY5_DOMAIN: 'בדיקה',
-        system5_exploded1_DOMAIN: '2',
-        system5_exploded2_DOMAIN: '3',
+        tags: {
+          system5_renamedExternalKey1: 'בדיקה',
+          system5_externalKey2: 'val2',
+          system5_externalKey3: 'val3',
+          system5_externalKey4: 'val4',
+          system5_externalKEY5: 'שלום שלום/מנכ"ל',
+          system5_explode1: 'שלום\\עולם',
+          system5_externalKey2_DOMAIN: '2',
+          system5_externalKEY5_DOMAIN: 'בדיקה',
+          system5_exploded1_DOMAIN: '2',
+          system5_exploded2_DOMAIN: '3',
+        },
       };
 
       getFields.mockReturnValueOnce([null, '2', null, null, 'בדיקה']);
@@ -373,21 +394,82 @@ describe('SchemaManager', () => {
         explode1: 'שלום\\עולם',
       };
       const expected = {
-        renamedExternalKey1: 'בדיקה',
-        externalKey2: 'val2',
-        externalKey3: 'val3',
-        externalKey4: 'val4',
-        externalKEY5: 'שלום שלום/מנכ"ל',
-        explode1: 'שלום\\עולם',
-        DOMAIN_PREFIX_externalKey2_DOMAIN_SUFFIX: '2',
-        DOMAIN_PREFIX_externalKEY5_DOMAIN_SUFFIX: 'בדיקה',
-        EXPLODE_PREFIX_exploded1_EXPLODE_SUFFIX: '2',
-        EXPLODE_PREFIX_exploded2_EXPLODE_SUFFIX: '3',
+        tags: {
+          renamedExternalKey1: 'בדיקה',
+          externalKey2: 'val2',
+          externalKey3: 'val3',
+          externalKey4: 'val4',
+          externalKEY5: 'שלום שלום/מנכ"ל',
+          explode1: 'שלום\\עולם',
+          DOMAIN_PREFIX_externalKey2_DOMAIN_SUFFIX: '2',
+          DOMAIN_PREFIX_externalKEY5_DOMAIN_SUFFIX: 'בדיקה',
+          EXPLODE_PREFIX_exploded1_EXPLODE_SUFFIX: '2',
+          EXPLODE_PREFIX_exploded2_EXPLODE_SUFFIX: '3',
+        },
       };
 
       getFields.mockReturnValueOnce([null, '2', null, null, 'בדיקה']);
       getFields.mockReturnValueOnce(['{ "exploded1": "2", "exploded2": "3" }']);
       const res = await schemaManager.map(name, tags);
+
+      expect(res).toMatchObject(expected);
+    });
+
+    it('should map domain field and respond with debug response', async function () {
+      const name = 'system6';
+      const tags = {
+        externalKey: 'val1',
+      };
+      const expected = {
+        tags: {
+          externalKey: 'val1',
+          DOMAIN_PREFIX_externalKey_DOMAIN_SUFFIX: '1',
+        },
+        debug: [
+          {
+            key: 'externalKey',
+            type: 'domain',
+            result: ['DOMAIN_PREFIX_externalKey_DOMAIN_SUFFIX'],
+          },
+        ],
+      };
+
+      getFields.mockReturnValueOnce(['1']);
+
+      const res = await schemaManager.map(name, tags, true);
+
+      expect(res).toMatchObject(expected);
+    });
+
+    it('should map explode field and respond with debug response', async function () {
+      const name = 'system6';
+      const tags = {
+        explode1: 'val1',
+      };
+      const expected = {
+        tags: {
+          explode1: 'val1',
+          EXPLODE_PREFIX_exploded1_EXPLODE_SUFFIX: '2',
+          EXPLODE_PREFIX_exploded2_EXPLODE_SUFFIX: '3',
+        },
+        debug: [
+          {
+            key: 'explode1',
+            type: 'explode',
+            result: ['EXPLODE_PREFIX_exploded1_EXPLODE_SUFFIX', 'EXPLODE_PREFIX_exploded2_EXPLODE_SUFFIX'],
+          },
+        ],
+      };
+
+      // const expectedDebug: MappingDebug = {
+      //   key: 'explode1',
+      //   type: 'explode',
+      //   result: ['EXPLODE_PREFIX_exploded1_EXPLODE_SUFFIX', 'EXPLODE_PREFIX_exploded2_EXPLODE_SUFFIX'],
+      // };
+
+      getFields.mockReturnValueOnce(['{ "exploded1": 2, "exploded2": 3 }']);
+
+      const res = await schemaManager.map(name, tags, true);
 
       expect(res).toMatchObject(expected);
     });
@@ -421,10 +503,12 @@ describe('SchemaManager', () => {
         explode2: 'val2',
       };
       const expected = {
-        system1_explode1: 'val1',
-        system1_explode2: 'val2',
-        system1_exploded1_DOMAIN: null,
-        system1_exploded2_DOMAIN: '3',
+        tags: {
+          system1_explode1: 'val1',
+          system1_explode2: 'val2',
+          system1_exploded1_DOMAIN: null,
+          system1_exploded2_DOMAIN: '3',
+        },
       };
 
       getFields.mockResolvedValue(['{"exploded1": null, "exploded2": "3"}']);
